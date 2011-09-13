@@ -1,0 +1,78 @@
+from emross import *
+
+
+# User agent
+user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7'
+
+logfile = '/tmp/emross.log'
+session_path = 'build/session.pickle'
+
+api_key = ''
+pushid = ''
+
+game_server = 'YOURSERVER.emrosswar.com'
+
+get_user_info = 'game/get_userinfo_api.php'
+get_city_info = 'game/get_cityinfo_api.php'
+get_city_countdown_info = 'game/get_cdinfo_api.php'
+get_goods = 'game/goods_api.php'
+
+get_heroes = 'game/gen_conscribe_api.php'
+get_soldiers = 'game/soldier_educate_api.php'
+
+hero_conscribe = 'game/gen_conscribe_api.php'
+
+
+api_fav = 'game/api_fav.php'
+war_result_list = 'game/war_result_list_api.php'
+war_result_info = 'game/war_result_info_api.php'
+
+world_map = 'game/api_world_map.php'
+
+action_confirm = 'game/armament_action_do_api.php'
+action_do = 'game/armament_action_task_api.php'
+
+local_market = 'game/local_market_api.php'
+
+
+
+event_timers = {
+    'get_user_info':60000
+}
+
+
+scout_devil_army_types = [DevilArmy.SIX_STAR]
+
+"""Id = 12553, name = crow tree
+--Id = 21111, name = localhost
+Id = 21261, name = 127001
+Id = 21469, name = Meadery
+Id = 21824, name = Sparta
+Id = 22008, name = Reboot"""
+ignore_cities = [22008]
+
+
+npc_attack_limit = 3
+
+soldier_threshold = {
+    'OVERLORD':  (15, 600),
+    'BERZERKER': (11, 800)
+}
+
+
+"""
+Ratio of troops which we will consider attacking
+
+eg.
+Horror 3000
+Nightmare 1000
+"""
+enemy_troop_ratio = 3000/1000
+
+enemy_troops = ('Horror', 'Nightmare')
+
+
+
+# If this comes up then we should hire it
+enable_recruit = False
+recruit_heroes = [4]
