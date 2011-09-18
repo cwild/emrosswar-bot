@@ -57,7 +57,7 @@ class World:
             print 'No cities found with spies.'
             return
 
-        x, y = 0, 0
+        x, y = 1, 1
         nx, ny = 1, 1
 
         page = self.get_page(x, y)

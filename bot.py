@@ -32,6 +32,7 @@ def main():
 
             try:
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
+                #bot.clear_favs()
 
                 for city in bot.cities:
                     print 'Updating city %s' % city.name
@@ -97,21 +98,16 @@ def main():
                         continue
 
             except NoTargetsFound:
+                print 'No targets found'
+
                 for city in bot.cities:
                     city.recruit_hero()
 
-                print 'No targets found'
-
-                print 'Processing scout reports'
                 bot.scout_map()
 
-                print 'Checking for new fav Devil Armies'
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
 
                 if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < settings.npc_attack_limit]):
-                    tl = ([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < settings.npc_attack_limit])
-                    for t in tl:
-                        print 'Coord %d,%d, Attack %d' % (t.x, t.y, t.attack)
                     print 'We have some more Devil Armies to attack!'
                 else:
                     print 'None found, sleep for 30 minutes'
