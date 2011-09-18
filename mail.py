@@ -48,38 +48,42 @@ class ScoutMailHandler(MailHandler):
         Read through all scout reports and examine the reports
         we have of any devil armies
         """
+        self.mail[:] = []
+
         page = 1
         while True:
-            print 'Process page %d' % page
             max = self.list_mail(page)
-
-            for mail in self.mail:
-
-                try:
-                    # NPC does not have a defender
-                    if mail.data['dname']:
-                        continue
-
-                    mail.fetch()
-
-                    troops = self.parser.find_troops(mail.message['scout_report']['result'])
-                    if self.parser.is_attackable(troops):
-                        result = 'ADDED'
-                        mail.add_fav(2)
-                    else:
-                        result = 'REJECTED'
-
-                    
-                    print '%s devil army at [%d/%d] with troops %s(%d), %s(%d)' % (result, mail.data['dx'], mail.data['dy'], settings.enemy_troops[0], troops[0], settings.enemy_troops[1], troops[1] )
-
-                    mail.processed = True
-                except TypeError:
-                    print 'Error parsing mail: %s\n\n%s\n\n\n%s' % (mail.data, mail.message, '*'*40)
+            print 'Reading page %d/%d' % (page, max)
 
             if max == page:
                 break
 
             page += 1
+
+
+        for mail in self.mail:
+
+            try:
+                # NPC does not have a defender
+                if mail.data['dname']:
+                    continue
+
+                mail.fetch()
+
+                troops = self.parser.find_troops(mail.message['scout_report']['result'])
+                if self.parser.is_attackable(troops):
+                    result = 'ADDED'
+                    mail.add_fav(2)
+                else:
+                    result = 'REJECTED'
+
+
+                print '%s devil army at [%d/%d] with troops %s(%d), %s(%d)' % (result, mail.data['dx'], mail.data['dy'], settings.enemy_troops[0], troops[0], settings.enemy_troops[1], troops[1] )
+
+                mail.processed = True
+            except TypeError:
+                print 'Error parsing mail: %s\n\n%s\n\n\n%s' % (mail.data, mail.message, '*'*40)
+
 
 
         # Now delete the mails
