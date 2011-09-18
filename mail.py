@@ -44,10 +44,13 @@ class ScoutMailHandler(MailHandler):
 
 
     def process(self):
-        self.mail = []
-
+        """
+        Read through all scout reports and examine the reports
+        we have of any devil armies
+        """
         page = 1
         while True:
+            print 'Process page %d' % page
             max = self.list_mail(page)
 
             for mail in self.mail:
@@ -80,9 +83,11 @@ class ScoutMailHandler(MailHandler):
 
 
         # Now delete the mails
-        for mail in self.mail:
-            if mail.processed:
-                mail.delete()
+        processed_mail = [m for m in self.mail if m.processed]
+        for mail in processed_mail:
+            mail.delete()
+
+        self.mail[:] = [m for m in self.mail if not m.processed]
 
 
 class MailParser:
