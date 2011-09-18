@@ -142,7 +142,13 @@ class EmrossWarBot:
             #[[14785,115,248,1,3]
             # Seems that x,y are back to front
             fav = Fav(y = da[1], x = da[2], attack = da[4])
+            fav.id = da[0]
             self.fav[cat].append(fav)
+
+    def clear_favs(self):
+        for f in self.fav[EmrossWar.DEVIL_ARMY]:
+            print 'Deleting fav %d' % f.id
+            api.call(settings.api_fav, act='delfavnpc', fid=f.id)
 
 
     def find_target(self, cat = EmrossWar.DEVIL_ARMY):
@@ -175,13 +181,13 @@ class EmrossWarBot:
 
 
     def scout_map(self):
-
+        print 'Trying to find more targets to attack'
         try:
             last_scan = self.session.last_scan
         except AttributeError:
             last_scan = 0
 
-        if time.time() < last_scan + (72 * 86400):
+        if time.time() < last_scan + (3 * 86400):
             print 'The world was scanned less than 3 days ago'
         else:
             world = World(api, self.cities, self.fav[EmrossWar.DEVIL_ARMY])
@@ -190,6 +196,7 @@ class EmrossWarBot:
             self.session.save()
 
         try:
+            print 'Look at scout reports to try to locate devil armies'
             self.mail.process()
         except MailException:
             pass
