@@ -202,6 +202,17 @@ class EmrossWarBot:
             pass
 
 
+    def is_attack_time(self):
+        """
+        Check if we should be farming at this time of day.
+        Can't be farming 24/7 after all!
+        """
+        for timespan in settings.farming_hours:
+            if timespan[0] < time.localtime().tm_hour < timespan[1]:
+                return True
+
+        return False
+
 
 
 class City:

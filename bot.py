@@ -43,6 +43,9 @@ def main():
                     print 'Replenishing food'
                     city.replenish_food()
 
+                    if bot.is_attack_time() is False:
+                        continue
+
                     try:
                         """
                         How many (decent) soldiers are in this city?
