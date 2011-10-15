@@ -7,6 +7,15 @@ class EmrossWar:
     #ERROR_AUTHFAIL = {12:1, 14:1, 301:1, 302:1}
 
 
+    """
+    3: "Scout",
+    0: "Loot",
+    7: "Attack",
+    8: "Occupy",
+    9: "Conquer",
+    5: "Build",
+    2: "Transport"
+    """
     ATTACK_TYPE_SCOUT = 3
 
 
