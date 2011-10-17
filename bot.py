@@ -104,6 +104,7 @@ def main():
                 print 'No targets found'
 
                 for city in bot.cities:
+                    city.update()
                     city.recruit_hero()
                     city.replenish_food()
 
