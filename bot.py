@@ -105,6 +105,7 @@ def main():
 
                 for city in bot.cities:
                     city.recruit_hero()
+                    city.replenish_food()
 
                 bot.scout_map()
 
