@@ -34,6 +34,9 @@ def main():
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
                 #bot.clear_favs()
 
+                print 'There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[2]),
+                            sum([settings.npc_attack_limit - x.attack for x in bot.fav[2]]) )
+
                 for city in bot.cities:
                     print 'Updating city %s' % city.name
                     city.update()
