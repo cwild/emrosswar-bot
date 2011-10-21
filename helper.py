@@ -16,22 +16,24 @@ import settings
 
 
 logger = logging.getLogger('emross-bot')
-logger.propagate = False
-logger.setLevel(logging.INFO)
 
-try:
-    _fh = logging.handlers.WatchedFileHandler(settings.logfile) # use with logrotate
-except IOError:
-    """ A do-nothing handler """
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
+if len(logger.handlers) == 0:
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
 
-    _fh = NullHandler()
+    try:
+        _fh = logging.handlers.WatchedFileHandler(settings.logfile) # use with logrotate
+    except IOError:
+        """ A do-nothing handler """
+        class NullHandler(logging.Handler):
+            def emit(self, record):
+                pass
 
-_fh.setLevel(logging.INFO)
-_fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s', datefmt='%Y %b %d %H:%M:%S'))
-logger.addHandler(_fh)
+        _fh = NullHandler()
+
+    _fh.setLevel(logging.INFO)
+    _fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s', datefmt='%Y %b %d %H:%M:%S'))
+    logger.addHandler(_fh)
 
 
 
