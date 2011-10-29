@@ -37,11 +37,16 @@ class World:
 
     def get_city_with_spies(self):
         """Choose a city with spies"""
+        choice = None
         for city in self.cities:
             city.get_soldiers()
             if city.soldiers[Soldier.SPY-1][1]:
-                return city
+                if not choice or city.soldiers[Soldier.SPY-1][1] > choice.soldiers[Soldier.SPY-1][1]:
+                    choice = city
 
+        if choice:
+            print 'Sending spies from %s' % choice.name
+            return choice
 
         print 'Unable to locate any available spies, sleeping for 5 mins.'
         time.sleep(300)
