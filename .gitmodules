@@ -1,0 +1,3 @@
+[submodule "lib/urllib3"]
+	path = lib/urllib3
+	url = https://github.com/shazow/urllib3.git

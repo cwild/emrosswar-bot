@@ -1,5 +1,4 @@
 import urllib
-from urllib import FancyURLopener
 import simplejson
 import time
 import math
@@ -8,6 +7,12 @@ import os
 
 import logging
 import logging.handlers
+
+import sys
+
+sys.path.extend(['lib/', 'lib/urllib3/'])
+
+from urllib3 import HTTPConnectionPool, HTTPError
 
 from emross import *
 from world import World
@@ -41,16 +46,22 @@ class EmrossWarException(Exception): pass
 
 class EmrossWarApiException(EmrossWarException): pass
 
-class EmrossWarApi(FancyURLopener):
+class EmrossWarApi:
     def __init__(self):
         if settings.user_agent:
             self.version = settings.user_agent
 
-        urllib.FancyURLopener.__init__(self)
+        self.pool = {}
 
 
     def call(self, method, server=settings.game_server, **kargs):
         """Call API and return result"""
+
+        try:
+            pool = self.pool[server]
+        except KeyError:
+            self.pool[server] = pool = HTTPConnectionPool(server, headers={'User-Agent': settings.user_agent})
+
 
         epoch = int(time.time())
 
@@ -69,19 +80,20 @@ class EmrossWarApi(FancyURLopener):
         url = 'http://%s/%s?%s' % (server, method, query_string)
 
         try:
-            page = self.open(url)
-        except IOError:
+            #page = self.open(url)
+            r = pool.urlopen('GET', url)
+        except HTTPError,e :
+            print e
             raise EmrossWarApiException, 'Problem connecting to game server.'
 
-        jsonp = page.read()
+        #jsonp = page.read()
+        jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
 
         try:
             json = simplejson.loads(jsonp)
-        except ValueError:
-            print jsonp
-            print url
-            return
+        except ValueError, e:
+            raise EmrossWarApiException, e
 
         #if json['code'] is not EmrossWar.SUCCESS:
         #    print json
