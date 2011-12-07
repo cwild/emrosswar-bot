@@ -30,6 +30,13 @@ class MailHandler:
 
 
 
+    def delete_bulk(self, id):
+        parts = map(None, *(iter(id),) * 10)
+
+        for part in parts:
+            ids = ','.join(str(o.id) for o in part if o is not None)
+            print 'Deleting mail id%s %s' % ("'s" if len(part) > 1 else '', ids)
+            json = self.api.call(settings.war_result_list, action='delete', id=ids)
 
 
 class AttackMailHandler(MailHandler):
@@ -88,8 +95,8 @@ class ScoutMailHandler(MailHandler):
 
         # Now delete the mails
         processed_mail = [m for m in self.mail if m.processed]
-        for mail in processed_mail:
-            mail.delete()
+
+        self.delete_bulk(processed_mail)
 
         self.mail[:] = [m for m in self.mail if not m.processed]
 
