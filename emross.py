@@ -26,6 +26,8 @@ class EmrossWar:
 
 
     REACHED_HERO_LIMIT = 1304
+    RECRUITING_CLOSED  = 1305
+    INSUFFICIENT_GOLD  = 1306
 
 
 class Soldier:

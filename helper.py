@@ -481,7 +481,12 @@ class City:
                 return
 
 
-            self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
+            if json['code'] == EmrossWar.INSUFFICIENT_GOLD:
+                print 'Insufficient gold to buy a drink!'
+                return
+            else:
+                self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
+
 
             if 'hero' in json['ret'] and json['ret']['hero']['gid'] in settings.recruit_heroes:
                 print 'Found a hero we are looking for: %d' % json['ret']['hero']['gid']
