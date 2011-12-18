@@ -80,8 +80,12 @@ class World:
                     for item in page['map']:
                         if item[2] in targets:
                             while not spies:
+                                city.get_soldiers()
                                 spies = city.soldiers[Soldier.SPY-1][1]
                                 print 'Found %d spies in the city %s' % (spies, city.name)
+                                if not spies:
+                                    print 'No spies available at the moment. Check again in 1 minute.'
+                                    time.sleep(60)
 
 
                             favs = [f for f in self.favs if f.x == item[1] and f.y == item[0]]
