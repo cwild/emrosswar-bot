@@ -232,7 +232,7 @@ class EmrossWarBot:
 class City:
     def __init__(self, id, name):
         self.id = id
-        self.name = name
+        self.name = name.encode('utf-8')
         self.data = None
 
         self.heroes = []
