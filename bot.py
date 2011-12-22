@@ -127,6 +127,7 @@ def main():
             """
             Now wait a while for things to return to their respective city
             """
+            bot.scout_map()
             print 'Cycle finished, waiting for 5 mins to go again'
             time.sleep(5*MINUTE)
 
