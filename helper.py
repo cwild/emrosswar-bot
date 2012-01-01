@@ -196,6 +196,11 @@ class EmrossWarBot:
 
     def scout_map(self):
         print 'Trying to find more targets to attack'
+
+        if not len(settings.farming_hours):
+            print 'There are no times of day set to farm. No point scouting the map.'
+            return
+
         try:
             last_scan = self.session.last_scan
         except AttributeError:
@@ -222,7 +227,7 @@ class EmrossWarBot:
         Can't be farming 24/7 after all!
         """
         for timespan in settings.farming_hours:
-            if timespan[0] < time.localtime().tm_hour < timespan[1]:
+            if timespan[0] <= time.localtime().tm_hour < timespan[1]:
                 return True
 
         return False
