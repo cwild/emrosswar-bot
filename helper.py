@@ -95,6 +95,10 @@ class EmrossWarApi:
         except ValueError, e:
             raise EmrossWarApiException, e
 
+        if json['code'] == EmrossWar.ERROR_INVALID_KEY:
+            print 'Invalid API key'
+            exit()
+
         #if json['code'] is not EmrossWar.SUCCESS:
         #    print json
         #    raise EmrossWarApiException, 'There was a problem during the call'

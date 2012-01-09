@@ -3,7 +3,7 @@
 class EmrossWar:
     SUCCESS = 0
     ERROR_UNKNOWN = -1
-    ERROR_INVALIDKEY = 2
+    ERROR_INVALID_KEY = 2
     #ERROR_AUTHFAIL = {12:1, 14:1, 301:1, 302:1}
 
 
