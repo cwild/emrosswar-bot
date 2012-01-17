@@ -214,7 +214,7 @@ class EmrossWarBot:
         if time.time() < last_scan + (3 * 86400):
             print 'The world was scanned less than 3 days ago'
         else:
-            world = World(api, self.cities, self.fav[EmrossWar.DEVIL_ARMY])
+            world = World(api, self)
             world.search(settings.scout_devil_army_types)
             self.session.last_scan = time.time()
             self.session.save()

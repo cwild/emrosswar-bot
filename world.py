@@ -6,10 +6,11 @@ from emross import *
 class WorldException(Exception): pass
 
 class World:
-    def __init__(self, api, cities, favs):
+    def __init__(self, api, bot):
         self.api = api
-        self.cities = cities
-        self.favs = favs
+        self.bot = bot
+        self.cities = bot.cities
+        self.favs = bot.fav[EmrossWar.DEVIL_ARMY]
 
 
     def scout(self, city, x, y):
@@ -80,6 +81,7 @@ class World:
                     for item in page['map']:
                         if item[2] in targets:
                             while not spies:
+                                self.bot.update()
                                 city.get_soldiers()
                                 spies = city.soldiers[Soldier.SPY-1][1]
                                 print 'Found %d spies in the city %s' % (spies, city.name)
