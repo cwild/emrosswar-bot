@@ -39,10 +39,35 @@ class MailHandler:
             json = self.api.call(settings.war_result_list, action='delete', id=ids)
 
 
+    def process(self):
+        self.mail[:] = []
+
+        page = 1
+        while True:
+            max = self.list_mail(page)
+            print 'Reading page %d/%d' % (page, max)
+
+            if max == page:
+                break
+
+            page += 1
+
+
 class AttackMailHandler(MailHandler):
     def __init__(self, api):
         MailHandler.__init__(self, api, type=-1)
 
+
+    def process(self):
+        print 'Cleaning up war reports...'
+
+        MailHandler.process(self)
+
+        # Now delete the mails
+        processed_mail = [m for m in self.mail if m.data['dname'] is None]
+
+        self.delete_bulk(processed_mail)
+        self.mail[:] = []
 
 class ScoutMailHandler(MailHandler):
     def __init__(self, api):
@@ -55,17 +80,7 @@ class ScoutMailHandler(MailHandler):
         Read through all scout reports and examine the reports
         we have of any devil armies
         """
-        self.mail[:] = []
-
-        page = 1
-        while True:
-            max = self.list_mail(page)
-            print 'Reading page %d/%d' % (page, max)
-
-            if max == page:
-                break
-
-            page += 1
+        MailHandler.process(self)
 
 
         for mail in self.mail:

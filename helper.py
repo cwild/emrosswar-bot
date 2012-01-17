@@ -117,7 +117,8 @@ class EmrossWarBot:
     def __init__(self):
         self.cities = []
         self.fav = {}
-        self.mail = ScoutMailHandler(api)
+        self.scout_mail = ScoutMailHandler(api)
+        self.war_mail = AttackMailHandler(api)
         self.session = Session.load()
 
 
@@ -220,7 +221,7 @@ class EmrossWarBot:
 
         try:
             print 'Look at scout reports to try to locate devil armies'
-            self.mail.process()
+            self.scout_mail.process()
         except MailException:
             pass
 
