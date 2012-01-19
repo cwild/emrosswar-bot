@@ -238,6 +238,12 @@ class EmrossWarBot:
         return False
 
 
+    def clean_war_reports(self):
+        try:
+            self.war_mail.process()
+        except MailException:
+            pass
+
 
 class City:
     def __init__(self, id, name):
