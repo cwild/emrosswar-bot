@@ -71,7 +71,7 @@ class Donator:
         i = self.info
 
         if i[4] is not 0:
-            self.hall_timeout = time() + i[4]
+            self.hall_timeout = time.time() + i[4]
             return
 
         try:
