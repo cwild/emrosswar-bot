@@ -129,6 +129,12 @@ def main():
             """
             bot.scout_map()
             bot.clean_war_reports()
+
+            try:
+                bot.donator.make_donations(settings.donation_tech_preference)
+            except AttributeError:
+                pass
+
             print 'Cycle finished, waiting for 5 mins to go again'
             time.sleep(5*MINUTE)
 
