@@ -41,9 +41,12 @@ class World:
         choice = None
         for city in self.cities:
             city.get_soldiers()
-            if city.soldiers[Soldier.SPY-1][1]:
-                if not choice or city.soldiers[Soldier.SPY-1][1] > choice.soldiers[Soldier.SPY-1][1]:
-                    choice = city
+            try:
+                if city.soldiers[Soldier.SPY-1][1]:
+                    if not choice or city.soldiers[Soldier.SPY-1][1] > choice.soldiers[Soldier.SPY-1][1]:
+                        choice = city
+            except IndexError:
+                pass
 
         if choice:
             print 'Sending spies from %s' % choice.name

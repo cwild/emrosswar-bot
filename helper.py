@@ -333,7 +333,10 @@ class City:
 
     def get_soldiers(self):
         json = api.call(settings.get_soldiers, city = self.id)
-        self.soldiers = json['ret']['soldiers']
+        try:
+            self.soldiers = json['ret']['soldiers']
+        except TypeError:
+            pass
 
     def create_army(self, deduct = True):
         """
