@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
+import locale
 import time
 from helper import *
 from emross import *
+
+locale.setlocale(locale.LC_ALL, '')
 
 SECOND = 1
 MINUTE = 60 * SECOND
@@ -134,6 +137,8 @@ def main():
                 bot.donator.make_donations(settings.donation_tech_preference)
             except AttributeError:
                 pass
+
+            print 'Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True))
 
             print 'Cycle finished, waiting for 5 mins to go again'
             time.sleep(5*MINUTE)
