@@ -14,6 +14,7 @@ sys.path.extend(['lib/', 'lib/urllib3/'])
 
 from urllib3 import HTTPConnectionPool, HTTPError
 
+from alliance import Donator
 from emross import *
 from world import World
 from mail import *
@@ -120,6 +121,7 @@ class EmrossWarBot:
         self.scout_mail = ScoutMailHandler(api)
         self.war_mail = AttackMailHandler(api)
         self.session = Session.load()
+        self.donator = Donator(api, self)
 
 
     def update(self):
@@ -238,6 +240,16 @@ class EmrossWarBot:
         return False
 
 
+    def richest_city(self, city):
+        if city is None:
+            for c in self.cities:
+                if not city or city.get_gold_count()[0] < c.get_gold_count()[0]:
+                    city = c
+
+            print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.get_gold_count()[0])
+
+        return city
+
 
 class City:
     def __init__(self, id, name):
@@ -290,12 +302,18 @@ class City:
         pass
 
 
+    def get_data(self, i):
+        if self.data is None:
+            self.update()
+
+        return self.data[i]
+
     def get_gold_count(self):
-        return (self.data[2], self.data[3])
+        return (self.get_data(2), self.get_data(3))
 
 
     def get_food_count(self):
-        return (self.data[4], self.data[5])
+        return (self.get_data(4), self.get_data(5))
 
 
     def replenish_food(self, amount = None):
