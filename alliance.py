@@ -60,9 +60,8 @@ class Donator:
         self.bot = bot
         self.info = None
 
-        start_time = 0#time.time()
-        self.hall_timeout = start_time
-        self.tech_timeout = start_time
+        self.hall_timeout = 0
+        self.tech_timeout = 0
 
     def update(self):
         json = self.api.call(Donator.UNION_INFO, op='info')
@@ -70,13 +69,18 @@ class Donator:
 
     def donate_to_hall(self, gold, city):
         i = self.info
+
+        if i[4] is not 0:
+            self.hall_timeout = time() + i[4]
+            return
+
         try:
             # Catch hall being max already
             i[1] / i[2]
             json = self.api.call(Donator.UNION_INFO, op='donate', num=gold, city=city)
             self.hall_timeout = time.time() + json['ret'][4]
         except IndexError:
-            print json
+            pass
         except TypeError:
             self.hall_timeout = None
 
