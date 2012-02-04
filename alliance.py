@@ -155,9 +155,6 @@ class Donator:
                 """ Can't donate next until current time + wait time """
                 self.tech_timeout = time.time() + self.info[5][0][2]
             else:
-                print self.info[5]
-                print self.info[5][0][2]
-                exit()
                 try:
                     techid = self.choose_preferred_tech(tech_preference)
                     amount = self.get_tech_info(techid)[2]
@@ -166,5 +163,4 @@ class Donator:
                     city = self.bot.richest_city(city)
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
                 except (TypeError, ValueError), e:
-                    print 'no tech donations'
                     pass
