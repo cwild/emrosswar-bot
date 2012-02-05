@@ -75,4 +75,24 @@ enemy_troops = ('Horror', 'Nightmare')
 
 # If this comes up then we should hire it
 enable_recruit = False
-recruit_heroes = [4]
+recruit_heroes = [1, 2, 3, 4]
+
+
+"""
+You can set the times at which you would like to farm here.
+
+The default is all day. You can set multiple ranges here though. eg.
+[(6, 9), (15, 18), (22, 23)]
+"""
+farming_hours = [(-1, 25)]
+
+
+"""
+Alliance donations? Remove the below if you don't want donations enabled.
+You can reorder the donation preferences as you like
+"""
+
+from alliance import Alliance as AT
+
+donation_tech_preference = [AT.VETERAN, AT.VALOR, AT.TENACITY, AT.INCENTIVE, AT.TOUGHNESS,
+    AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG]
