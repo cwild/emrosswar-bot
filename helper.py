@@ -240,13 +240,13 @@ class EmrossWarBot:
         return False
 
 
-    def richest_city(self, city):
-        if city is None:
-            for c in self.cities:
-                if not city or city.get_gold_count()[0] < c.get_gold_count()[0]:
-                    city = c
+    def richest_city(self):
+        city = None
+        for c in self.cities:
+            if city is None or city.get_gold_count()[0] < c.get_gold_count()[0]:
+                city = c
 
-            print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.get_gold_count()[0])
+        print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.get_gold_count()[0])
 
         return city
 

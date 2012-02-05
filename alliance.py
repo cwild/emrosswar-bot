@@ -124,7 +124,7 @@ class Donator:
             json = self.api.call('game/api_union_info.php', op='tdonate',
                                 num=gold, techid=techid, city=city)
 
-            self.tech_timeout = time.time() + json['ret'][5][techid-1][2]
+            self.tech_timeout = time.time() + json['ret'][1][4]
         except Exception:
             pass
 
@@ -135,36 +135,44 @@ class Donator:
         Cherry pick the favoured techs to donate to
         """
 
-        if (self.hall_timeout is not None != self.hall_timeout <= time.time()) and \
-            (self.tech_timeout is not None != self.tech_timeout <= time.time()):
+        check_hall = self.hall_timeout is not None and self.hall_timeout <= time.time()
+        check_tech = self.tech_timeout is not None and self.tech_timeout <= time.time()
+
+        if check_hall or check_tech:
             self.update()
         else:
             return
 
-        city = None
+        city = self.bot.richest_city()
 
-        if self.hall_timeout is not None:
-            try:
-                self.info[1] / self.info[2]
-                print 'Donate to Hall of Alliance'
-                city = self.bot.richest_city(city)
-                self.donate_to_hall(gold=self.info[3], city = city.id)
-            except TypeError:
-                print 'Hall of Alliance is already complete'
-                self.hall_timeout = None
+        if check_hall:
+            cooldown = self.info[4]
+            if cooldown is not 0:
+                print 'Cannot donate to hall yet. Try again in %d seconds' % cooldown
+                self.hall_timeout = time.time () + cooldown
+            else:
+                try:
+                    self.info[1] / self.info[2]
+                    amount = self.info[3]
+                    print 'Donate %d gold to Hall of Alliance' % amount
+                    self.donate_to_hall(gold=amount, city = city.id)
+                except TypeError:
+                    print 'Hall of Alliance is already complete'
+                    self.hall_timeout = None
 
 
-        if self.tech_timeout is not None:
-            if self.info[5][0][2] is not 0:
-                """ Can't donate next until current time + wait time """
-                self.tech_timeout = time.time() + self.info[5][0][2]
+        if check_tech:
+            # second index is techid but they all share the same timer, so just use 0
+            cooldown = self.info[5][0][2]
+            if cooldown is not 0:
+                print 'Cannot donate to tech yet. Try again in %d seconds' % cooldown
+                self.tech_timeout = time.time() + cooldown
             else:
                 try:
                     techid = self.choose_preferred_tech(tech_preference)
                     amount = self.get_tech_info(techid)[2]
                     print 'Donate %d gold to %s' % (amount, Alliance.TECH[techid])
 
-                    city = self.bot.richest_city(city)
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
-                except (TypeError, ValueError), e:
+                except (TypeError, ValueError):
                     pass
