@@ -146,10 +146,16 @@ class MailParser:
         """
         If the ratio is not exceeded then this target is safe for us to attack
         """
-        if not troops[1]:
-            return True
 
-        return troops[0]/troops[1] >= settings.enemy_troop_ratio
+        ratio = list(settings.enemy_troop_ratio)
+
+        troops[0], troops[1] = troops[0] or 1, troops[1] or 1
+        ratio[0], ratio[1] = ratio[0] or 1, ratio[1] or 1
+
+        if ratio[0] > ratio[1]:
+            return troops[0]/troops[1] >= ratio[0]/ratio[1]
+        else:
+            return troops[0]/troops[1] <= ratio[0]/ratio[1]
 
 
 
@@ -198,7 +204,7 @@ def main():
 
     for m in message:
         troops = mail_parser.find_troops(m)
-        print 'Troops %s' % troops
+        print 'Troops %s, Attackable: %s' % (troops, mail_parser.is_attackable(troops))
 
     #print 'Enemy troop ratio we are using: %d' % settings.enemy_troop_ratio
     #print 'Consider for attack: %s' % mail_parser.is_attackable(troops)
