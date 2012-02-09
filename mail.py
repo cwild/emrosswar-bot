@@ -148,14 +148,15 @@ class MailParser:
         """
 
         ratio = list(settings.enemy_troop_ratio)
-
-        troops[0], troops[1] = troops[0] or 1, troops[1] or 1
         ratio[0], ratio[1] = ratio[0] or 1, ratio[1] or 1
 
+        t = troops[:]
+        t[0], t[1] = t[0] or 1, t[1] or 1
+
         if ratio[0] > ratio[1]:
-            return troops[0]/troops[1] >= ratio[0]/ratio[1]
+            return t[0]/t[1] >= ratio[0]/ratio[1]
         else:
-            return troops[0]/troops[1] <= ratio[0]/ratio[1]
+            return t[0]/t[1] <= ratio[0]/ratio[1]
 
 
 
