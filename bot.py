@@ -62,17 +62,9 @@ def main():
                         print 'Getting available heroes'
                         city.get_available_heroes()
 
-                        """
-                        How many armies can we form from the above number of soldiers?
-                        """
-                        armies = city.get_army_count()
-                        print '%d armies in this city (%s)' % (armies, city.name)
 
-                        for i in range(armies):
-                            target = bot.find_target(EmrossWar.DEVIL_ARMY)
-
-                            # create an army
-                            army = city.create_army()
+                        while True:
+                            target, army = bot.find_target_for_army(city, EmrossWar.DEVIL_ARMY)
 
                             # choose hero which can lead this army
                             hero = city.choose_hero(sum(army.values()))

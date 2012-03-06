@@ -41,7 +41,6 @@ event_timers = {
 }
 
 
-scout_devil_army_types = [DevilArmy.SIX_STAR]
 
 """Id = 12553, name = crow tree
 --Id = 21111, name = localhost
@@ -54,10 +53,26 @@ ignore_cities = [22008]
 
 npc_attack_limit = 3
 
-soldier_threshold = {
-    Soldier.OVERLORD: 600,
-    Soldier.BERSERKER: 800
-}
+
+"""
+What types of Devil Army should we scout on the world map?
+"""
+scout_devil_army_types = [DevilArmy.FIVE_STAR, DevilArmy.SIX_STAR]
+
+"""
+It will start attacking from the first in the list, moving through the list
+if there are not enough troops in the current city to build an army
+"""
+soldier_threshold = [
+	(DevilArmy.SIX_STAR, {
+		Soldier.OVERLORD: 600,
+		Soldier.BERSERKER: 800
+	}),
+	(DevilArmy.FIVE_STAR, {
+		Soldier.OVERLORD: 400,
+		Soldier.BERSERKER: 600
+	})
+]
 
 
 """

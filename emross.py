@@ -48,6 +48,7 @@ class Soldier:
     OVERLORD = 15
     NANUH = 16
     KAHKLEH = 17
+    ASSASSIN = 18
 
 
 class DevilArmy:

@@ -132,7 +132,7 @@ class EmrossWarBot:
 
         if json['code'] == 2:
             raise EmrossWarApiException, 'Error during load'
-        
+
 
         if len(self.cities) == 0:
             cities = [city for city in json['ret']['user']['city'] if city['id'] not in settings.ignore_cities]
@@ -164,6 +164,7 @@ class EmrossWarBot:
             # Seems that x,y are back to front
             fav = Fav(y = da[1], x = da[2], attack = da[4])
             fav.id = da[0]
+            fav.rating = da[3]
             self.fav[cat].append(fav)
 
     def clear_favs(self):
@@ -172,7 +173,7 @@ class EmrossWarBot:
             api.call(settings.api_fav, act='delfavnpc', fid=f.id)
 
 
-    def find_target(self, cat = EmrossWar.DEVIL_ARMY):
+    def find_target_for_army(self, city, cat = EmrossWar.DEVIL_ARMY):
         """
         Get next fav which is available for attack
 
@@ -181,23 +182,41 @@ class EmrossWarBot:
         """
 
         target = None
+        army = None
 
         try:
-            for t in self.fav[cat]:
-                if t.attack < settings.npc_attack_limit:
-                    target = t
-                    break
+            for rating, threshold in settings.soldier_threshold:
+                try:
+                    army = city.create_army(threshold)
+                except InsufficientSoldiers:
+                    continue
+
+                done = False
+                favs = [e for e in self.fav[cat] if e.rating is rating]
+
+                for t in favs:
+                    if t.attack < settings.npc_attack_limit:
+                        target = t
+                        done = True
+                        break
+
+                if done:
+					break
 
         except KeyError, e:
             pass
 
+        if not army:
+            raise InsufficientSoldiers
+
         if not target:
             raise NoTargetsFound, 'No targets with less than 3 attacks found!'
 
-        print 'Target is %d/%d with attack count %d' % (target.y, target.x, target.attack)
+        rating = range(6, 0, -1)[target.rating-1]
+        print 'Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack)
 
-        return target
-        
+        return target, army
+
 
 
 
@@ -297,7 +316,7 @@ class City:
                 18, # Facility Center
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
-        
+
         json = api.call(settings.get_city_info, city = self.id)
         self.data = json['ret']['city']
 
@@ -357,14 +376,14 @@ class City:
         except TypeError:
             pass
 
-    def create_army(self, deduct = True):
+    def create_army(self, threshold, deduct = True):
         """
         Return a dict of the various soldiers to include in this army
         """
 
         army = {}
 
-        for soldier, qty in settings.soldier_threshold.iteritems():
+        for soldier, qty in threshold.iteritems():
             """
             If there are enough of a given soldier to send
             then add them to the army
@@ -427,7 +446,7 @@ class City:
         self.heroes = []
 
         heroes = sorted(json['ret']['hero'], key = lambda val: (val['g'], val['ex']))
-        
+
         for data in heroes:
             #print 'Level %d, Exp %d' % (data['g'], data['ex'])
             self.heroes.append(Hero(data))
