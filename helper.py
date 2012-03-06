@@ -364,24 +364,20 @@ class City:
 
         army = {}
 
-        for soldier in settings.soldier_threshold:
-            data = settings.soldier_threshold[soldier]
-
+        for soldier, qty in settings.soldier_threshold.iteritems():
             """
             If there are enough of a given soldier to send
             then add them to the army
             """
             try:
-                # Get position of tuple representing this troop type
-                i = [x[0] for x in self.soldiers].index(data[0])
-                if self.soldiers[i][1] >= data[1]:
-                    army['soldier_num%d' % data[0]] = data[1]
+                if self.soldiers[soldier-1][1] >= qty:
+                    army['soldier_num%d' % soldier] = qty
 
                     """
                     Update soldier cache
                     """
                     if deduct:
-                        self.soldiers[i][1] -= data[1]
+                        self.soldiers[soldier-1][1] -= qty
 
                     break
             except (IndexError, ValueError):
@@ -398,16 +394,11 @@ class City:
         """
         Calculate the number of armies this castle has
         """
-
         count = 0
-        
-        for soldier in settings.soldier_threshold:
-            data = settings.soldier_threshold[soldier]
 
+        for soldier, qty in settings.soldier_threshold.iteritems():
             try:
-                # Get position of tuple representing this troop type
-                i = [x[0] for x in self.soldiers].index(data[0])
-                count += int(math.floor(self.soldiers[i][1] / data[1]))
+                count += int(math.floor(self.soldiers[soldier-1][1] / qty))
             except (IndexError, ValueError, ZeroDivisionError):
                 pass
 

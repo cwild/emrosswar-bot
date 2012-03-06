@@ -55,8 +55,8 @@ ignore_cities = [22008]
 npc_attack_limit = 3
 
 soldier_threshold = {
-    'OVERLORD':  (15, 600),
-    'BERZERKER': (11, 800)
+    Soldier.OVERLORD: 600,
+    Soldier.BERSERKER: 800
 }
 
 
