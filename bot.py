@@ -68,11 +68,13 @@ def main():
 
                             # choose hero which can lead this army
                             hero = city.choose_hero(sum(army.values()))
+                            if not hero:
+                                print 'No available heroes to command this army'
 
                             # send troops to attack
                             params = {
                                 'action': 'do_war',
-                                'attack_type': 7,
+                                'attack_type': EmrossWar.ACTION_ATTACK,
                                 'gen': hero.data['gid'],
                                 'area': target.y,
                                 'area_x': target.x

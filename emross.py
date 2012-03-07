@@ -17,6 +17,7 @@ class EmrossWar:
     2: "Transport"
     """
     ATTACK_TYPE_SCOUT = 3
+    ACTION_ATTACK = 7
 
 
     LORD = 1
