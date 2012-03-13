@@ -112,7 +112,8 @@ def main():
 
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
 
-                if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < settings.npc_attack_limit]):
+                ratings = dict(settings.soldier_threshold)
+                if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < settings.npc_attack_limit and f.rating in ratings]):
                     print 'We have some more Devil Armies to attack!'
                 else:
                     print 'None found, sleep for 30 minutes'

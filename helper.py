@@ -484,6 +484,9 @@ class City:
         city=12553&action=do_war&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600&_l=en
         """
 
+        if not hasattr(settings, 'TOO_OFTEN_WARNING'):
+            raise EmrossWarException, 'You need to set the API TOO_OFTEN_WARNING code in your settings file'
+
         if not params['gen']:
             raise ValueError, 'Need to send a hero to lead the army'
 
@@ -503,6 +506,14 @@ class City:
         carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
         """
         json = api.call(settings.action_do, city=self.id, **params)
+
+        if json['code'] is settings.TOO_OFTEN_WARNING:
+            raise EmrossWarApiException, 'We have been rate limited. Come back later.'
+
+        soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
+        for k, v in soldiers:
+            i = int(k) - 1
+            self.soldiers[i][1] -= v
 
 
 

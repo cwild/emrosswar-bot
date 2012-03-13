@@ -51,6 +51,7 @@ Id = 22008, name = Reboot"""
 ignore_cities = [22008]
 
 
+TOO_OFTEN_WARNING = '''You visit too often!'''
 npc_attack_limit = 3
 
 
