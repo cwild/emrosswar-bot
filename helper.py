@@ -4,11 +4,11 @@ import time
 import math
 import pickle
 import os
+import sys
 
 import logging
 import logging.handlers
 
-import sys
 
 sys.path.extend(['lib/', 'lib/urllib3/'])
 
@@ -25,7 +25,11 @@ logger = logging.getLogger('emross-bot')
 
 if len(logger.handlers) == 0:
     logger.propagate = False
-    logger.setLevel(logging.INFO)
+
+    try:
+        logger.setLevel(settings.log_level)
+    except AttributeError:
+        logger.setLevel(logging.INFO)
 
     try:
         _fh = logging.handlers.WatchedFileHandler(settings.logfile) # use with logrotate
@@ -37,9 +41,31 @@ if len(logger.handlers) == 0:
 
         _fh = NullHandler()
 
-    _fh.setLevel(logging.INFO)
+    try:
+        _fh.setLevel(settings.log_level)
+    except AttributeError:
+        _fh.setLevel(logging.INFO)
+
     _fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s', datefmt='%Y %b %d %H:%M:%S'))
     logger.addHandler(_fh)
+
+
+
+class Unbuffered:
+    def __init__(self, stream):
+        self.stream = stream
+    def write(self, data):
+        self.stream.write(data)
+        data = data.strip()
+        if len(data):
+            logger.info('CLI: %s' % data)
+        self.stream.flush()
+    def __getattr__(self, attr):
+        return getattr(self.stream, attr)
+
+sys.stdout = Unbuffered(sys.stdout)
+
+
 
 
 
@@ -76,23 +102,21 @@ class EmrossWarApi:
 
         query_string = urllib.urlencode(params)
 
-        logger.info('Calling method "%s" on "%s" with query string %s' % (method, server, query_string) )
-
         url = 'http://%s/%s?%s' % (server, method, query_string)
+        logger.debug(url)
 
         try:
-            #page = self.open(url)
             r = pool.urlopen('GET', url)
         except HTTPError,e :
-            print e
+            logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
 
-        #jsonp = page.read()
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
 
         try:
             json = simplejson.loads(jsonp)
+            logger.debug(json)
         except ValueError, e:
             raise EmrossWarApiException, e
 

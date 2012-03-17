@@ -5,6 +5,9 @@ import time
 from helper import *
 from emross import *
 
+import logging
+logger = logging.getLogger('emross-bot')
+
 locale.setlocale(locale.LC_ALL, '')
 
 SECOND = 1
@@ -18,7 +21,6 @@ def main():
     """
     Steps necessary for the bot to "play" the game
     """
-
     print 'Starting bot'
     bot.session.start_time = time.time()
 
