@@ -531,7 +531,7 @@ class City:
         """
         json = api.call(settings.action_do, city=self.id, **params)
 
-        if json['code'] is settings.TOO_OFTEN_WARNING:
+        if json['code'] == settings.TOO_OFTEN_WARNING:
             raise EmrossWarApiException, 'We have been rate limited. Come back later.'
 
         soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
