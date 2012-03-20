@@ -4,6 +4,7 @@ import time
 import math
 import pickle
 import os
+import random
 import sys
 
 import logging
@@ -81,7 +82,7 @@ class EmrossWarApi:
         self.pool = {}
 
 
-    def call(self, method, server=settings.game_server, **kargs):
+    def call(self, method, server=settings.game_server, sleep=(), **kargs):
         """Call API and return result"""
 
         try:
@@ -127,6 +128,11 @@ class EmrossWarApi:
         #if json['code'] is not EmrossWar.SUCCESS:
         #    print json
         #    raise EmrossWarApiException, 'There was a problem during the call'
+
+        if sleep:
+            wait = random.randrange(*sleep) + random.random()
+            logger.info('Wait for %d seconds' % wait)
+            time.sleep(wait)
 
         return json
 
@@ -514,7 +520,7 @@ class City:
         if not params['gen']:
             raise ValueError, 'Need to send a hero to lead the army'
 
-        json = api.call(settings.action_confirm, city=self.id, **params)
+        json = api.call(settings.action_confirm, sleep=(5,8), city=self.id, **params)
 
         """ Returns the cost of war """
         """
@@ -529,7 +535,7 @@ class City:
 
         carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
         """
-        json = api.call(settings.action_do, city=self.id, **params)
+        json = api.call(settings.action_do, sleep=(1,3), city=self.id, **params)
 
         if json['code'] == settings.TOO_OFTEN_WARNING:
             raise EmrossWarApiException, 'We have been rate limited. Come back later.'
