@@ -129,10 +129,13 @@ class EmrossWarApi:
         #    print json
         #    raise EmrossWarApiException, 'There was a problem during the call'
 
+        wait = random.random()
+
         if sleep:
-            wait = random.randrange(*sleep) + random.random()
-            logger.info('Wait for %d seconds' % wait)
-            time.sleep(wait)
+            wait += random.randrange(*sleep)
+
+        logger.debug('Wait for %f seconds' % wait)
+        time.sleep(wait)
 
         return json
 
