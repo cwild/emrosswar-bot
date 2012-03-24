@@ -581,6 +581,9 @@ class City:
                     print 'Could not recruit hero.'
 
 
+    def check_war_room(self):
+        json = api.call(settings.action_confirm, act='warinfo', city=self.id)
+
 
 class Hero:
     def __init__(self, data = {}):

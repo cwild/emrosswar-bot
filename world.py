@@ -85,6 +85,7 @@ class World:
                         if item[2] in targets:
                             while not spies:
                                 self.bot.update()
+                                city.check_war_room()
                                 city.get_soldiers()
                                 spies = city.soldiers[Soldier.SPY-1][1]
                                 print 'Found %d spies in the city %s' % (spies, city.name)
