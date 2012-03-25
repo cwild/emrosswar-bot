@@ -42,6 +42,8 @@ def main():
                 print 'There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[2]),
                             sum([settings.npc_attack_limit - x.attack for x in bot.fav[2]]) )
 
+                concurrent_attacks = []
+
                 for city in bot.cities:
                     print 'Updating city %s' % city.name
                     city.update()
@@ -90,10 +92,25 @@ def main():
                             print 'Sending attack %d/%d' % (target.y, target.x)
                             city.action_do(params)
 
+                            roundtrip = params['travel_sec'] * 2
+                            concurrent_attacks.append(time.time() + roundtrip)
+
                             """
                             Update cache as targets are only updated once per city rather than per hero
                             """
                             target.attack += 1
+
+                            try:
+                                if len(concurrent_attacks) == settings.concurrent_attack_limit:
+                                    delay = max(concurrent_attacks) - time.time()
+
+                                    print 'Maximum number of concurrent attacks, %d, has been reached. Wait for longest current attack to return (%d seconds)' % (settings.concurrent_attack_limit, delay)
+
+                                    concurrent_attacks[:] = []
+                                    time.sleep(delay)
+                            except AttributeError:
+                                logger.critical('You need to set a concurrent attack limit.')
+
 
                     except AttributeError, e:
                         continue
@@ -101,6 +118,8 @@ def main():
                     except InsufficientSoldiers, e:
                         print '%s has insufficient troops to launch an attack.' % city.name
                         continue
+
+                concurrent_attacks[:] = [e for e in concurrent_attacks if e > time.time()]
 
             except NoTargetsFound:
                 print 'No targets found'
