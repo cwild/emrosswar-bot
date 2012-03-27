@@ -92,8 +92,13 @@ def main():
                             print 'Sending attack %d/%d' % (target.y, target.x)
                             city.action_do(params)
 
-                            roundtrip = params['travel_sec'] * 2
-                            concurrent_attacks.append(time.time() + roundtrip)
+                            try:
+                                roundtrip = params['travel_sec'] * 2
+                                concurrent_attacks.append(time.time() + roundtrip)
+                            except KeyError, e:
+                                logger.exception(e)
+                                logger.debug(params)
+                                continue
 
                             """
                             Update cache as targets are only updated once per city rather than per hero
