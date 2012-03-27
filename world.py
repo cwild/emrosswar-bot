@@ -5,6 +5,8 @@ from emross import *
 
 class WorldException(Exception): pass
 
+class OutOfSpies(WorldException): pass
+
 class World:
     def __init__(self, api, bot):
         self.api = api
@@ -66,8 +68,10 @@ class World:
             print 'No cities found with spies.'
             return
 
-        x, y = 1, 1
-        nx, ny = 1, 1
+        try:
+            x, y, nx, ny = self.bot.session.map_coords
+        except AttributeError:
+            x, y, nx, ny = 1, 1, 1, 1
 
         page = self.get_page(x, y)
 
@@ -80,18 +84,23 @@ class World:
             x = 0
 
             while x < nx:
+                self.bot.session.map_coords = (x, y, nx, ny)
+
                 try:
                     for item in page['map']:
                         if item[2] in targets:
-                            while not spies:
-                                self.bot.update()
-                                city.check_war_room()
+                            for tries in xrange(2):
                                 city.get_soldiers()
                                 spies = city.soldiers[Soldier.SPY-1][1]
                                 print 'Found %d spies in the city %s' % (spies, city.name)
                                 if not spies:
-                                    print 'No spies available at the moment. Check again in 1 minute.'
-                                    time.sleep(60)
+                                    if tries == 0:
+                                        logger.info('Check the war room. Try to trigger spy count to update')
+                                        city.check_war_room()
+                                    else:
+                                        raise OutOfSpies, 'No spies available at the moment'
+                                else:
+                                     break
 
 
                             favs = [f for f in self.favs if f.x == item[1] and f.y == item[0]]
@@ -120,6 +129,11 @@ class World:
                 y = page['ydown']
                 page = self.get_page(x, y)
             else:
+                try:
+                    del self.bot.session.map_coords
+                except AttributeError:
+                    pass
+
                 print 'Finished scouting map'
                 break
 

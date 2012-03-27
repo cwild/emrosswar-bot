@@ -17,7 +17,7 @@ from urllib3 import HTTPConnectionPool, HTTPError
 
 from alliance import Donator
 from emross import *
-from world import World
+from world import OutOfSpies, World
 from mail import *
 import settings
 
@@ -268,10 +268,18 @@ class EmrossWarBot:
         if time.time() < last_scan + (3 * 86400):
             print 'The world was scanned less than 3 days ago'
         else:
-            world = World(api, self)
-            world.search(settings.scout_devil_army_types)
-            self.session.last_scan = time.time()
-            self.session.save()
+            try:
+                world = World(api, self)
+                world.search(settings.scout_devil_army_types)
+                self.session.last_scan = time.time()
+            except OutOfSpies, e:
+                logger.info(e)
+                try:
+                    logger.debug(self.session.map_coords)
+                except AttributeError:
+                    pass
+            finally:
+                self.session.save()
 
         try:
             print 'Look at scout reports to try to locate devil armies'
