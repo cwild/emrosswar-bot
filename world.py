@@ -3,6 +3,9 @@ import time
 import settings
 from emross import *
 
+import logging
+logger = logging.getLogger('emross-bot')
+
 class WorldException(Exception): pass
 
 class OutOfSpies(WorldException): pass
