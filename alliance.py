@@ -60,6 +60,7 @@ class Donator:
         self.bot = bot
         self.info = None
 
+        self.hall_donation_forced = False
         self.hall_timeout = 0
         self.tech_timeout = 0
 
@@ -76,7 +77,8 @@ class Donator:
 
         try:
             # Catch hall being max already
-            i[1] / i[2]
+            if self.hall_donation_forced is False:
+                i[1] / i[2]
             json = self.api.call(Donator.UNION_INFO, op='donate', num=gold, city=city)
             self.hall_timeout = time.time() + json['ret'][4]
         except IndexError:
@@ -145,21 +147,6 @@ class Donator:
 
         city = self.bot.richest_city()
 
-        if check_hall:
-            cooldown = self.info[4]
-            if cooldown is not 0:
-                print 'Cannot donate to hall yet. Try again in %d seconds' % cooldown
-                self.hall_timeout = time.time () + cooldown
-            else:
-                try:
-                    self.info[1] / self.info[2]
-                    amount = self.info[3]
-                    print 'Donate %d gold to Hall of Alliance' % amount
-                    self.donate_to_hall(gold=amount, city = city.id)
-                except TypeError:
-                    print 'Hall of Alliance is already complete'
-                    self.hall_timeout = None
-
 
         if check_tech:
             # second index is techid but they all share the same timer, so just use 0
@@ -176,3 +163,20 @@ class Donator:
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
                 except (TypeError, ValueError):
                     pass
+
+
+        if check_hall:
+            cooldown = self.info[4]
+            if cooldown is not 0:
+                print 'Cannot donate to hall yet. Try again in %d seconds' % cooldown
+                self.hall_timeout = time.time () + cooldown
+            else:
+                try:
+                    if self.hall_donation_forced is False:
+                        self.info[1] / self.info[2]
+                    amount = self.info[3]
+                    print 'Donate %d gold to Hall of Alliance' % amount
+                    self.donate_to_hall(gold=amount, city = city.id)
+                except TypeError:
+                    print 'Hall of Alliance is already complete'
+                    self.hall_timeout = None

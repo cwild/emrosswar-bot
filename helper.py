@@ -155,6 +155,10 @@ class EmrossWarBot:
         self.war_mail = AttackMailHandler(api)
         self.session = Session.load()
         self.donator = Donator(api, self)
+        try:
+            self.donator.hall_donation_forced = settings.hall_donation_forced
+        except AttributeError:
+            pass
 
 
     def update(self):
