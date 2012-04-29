@@ -550,6 +550,10 @@ class City:
 
         carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
         """
+
+        if params['cost_food'] > self.get_data(4):
+            self.replenish_food(params['cost_food'] - self.get_data(4))
+
         json = api.call(settings.action_do, sleep=(1,3), city=self.id, **params)
 
         if json['code'] == settings.TOO_OFTEN_WARNING:
