@@ -1,3 +1,5 @@
+import chat
+import kronos
 import urllib
 import simplejson
 import time
@@ -149,6 +151,8 @@ class NoTargetsFound(BotException): pass
 
 class EmrossWarBot:
     def __init__(self):
+        self.scheduler = s = kronos.ThreadedScheduler()
+        self.tasks = {}
         self.cities = []
         self.fav = {}
         self.scout_mail = ScoutMailHandler(api)
@@ -160,6 +164,10 @@ class EmrossWarBot:
         except AttributeError:
             pass
 
+        self.chatter = chat.Chat(api, self)
+        self.tasks['chat'] = s.add_interval_task(self.chatter.check, "chat handler", 3, 6, kronos.method.threaded, [], None)
+
+        s.start()
 
     def update(self):
         """
