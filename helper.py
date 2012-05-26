@@ -15,7 +15,7 @@ import logging.handlers
 
 sys.path.extend(['lib/', 'lib/urllib3/'])
 
-from urllib3 import HTTPConnectionPool, HTTPError
+from urllib3 import HTTPConnectionPool, HTTPError, make_headers
 
 from alliance import Donator
 from emross import *
@@ -90,7 +90,8 @@ class EmrossWarApi:
         try:
             pool = self.pool[server]
         except KeyError:
-            self.pool[server] = pool = HTTPConnectionPool(server, headers={'User-Agent': settings.user_agent})
+            self.pool[server] = pool = HTTPConnectionPool(server, headers=make_headers(
+                user_agent=settings.user_agent, keep_alive=True, accept_encoding=True))
 
 
         epoch = int(time.time())
