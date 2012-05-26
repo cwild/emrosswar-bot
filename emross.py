@@ -31,6 +31,8 @@ class EmrossWar:
     INSUFFICIENT_GOLD  = 1306
 
 
+    PVP_ELIMINATED = 7415
+
 class Soldier:
     INFANTRY = 1
     SPY = 2

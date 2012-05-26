@@ -148,9 +148,11 @@ api = EmrossWarApi()
 
 class BotException(EmrossWarException): pass
 class NoTargetsFound(BotException): pass
+class NoTargetsAvailable(NoTargetsFound): pass
 
 class EmrossWarBot:
     def __init__(self):
+        self.last_update = 0
         self.scheduler = s = kronos.ThreadedScheduler()
         self.tasks = {}
         self.cities = []
@@ -169,6 +171,7 @@ class EmrossWarBot:
 
         s.start()
 
+
     def update(self):
         """
         Setup bot with player account data
@@ -176,8 +179,15 @@ class EmrossWarBot:
         json = api.call(settings.get_user_info, pushid=settings.pushid, **{'_l':'en'} )
 
         if json['code'] == 2:
+            self.last_update = 0
             raise EmrossWarApiException, 'Error during load'
 
+
+        if json['code'] in [EmrossWar.PVP_ELIMINATED]:
+            print 'You have been eliminated from PvP!'
+            exit()
+
+        self.last_update = time.time()
 
         if len(self.cities) == 0:
             cities = [city for city in json['ret']['user']['city'] if city['id'] not in settings.ignore_cities]
@@ -255,7 +265,7 @@ class EmrossWarBot:
             raise InsufficientSoldiers
 
         if not target:
-            raise NoTargetsFound, 'No targets with less than %d attacks found!' % settings.npc_attack_limit
+            raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % settings.npc_attack_limit
 
         rating = range(6, 0, -1)[target.rating-1]
         print 'Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack)

@@ -1,4 +1,5 @@
 import logging
+import time
 logger = logging.getLogger('emross-bot')
 
 class Chat:
@@ -10,6 +11,9 @@ class Chat:
         self.lineid = -1
 
     def check(self):
+        if time.time() - self.bot.last_update > 60*5:
+            return
+
         json = self.api.call(Chat.URL, lineid=self.lineid)
 
         try:

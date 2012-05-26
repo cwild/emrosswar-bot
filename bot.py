@@ -126,7 +126,12 @@ def main():
 
                 concurrent_attacks[:] = [e for e in concurrent_attacks if e > time.time()]
 
-            except NoTargetsFound:
+            except NoTargetsAvailable, e:
+                logger.exception(e)
+                print 'No targets available to attack.'
+
+            except NoTargetsFound, e:
+                logger.exception(e)
                 print 'No targets found'
 
                 for city in bot.cities:
@@ -146,6 +151,7 @@ def main():
                     time.sleep(30*MINUTE)
 
                 continue
+
 
 
             """
