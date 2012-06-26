@@ -1,4 +1,5 @@
-from emross import *
+from emross.military.camp import Soldier
+from emross.mobs import DevilArmy
 
 import logging
 log_level = logging.DEBUG
@@ -15,7 +16,6 @@ user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) 
 game_server = 'YOURSERVER.emrosswar.com'
 
 get_user_info = 'game/get_userinfo_api.php'
-get_city_info = 'game/get_cityinfo_api.php'
 get_city_countdown_info = 'game/get_cdinfo_api.php'
 get_goods = 'game/goods_api.php'
 
@@ -112,7 +112,13 @@ Alliance donations? Remove the below if you don't want donations enabled.
 You can reorder the donation preferences as you like
 """
 
-from alliance import Alliance as AT
+from emross.alliance import Alliance as AT
 
 donation_tech_preference = [AT.VETERAN, AT.VALOR, AT.TENACITY, AT.INCENTIVE, AT.TOUGHNESS,
     AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG]
+
+
+plugin_api = {
+    'auth': 'username:password',
+    'url': 'http://emross.cryformercy.com/client/plugins/api/'
+}

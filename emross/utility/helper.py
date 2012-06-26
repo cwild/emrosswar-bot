@@ -1,28 +1,25 @@
-import chat
-import kronos
-import urllib
-import simplejson
+import sys
+sys.path.extend(['lib/urllib3/'])
+
+
+from lib import kronos
+from lib.session import Session
+
 import time
 import math
-import pickle
-import os
-import random
-import sys
 
 import logging
 import logging.handlers
 
 
-sys.path.extend(['lib/', 'lib/urllib3/'])
+from emross.alliance import Donator
+from emross.api import EmrossWarApi, EmrossWar
+from emross.chat import Chat
+from emross.exceptions import *
+from emross.mail import *
+from emross.world import OutOfSpies, World
 
-from urllib3 import HTTPConnectionPool, HTTPError, make_headers
-
-from alliance import Donator
-from emross import *
-from world import OutOfSpies, World
-from mail import *
 import settings
-
 
 logger = logging.getLogger('emross-bot')
 
@@ -69,87 +66,7 @@ class Unbuffered:
 sys.stdout = Unbuffered(sys.stdout)
 
 
-
-
-
-class EmrossWarException(Exception): pass
-
-class EmrossWarApiException(EmrossWarException): pass
-
-class EmrossWarApi:
-    def __init__(self):
-        if settings.user_agent:
-            self.version = settings.user_agent
-
-        self.pool = {}
-
-
-    def call(self, method, server=settings.game_server, sleep=(), **kargs):
-        """Call API and return result"""
-
-        try:
-            pool = self.pool[server]
-        except KeyError:
-            self.pool[server] = pool = HTTPConnectionPool(server, headers=make_headers(
-                user_agent=settings.user_agent, keep_alive=True, accept_encoding=True))
-
-
-        epoch = int(time.time())
-
-
-        params = [('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
-                    ('key', settings.api_key)]
-
-        for key in kargs:
-            if kargs[key]:
-                params.append( (key, kargs[key]) )
-
-        query_string = urllib.urlencode(params)
-
-        url = 'http://%s/%s?%s' % (server, method, query_string)
-        logger.debug(url)
-
-        try:
-            r = pool.urlopen('GET', url)
-        except HTTPError,e :
-            logger.exception(e)
-            raise EmrossWarApiException, 'Problem connecting to game server.'
-
-        jsonp = r.data
-        jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
-
-        try:
-            json = simplejson.loads(jsonp)
-            logger.debug(json)
-        except ValueError, e:
-            raise EmrossWarApiException, e
-
-        if json['code'] == EmrossWar.ERROR_INVALID_KEY:
-            print 'Invalid API key'
-            exit()
-
-        #if json['code'] is not EmrossWar.SUCCESS:
-        #    print json
-        #    raise EmrossWarApiException, 'There was a problem during the call'
-
-        wait = random.random()
-
-        if sleep:
-            wait += random.randrange(*sleep)
-
-        logger.debug('Wait for %f seconds' % wait)
-        time.sleep(wait)
-
-        return json
-
-
-api = EmrossWarApi()
-
-
-
-class BotException(EmrossWarException): pass
-class NoTargetsFound(BotException): pass
-class NoTargetsAvailable(NoTargetsFound): pass
+api = EmrossWarApi(settings.api_key, settings.game_server, settings.user_agent)
 
 class EmrossWarBot:
     def __init__(self):
@@ -160,6 +77,7 @@ class EmrossWarBot:
         self.fav = {}
         self.scout_mail = ScoutMailHandler(api)
         self.war_mail = AttackMailHandler(api)
+        Session.PATH = settings.session_path
         self.session = Session.load()
         self.donator = Donator(api, self)
         try:
@@ -167,7 +85,7 @@ class EmrossWarBot:
         except AttributeError:
             pass
 
-        self.chatter = chat.Chat(api, self)
+        self.chatter = Chat(api, self)
         self.tasks['chat'] = s.add_interval_task(self.chatter.check, "chat handler", 3, 6, kronos.method.threaded, [], None)
 
         s.start()
@@ -342,6 +260,8 @@ class EmrossWarBot:
 
 
 class City:
+    GET_CITY_INFO = 'game/get_cityinfo_api.php'
+
     def __init__(self, id, name):
         self.id = id
         self.name = name.encode('utf-8')
@@ -381,7 +301,7 @@ class City:
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
-        json = api.call(settings.get_city_info, city = self.id)
+        json = api.call(self.GET_CITY_INFO, city = self.id)
         self.data = json['ret']['city']
 
 
@@ -668,19 +588,3 @@ class Market:
 class InsufficientSoldiers(BotException):
     def __init__(self, troop_count = 0):
         self.troop_count = troop_count
-
-
-
-
-class Session:
-    __module__ = os.path.splitext(os.path.basename(__file__))[0]
-
-    def save(self):
-        pickle.dump(self, file(settings.session_path, 'w'))
-
-    @classmethod
-    def load(cls):
-        try:
-            return pickle.load(file(settings.session_path))
-        except IOError:
-            return Session()

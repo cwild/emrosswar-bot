@@ -2,8 +2,8 @@
 
 import locale
 import time
-from helper import *
 from emross import *
+from emross.utility.helper import *
 
 import logging
 logger = logging.getLogger('emross-bot')

@@ -3,7 +3,7 @@ import time
 logger = logging.getLogger('emross-bot')
 
 class Chat:
-    URL = 'game/api_chat.php'
+    URL = 'game/api_chat2.php'
 
     def __init__(self, api, bot):
         self.api = api

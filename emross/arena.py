@@ -1,5 +1,5 @@
 import settings
-from helper import EmrossWarApi, EmrossWarApiException
+from emross.exceptions import EmrossWarApi, EmrossWarApiException
 
 bot = EmrossWarApi()
 

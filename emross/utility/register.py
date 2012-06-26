@@ -1,14 +1,14 @@
 import uuid
-from helper import EmrossWarApi, EmrossWarApiException
+from emross.exceptions import EmrossWarApiException
+from helper import api
 import argparse
 
-bot = EmrossWarApi()
 
 def register(username = None, password = None, referrer = None):
     """
     user=creative&action=reg&referer=rm9y5w&code=875628a8-ccf7-11e0-9fbd-00216b4d955c
     """
-    json = bot.call('info.php', server='m.emrosswar.com', user = username, action = 'reg', referer = referrer, code = uuid.uuid4())
+    json = api.call('info.php', server='m.emrosswar.com', user = username, action = 'reg', referer = referrer, code = uuid.uuid4(), key=None)
 
     print json
 
@@ -18,7 +18,7 @@ def register(username = None, password = None, referrer = None):
     """
 
     try:
-        print bot.call('register_api.php', server = json['ret']['server'][7:-1], txtUserName = json['ret']['refercode'], txtPassword = password, referer = json['ret']['referer'], txtEmail = '')
+        print api.call('register_api.php', server = json['ret']['server'][7:-1], txtUserName = json['ret']['refercode'], txtPassword = password, referer = json['ret']['referer'], txtEmail = '')
     except TypeError:
         print 'There was an error during registration.'
 

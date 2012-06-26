@@ -1,14 +1,12 @@
 import time
-
-import settings
-from emross import *
-
 import logging
 logger = logging.getLogger('emross-bot')
 
-class WorldException(Exception): pass
+from emross.api import EmrossWar
+from emross.exceptions import WorldException, OutOfSpies
+from emross.military.camp import Soldier
 
-class OutOfSpies(WorldException): pass
+import settings
 
 class World:
     def __init__(self, api, bot):
