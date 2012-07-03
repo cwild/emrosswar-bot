@@ -6,4 +6,4 @@ class NoTargetsFound(BotException): pass
 class NoTargetsAvailable(NoTargetsFound): pass
 
 class WorldException(BotException): pass
-class OutOfSpies(WorldException): pass
+class OutOfSpies(EmrossWarException): pass
