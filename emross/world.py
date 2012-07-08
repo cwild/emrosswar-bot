@@ -71,18 +71,18 @@ class World:
 
         try:
             x, y, nx, ny = self.bot.session.map_coords
+            page = self.get_page(x, y)
         except AttributeError:
             x, y, nx, ny = 1, 1, 1, 1
-
-        page = self.get_page(x, y)
-
-        nx = page['xleft']
-        ny = page['yup']
+            page = self.get_page(x, y)
+            nx = page['xleft']
+            ny = page['yup']
+        finally:
+            logger.debug('Map co-ordinates: %s' % str((x, y, nx, ny)))
 
         spies = 0
 
         while y < ny:
-            x = 0
 
             while x < nx:
                 self.bot.session.map_coords = (x, y, nx, ny)
@@ -139,7 +139,7 @@ class World:
                 print 'Finished scouting map'
                 break
 
-
+            x = 0
 
     def get_page(self, x, y):
         print 'Get page x=%d y=%d' % (x,y)

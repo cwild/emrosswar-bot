@@ -71,6 +71,7 @@ api = EmrossWarApi(settings.api_key, settings.game_server, settings.user_agent)
 class EmrossWarBot:
     def __init__(self):
         self.last_update = 0
+        self.userinfo = None
         self.scheduler = s = kronos.ThreadedScheduler()
         self.tasks = {}
         self.cities = []
@@ -106,17 +107,18 @@ class EmrossWarBot:
             print 'You have been eliminated from PvP!'
             exit()
 
+        self.userinfo = userinfo = json['ret']['user']
         self.last_update = time.time()
 
         if len(self.cities) == 0:
-            cities = [city for city in json['ret']['user']['city'] if city['id'] not in settings.ignore_cities]
+            cities = [city for city in userinfo['city'] if city['id'] not in settings.ignore_cities]
 
             for city in cities:
                 city = City(city['id'], city['name'])
                 self.cities.append(city)
 
 
-        gifts = json['ret']['user']['gift']
+        gifts = userinfo['gift']
 
         for gift in gifts:
             self.get_gift(gift)
@@ -214,6 +216,7 @@ class EmrossWarBot:
                 world.search(settings.scout_devil_army_types)
                 self.session.last_scan = time.time()
             except OutOfSpies, e:
+                self.session.last_scan = 0
                 logger.info(e)
                 try:
                     logger.debug(self.session.map_coords)

@@ -1,4 +1,7 @@
+import logging
 import time
+
+logger = logging.getLogger('emross-bot')
 
 class AllianceTechStatus:
     ACTIVATED = 0
@@ -136,6 +139,10 @@ class Donator:
         Make donations to the alliance when appropriate.
         Cherry pick the favoured techs to donate to
         """
+
+        if self.bot.userinfo.guildid == 0:
+            logger.info('Not in an alliance. Cannot donate.')
+            return False
 
         check_hall = self.hall_timeout is not None and self.hall_timeout <= time.time()
         check_tech = self.tech_timeout is not None and self.tech_timeout <= time.time()
