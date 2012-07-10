@@ -97,6 +97,7 @@ enemy_troops = ('Horror', 'Nightmare')
 enable_recruit = False
 recruit_heroes = [1, 2, 3, 4]
 
+prefer_closer = True
 
 """
 You can set the times at which you would like to farm here.

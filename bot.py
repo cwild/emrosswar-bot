@@ -67,6 +67,9 @@ def main():
                         city.get_available_heroes()
 
 
+                        if hasattr(settings, 'prefer_closer') and settings.prefer_closer:
+                            bot.sort_favs(city)
+
                         while True:
                             target, army = bot.find_target_for_army(city, EmrossWar.DEVIL_ARMY)
 

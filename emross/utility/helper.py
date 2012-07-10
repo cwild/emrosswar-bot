@@ -114,7 +114,7 @@ class EmrossWarBot:
             cities = [city for city in userinfo['city'] if city['id'] not in settings.ignore_cities]
 
             for city in cities:
-                city = City(city['id'], city['name'])
+                city = City(city['id'], city['name'], x = city['x'], y = city['y'])
                 self.cities.append(city)
 
 
@@ -142,6 +142,15 @@ class EmrossWarBot:
             fav.id = da[0]
             fav.rating = da[3]
             self.fav[cat].append(fav)
+
+
+    def sort_favs(self, city, cat = EmrossWar.DEVIL_ARMY):
+        """
+        Sort favs based on proximity from city (ascending distance)
+        """
+        nx, ny = city.y, city.x # Backwards..?
+        self.fav[cat].sort(key=lambda fav: math.sqrt((fav.x - nx)**2 + (fav.y - ny)**2))
+
 
     def clear_favs(self):
         for f in self.fav[EmrossWar.DEVIL_ARMY]:
@@ -265,9 +274,11 @@ class EmrossWarBot:
 class City:
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
 
-    def __init__(self, id, name):
+    def __init__(self, id, name, x, y):
         self.id = id
         self.name = name.encode('utf-8')
+        self.x = x
+        self.y = y
         self.data = None
 
         self.heroes = []
