@@ -140,7 +140,7 @@ class Donator:
         Cherry pick the favoured techs to donate to
         """
 
-        if self.bot.userinfo.guildid == 0:
+        if self.bot.userinfo['guildid'] == 0:
             logger.info('Not in an alliance. Cannot donate.')
             return False
 
