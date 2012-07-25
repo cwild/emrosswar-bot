@@ -34,25 +34,17 @@ class EmrossWarApi:
 
 
         epoch = int(time.time())
-
-
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', self.api_key)])
 
         params.update(kargs)
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
 
-        #query_string = urllib.urlencode(params)
-
-        #url = 'http://%s/%s?%s' % (server, method, query_string)
-        #logger.debug(url)
-
         try:
             url = 'http://%s/%s' % (server, method)
             logger.debug(url)
             logger.debug(params)
             r = pool.request('GET', url, fields=params)
-            #r = pool.urlopen('GET', url)
         except HTTPError,e :
             logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
@@ -65,18 +57,14 @@ class EmrossWarApi:
             logger.debug(json)
         except ValueError, e:
             logger.exception(e)
+            logger.debug(r.data)
             raise EmrossWarApiException, e
 
         if json['code'] == EmrossWar.ERROR_INVALID_KEY:
             print 'Invalid API key'
             exit()
 
-        #if json['code'] is not EmrossWar.SUCCESS:
-        #    print json
-        #    raise EmrossWarApiException, 'There was a problem during the call'
-
         wait = random.random()
-
         if sleep:
             wait += random.randrange(*sleep)
 
@@ -106,12 +94,9 @@ class EmrossWar:
     ATTACK_TYPE_SCOUT = 3
     ACTION_ATTACK = 7
 
-
     LORD = 1
     DEVIL_ARMY = 2
     COLONY = 3
-
-
 
     REACHED_HERO_LIMIT = 1304
     RECRUITING_CLOSED  = 1305
