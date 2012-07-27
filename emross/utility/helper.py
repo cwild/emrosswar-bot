@@ -387,6 +387,9 @@ class City:
             then add them to the army
             """
             try:
+                if (max([h.get_capacity() for h in self.heroes]) < qty):
+                    continue
+
                 if self.soldiers[soldier-1][1] >= qty:
                     army['soldier_num%d' % soldier] = qty
 
@@ -439,9 +442,8 @@ class City:
             ]
         }
         """
-
         json = api.call(settings.get_heroes, city=self.id, action='gen_list', extra=1)
-        self.heroes = []
+        self.heroes[:] = []
 
         heroes = sorted(json['ret']['hero'], key = lambda val: (val['g'], val['ex']))
 
