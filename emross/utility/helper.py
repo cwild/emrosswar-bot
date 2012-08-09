@@ -390,14 +390,16 @@ class City:
                 if (max([h.get_capacity() for h in self.heroes]) < qty):
                     continue
 
-                if self.soldiers[soldier-1][1] >= qty:
+                soldiers = [s for s in self.soldiers if s[0] == soldier][0]
+
+                if soldiers[1] >= qty:
                     army['soldier_num%d' % soldier] = qty
 
                     """
                     Update soldier cache
                     """
                     if deduct:
-                        self.soldiers[soldier-1][1] -= qty
+                        soldiers[1] -= qty
 
                     break
             except (IndexError, ValueError):
@@ -418,7 +420,8 @@ class City:
 
         for soldier, qty in settings.soldier_threshold.iteritems():
             try:
-                count += int(math.floor(self.soldiers[soldier-1][1] / qty))
+                soldiers = [s for s in self.soldiers if s[0] == soldier][0]
+                count += int(math.floor(soldiers[1] / qty))
             except (IndexError, ValueError, ZeroDivisionError):
                 pass
 
