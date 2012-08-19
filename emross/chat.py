@@ -5,8 +5,7 @@ logger = logging.getLogger(__name__)
 class Chat:
     URL = 'game/api_chat2.php'
 
-    def __init__(self, api, bot):
-        self.api = api
+    def __init__(self, bot):
         self.bot = bot
         self.lineid = -1
 
@@ -14,7 +13,7 @@ class Chat:
         if time.time() - self.bot.last_update > 60*3:
             return
 
-        json = self.api.call(self.__class__.URL, lineid=self.lineid)
+        json = self.bot.api.call(self.__class__.URL, lineid=self.lineid)
 
         try:
             msg = json['ret']['msg']

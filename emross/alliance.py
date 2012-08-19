@@ -58,8 +58,7 @@ class Alliance:
 class Donator:
     UNION_INFO = 'game/api_union_info.php'
 
-    def __init__(self, api, bot):
-        self.api = api
+    def __init__(self, bot):
         self.bot = bot
         self.info = None
 
@@ -68,7 +67,7 @@ class Donator:
         self.tech_timeout = 0
 
     def update(self):
-        json = self.api.call(Donator.UNION_INFO, op='info')
+        json = self.bot.api.call(Donator.UNION_INFO, op='info')
         self.info = json['ret']
 
     def donate_to_hall(self, gold, city):
@@ -82,7 +81,7 @@ class Donator:
             # Catch hall being max already
             if self.hall_donation_forced is False:
                 i[1] / i[2]
-            json = self.api.call(Donator.UNION_INFO, op='donate', num=gold, city=city)
+            json = self.bot.api.call(Donator.UNION_INFO, op='donate', num=gold, city=city)
             self.hall_timeout = time.time() + json['ret'][4]
         except IndexError:
             pass
@@ -91,7 +90,7 @@ class Donator:
 
 
     def get_tech_info(self, techid):
-        json = self.api.call(Donator.UNION_INFO, op='techinfo', techid=techid)
+        json = self.bot.api.call(Donator.UNION_INFO, op='techinfo', techid=techid)
         return json['ret']
 
 
@@ -126,7 +125,7 @@ class Donator:
 
     def donate_to_tech(self, gold, techid, city):
         try:
-            json = self.api.call('game/api_union_info.php', op='tdonate',
+            json = self.bot.api.call('game/api_union_info.php', op='tdonate',
                                 num=gold, techid=techid, city=city)
 
             self.tech_timeout = time.time() + json['ret'][1][4]

@@ -40,9 +40,11 @@ sys.stdout = Unbuffered(sys.stdout)
 class EmrossWarBot:
     def __init__(self, api):
         self.api = api
+
+        self.scheduler = s = kronos.ThreadedScheduler()
+
         self.last_update = 0
         self.userinfo = None
-        self.scheduler = s = kronos.ThreadedScheduler()
         self.tasks = {}
         self.cities = []
         self.fav = {}
@@ -50,13 +52,13 @@ class EmrossWarBot:
         self.war_mail = AttackMailHandler(api)
         Session.PATH = settings.session_path
         self.session = Session.load()
-        self.donator = Donator(api, self)
+        self.donator = Donator(self)
         try:
             self.donator.hall_donation_forced = settings.hall_donation_forced
         except AttributeError:
             pass
 
-        self.chatter = Chat(api, self)
+        self.chatter = Chat(self)
         self.tasks['chat'] = s.add_interval_task(self.chatter.check, "chat handler", 3, 6, kronos.method.threaded, [], None)
 
         s.start()
