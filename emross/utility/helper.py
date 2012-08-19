@@ -9,7 +9,7 @@ import time
 import math
 
 import logging
-import logging.handlers
+logger = logging.getLogger(__name__)
 
 
 from emross.alliance import Donator
@@ -21,35 +21,6 @@ from emross.world import OutOfSpies, World
 
 import settings
 
-logger = logging.getLogger('emross-bot')
-
-if len(logger.handlers) == 0:
-    logger.propagate = False
-
-    try:
-        logger.setLevel(settings.log_level)
-    except AttributeError:
-        logger.setLevel(logging.INFO)
-
-    try:
-        _fh = logging.handlers.WatchedFileHandler(settings.logfile) # use with logrotate
-    except IOError:
-        """ A do-nothing handler """
-        class NullHandler(logging.Handler):
-            def emit(self, record):
-                pass
-
-        _fh = NullHandler()
-
-    try:
-        _fh.setLevel(settings.log_level)
-    except AttributeError:
-        _fh.setLevel(logging.INFO)
-
-    _fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s', datefmt='%Y %b %d %H:%M:%S'))
-    logger.addHandler(_fh)
-
-
 
 class Unbuffered:
     def __init__(self, stream):
@@ -58,7 +29,7 @@ class Unbuffered:
         self.stream.write(data)
         data = data.strip()
         if len(data):
-            logger.info('CLI: %s' % data)
+            logging.info('CLI: %s' % data)
         self.stream.flush()
     def __getattr__(self, attr):
         return getattr(self.stream, attr)
@@ -66,10 +37,9 @@ class Unbuffered:
 sys.stdout = Unbuffered(sys.stdout)
 
 
-api = EmrossWarApi(settings.api_key, settings.game_server, settings.user_agent)
-
 class EmrossWarBot:
-    def __init__(self):
+    def __init__(self, api):
+        self.api = api
         self.last_update = 0
         self.userinfo = None
         self.scheduler = s = kronos.ThreadedScheduler()
@@ -96,7 +66,7 @@ class EmrossWarBot:
         """
         Setup bot with player account data
         """
-        json = api.call(settings.get_user_info, pushid=settings.pushid, **{'_l':'en'} )
+        json = self.api.call(settings.get_user_info, pushid=settings.pushid, **{'_l':'en'} )
 
         if json['code'] == 2:
             self.last_update = 0
@@ -114,7 +84,7 @@ class EmrossWarBot:
             cities = [city for city in userinfo['city'] if city['id'] not in settings.ignore_cities]
 
             for city in cities:
-                city = City(city['id'], city['name'], x = city['x'], y = city['y'])
+                city = City(self, city['id'], city['name'], x = city['x'], y = city['y'])
                 self.cities.append(city)
 
 
@@ -126,11 +96,11 @@ class EmrossWarBot:
 
     def get_gift(self, gift):
         logger.info('Collecting gift %d' % gift['id'])
-        json = api.call(settings.get_goods, action='gift', id=gift['id'], _l='en')
+        json = self.api.call(settings.get_goods, action='gift', id=gift['id'], _l='en')
 
 
     def get_fav(self, cat = EmrossWar.DEVIL_ARMY):
-        json = api.call(settings.api_fav, act = 'getfavnpc', cat = cat)
+        json = self.api.call(settings.api_fav, act = 'getfavnpc', cat = cat)
 
         favs = json['ret']['favs']
 
@@ -155,7 +125,7 @@ class EmrossWarBot:
     def clear_favs(self):
         for f in self.fav[EmrossWar.DEVIL_ARMY]:
             print 'Deleting fav %d' % f.id
-            api.call(settings.api_fav, act='delfavnpc', fid=f.id)
+            self.api.call(settings.api_fav, act='delfavnpc', fid=f.id)
 
 
     def find_target_for_army(self, city, cat = EmrossWar.DEVIL_ARMY):
@@ -221,7 +191,7 @@ class EmrossWarBot:
             print 'The world was scanned less than 3 days ago'
         else:
             try:
-                world = World(api, self)
+                world = World(self)
                 world.search(settings.scout_devil_army_types)
                 self.session.last_scan = time.time()
             except OutOfSpies, e:
@@ -274,7 +244,8 @@ class EmrossWarBot:
 class City:
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
 
-    def __init__(self, id, name, x, y):
+    def __init__(self, bot, id, name, x, y):
+        self.bot = bot
         self.id = id
         self.name = name.encode('utf-8')
         self.x = x
@@ -315,7 +286,7 @@ class City:
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
-        json = api.call(self.GET_CITY_INFO, city = self.id)
+        json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
         self.data = json['ret']['city']
 
 
@@ -357,18 +328,18 @@ class City:
 
         if buy_gold and buy_gold > 0:
             print 'trying with %d gold' % buy_gold
-            json = api.call(settings.local_market, city = self.id, reso_put='giveput', g2f=buy_gold)
+            json = self.bot.api.call(settings.local_market, city = self.id, reso_put='giveput', g2f=buy_gold)
 
 
 
     def get_local_market_info(self):
-        json = api.call(settings.local_market, city = self.id)
+        json = self.bot.api.call(settings.local_market, city = self.id)
         self.market = Market(json['ret'])
 
 
 
     def get_soldiers(self):
-        json = api.call(settings.get_soldiers, city = self.id)
+        json = self.bot.api.call(settings.get_soldiers, city = self.id)
         try:
             self.soldiers = json['ret']['soldiers']
         except TypeError:
@@ -445,7 +416,7 @@ class City:
             ]
         }
         """
-        json = api.call(settings.get_heroes, city=self.id, action='gen_list', extra=1)
+        json = self.bot.api.call(settings.get_heroes, city=self.id, action='gen_list', extra=1)
         self.heroes[:] = []
 
         heroes = sorted(json['ret']['hero'], key = lambda val: (val['g'], val['ex']))
@@ -493,7 +464,7 @@ class City:
         if not params['gen']:
             raise ValueError, 'Need to send a hero to lead the army'
 
-        json = api.call(settings.action_confirm, sleep=(5,8), city=self.id, **params)
+        json = self.bot.api.call(settings.action_confirm, sleep=(5,8), city=self.id, **params)
 
         """ Returns the cost of war """
         """
@@ -516,7 +487,7 @@ class City:
             logger.exception(e)
             logger.info(params)
 
-        json = api.call(settings.action_do, sleep=(1,3), city=self.id, **params)
+        json = self.bot.api.call(settings.action_do, sleep=(1,3), city=self.id, **params)
 
         if json['code'] == settings.TOO_OFTEN_WARNING:
             raise EmrossWarApiException, 'We have been rate limited. Come back later.'
@@ -536,7 +507,7 @@ class City:
             return
 
         print 'Check for heroes at the bar in "%s"' % self.name
-        json = api.call(settings.hero_conscribe, city=self.id)
+        json = self.bot.api.call(settings.hero_conscribe, city=self.id)
 
 
         if 'refresh' in json['ret']:
@@ -544,7 +515,7 @@ class City:
             self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
         else:
             print 'Try buying a drink'
-            json = api.call(settings.hero_conscribe, city=self.id, action='pub_process')
+            json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='pub_process')
 
             if json['code'] == EmrossWar.REACHED_HERO_LIMIT:
                 print 'Hero limit has been reached for this castle.'
@@ -560,7 +531,7 @@ class City:
 
             if 'hero' in json['ret'] and json['ret']['hero']['gid'] in settings.recruit_heroes:
                 print 'Found a hero we are looking for: %d' % json['ret']['hero']['gid']
-                json = api.call(settings.hero_conscribe, city=self.id, action='hire_process')
+                json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='hire_process')
 
                 if json['code'] == EmrossWar.SUCCESS:
                     print 'Hero recruited!'
@@ -569,7 +540,7 @@ class City:
 
 
     def check_war_room(self):
-        json = api.call(settings.action_confirm, act='warinfo', city=self.id)
+        json = self.bot.api.call(settings.action_confirm, act='warinfo', city=self.id)
 
 
 class Hero:

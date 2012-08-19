@@ -1,6 +1,6 @@
 import time
 import logging
-logger = logging.getLogger('emross-bot')
+logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
@@ -9,10 +9,8 @@ from emross.military.camp import Soldier
 import settings
 
 class World:
-    def __init__(self, api, bot):
-        self.api = api
+    def __init__(self, bot):
         self.bot = bot
-        self.cities = bot.cities
         self.favs = bot.fav[EmrossWar.DEVIL_ARMY]
 
 
@@ -31,10 +29,10 @@ class World:
             'area_x': y
         }
 
-        json = self.api.call(settings.action_confirm, **params)
+        json = self.bot.api.call(settings.action_confirm, **params)
 
         params.update(json['ret'])
-        json = self.api.call(settings.action_do, **params)
+        json = self.bot.api.call(settings.action_do, **params)
 
         return json['code'] == EmrossWar.SUCCESS
 
@@ -42,7 +40,7 @@ class World:
     def get_city_with_spies(self):
         """Choose a city with spies"""
         choice = None
-        for city in self.cities:
+        for city in self.bot.cities:
             city.get_soldiers()
             try:
                 if city.soldiers[Soldier.SPY-1][1]:
@@ -143,7 +141,7 @@ class World:
 
     def get_page(self, x, y):
         print 'Get page x=%d y=%d' % (x,y)
-        json = self.api.call(settings.world_map, x=x, y=y)
+        json = self.bot.api.call(settings.world_map, x=x, y=y)
 
         if json['code'] != EmrossWar.SUCCESS:
             return

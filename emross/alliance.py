@@ -1,7 +1,7 @@
 import logging
 import time
 
-logger = logging.getLogger('emross-bot')
+logger = logging.getLogger(__name__)
 
 class AllianceTechStatus:
     ACTIVATED = 0
@@ -168,6 +168,8 @@ class Donator:
                     print 'Donate %d gold to %s' % (amount, Alliance.TECH[techid])
 
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
+                    city.update()
+                    city = self.bot.richest_city()
                 except (TypeError, ValueError):
                     pass
 

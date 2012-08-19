@@ -1,6 +1,6 @@
 import logging
 import time
-logger = logging.getLogger('emross-bot')
+logger = logging.getLogger(__name__)
 
 class Chat:
     URL = 'game/api_chat2.php'
@@ -11,10 +11,10 @@ class Chat:
         self.lineid = -1
 
     def check(self):
-        if time.time() - self.bot.last_update > 60*5:
+        if time.time() - self.bot.last_update > 60*3:
             return
 
-        json = self.api.call(Chat.URL, lineid=self.lineid)
+        json = self.api.call(self.__class__.URL, lineid=self.lineid)
 
         try:
             msg = json['ret']['msg']
@@ -25,4 +25,9 @@ class Chat:
 
 
     def parse_message(self, message):
-        logger.debug(message)
+        """
+        The message may contain useful info such as incoming loot notifcations.
+        Maybe we can use this in future.
+        """
+        pass
+        #logger.debug(message)

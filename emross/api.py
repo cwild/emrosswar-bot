@@ -9,9 +9,9 @@ import time
 from lib.ordered_dict import OrderedDict
 
 from emross.exceptions import EmrossWarApiException
-from urllib3 import HTTPConnectionPool, HTTPError, make_headers
+from urllib3 import HTTPConnectionPool, make_headers, exceptions
 
-logger = logging.getLogger('emross-bot')
+logger = logging.getLogger(__name__)
 
 class EmrossWarApi:
     def __init__(self, api_key, game_server, user_agent):
@@ -42,10 +42,8 @@ class EmrossWarApi:
 
         try:
             url = 'http://%s/%s' % (server, method)
-            logger.debug(url)
-            logger.debug(params)
             r = pool.request('GET', url, fields=params)
-        except HTTPError,e :
+        except exceptions.HTTPError, e :
             logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
 

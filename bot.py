@@ -6,7 +6,16 @@ from emross import *
 from emross.utility.helper import *
 
 import logging
-logger = logging.getLogger('emross-bot')
+logger = logging.getLogger(__name__)
+
+import settings
+
+logging.basicConfig(level=settings.log_level,
+                    format='%(asctime)s, %(name)s (%(levelname)s): %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename=settings.logfile, filemode='a')
+
+
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -14,8 +23,9 @@ SECOND = 1
 MINUTE = 60 * SECOND
 HOUR   = 60 * MINUTE
 
+api = EmrossWarApi(settings.api_key, settings.game_server, settings.user_agent)
+bot = EmrossWarBot(api)
 
-bot = EmrossWarBot()
 
 def main():
     """
