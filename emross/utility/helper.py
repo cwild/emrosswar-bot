@@ -5,6 +5,8 @@ sys.path.extend(['lib/urllib3/'])
 from lib import kronos
 from lib.session import Session
 
+from emross.item import item
+
 import time
 import math
 
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 from emross.alliance import Donator
-from emross.api import EmrossWarApi, EmrossWar
+from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.exceptions import *
 from emross.mail import *
@@ -226,13 +228,13 @@ class EmrossWarBot:
 
 
     def richest_city(self):
-        city = None
-        for c in self.cities:
-            if city is None or city.get_gold_count()[0] < c.get_gold_count()[0]:
-                city = c
-
+        city = max(self.cities, key = lambda c: c.get_gold_count()[0])
         print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.get_gold_count()[0])
+        return city
 
+    def poorest_city(self):
+        city = min(self.cities, key = lambda c: c.get_gold_count()[0])
+        print 'Chosen the city with the least gold, %s (%d)' % (city.name, city.get_gold_count()[0])
         return city
 
 
@@ -241,6 +243,46 @@ class EmrossWarBot:
             self.war_mail.process()
         except MailException:
             pass
+
+
+
+    def clearout_inventory(self):
+        logger.info('Clear the item inventories')
+
+        item_manager = item.Item(self)
+        it = item.ItemType
+        for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
+            page, max = 1, 1
+            sale_list = []
+
+            while True:
+                json = item_manager.list(page = page, type = itype)
+                max = json['ret']['max']
+
+                for _item in json['ret']['item']:
+                    try:
+                        if item.ITEMS[_item['item']['sid']]['rank'] < item.ItemRank.RARE:
+                            sale_list.append(_item['item']['id'])
+                    except KeyError:
+                        pass
+
+
+                page += 1
+                if page > max:
+                    max = 1
+                    break
+
+            city = self.poorest_city()
+            print 'Sell %d item/s of type %d' % (len(sale_list), itype)
+
+            for item_id in sale_list:
+                json = item_manager.sell(city = city.id, id = item_id)
+                try:
+                    city.data[2] = json['ret']['gold']
+                except KeyError:
+                    pass
+
+            sale_list = sale_list[:]
 
 
 class City:

@@ -3,6 +3,7 @@
 import locale
 import time
 from emross import *
+from emross.api import EmrossWarApi
 from emross.utility.helper import *
 
 import logging
@@ -177,6 +178,8 @@ def main():
                 bot.donator.make_donations(settings.donation_tech_preference)
             except AttributeError:
                 pass
+
+            bot.clearout_inventory()
 
             print 'Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True))
 
