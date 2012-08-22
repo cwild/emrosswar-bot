@@ -252,12 +252,11 @@ class EmrossWarBot:
         item_manager = item.Item(self)
         it = item.ItemType
         for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
-            page, max = 1, 1
+            page = 1
             sale_list = []
 
             while True:
                 json = item_manager.list(page = page, type = itype)
-                max = json['ret']['max']
 
                 for _item in json['ret']['item']:
                     try:
@@ -268,8 +267,8 @@ class EmrossWarBot:
 
 
                 page += 1
-                if page > max:
-                    max = 1
+                if page > json['ret']['max']:
+                    logger.info('Last page of this item type')
                     break
 
             city = self.poorest_city()
@@ -282,7 +281,7 @@ class EmrossWarBot:
                 except KeyError:
                     pass
 
-            sale_list = sale_list[:]
+            sale_list[:] = []
 
 
 class City:
