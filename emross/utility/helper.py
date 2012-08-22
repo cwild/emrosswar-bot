@@ -255,6 +255,7 @@ class EmrossWarBot:
             page = 1
             sale_list = []
 
+            logger.info('Find items of type %d' % itype)
             while True:
                 json = item_manager.list(page = page, type = itype)
 
@@ -268,7 +269,7 @@ class EmrossWarBot:
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.info('Last page of this item type')
+                    logger.info('Last page of item type %d' % itype)
                     break
 
             city = self.poorest_city()
