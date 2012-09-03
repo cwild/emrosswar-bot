@@ -539,7 +539,8 @@ class City:
         soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
         for k, v in soldiers:
             i = int(k) - 1
-            self.soldiers[i][1] -= v
+            soldier = [s for s in self.solders if i == s[0]][0]
+            soldier[1] -= v
 
 
 
