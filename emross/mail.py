@@ -1,4 +1,3 @@
-from __future__ import division
 import re
 
 import settings
@@ -73,7 +72,7 @@ class AttackMailHandler(MailHandler):
 class ScoutMailHandler(MailHandler):
     def __init__(self, api):
         MailHandler.__init__(self, api, type=3)
-        self.parser = MailParser(settings.enemy_troops[0], settings.enemy_troops[1])
+        self.parser = MailParser(settings.enemy_troops)
 
 
     def process(self):
@@ -118,46 +117,36 @@ class ScoutMailHandler(MailHandler):
 
 
 class MailParser:
-    def __init__(self, troop1, troop2):
-        #self.reTroops = re.compile('(?:%s\((\d+)\))?.*(?:%s\((\d+)\))?' % (troops[0], troops[1]))
-        self.reTroop1 = re.compile('%s\((\d+)\)' % troop1)
-        self.reTroop2 = re.compile('%s\((\d+)\)' % troop2)
+    def __init__(self, troops=()):
+        self.troops = troops
+        self.reTroops = []
+        for troop, count in troops:
+            self.reTroops.append(re.compile('%s\((\d+)\)' % troop))
 
 
     def find_troops(self, message):
-        t1 = self.reTroop1.search(message)
-        if t1:
-            troop1 = int(t1.group(1))
-        else:
-            troop1 = 0
+        troops = []
 
+        for reg in self.reTroops:
+            t = reg.search(message)
+            if t:
+                count = int(t.group(1))
+            else:
+                count = 0
 
-        t2 = self.reTroop2.search(message)
-        if t2:
-            troop2 = int(t2.group(1))
-        else:
-            troop2 = 0
+            troops.append(count)
 
-
-        return [troop1, troop2]
+        return troops
 
 
 
     def is_attackable(self, troops):
         """
-        If the ratio is not exceeded then this target is safe for us to attack
+        If the troop count is not exceeded for a given troop type then this target is attackable
         """
+        limits = [t[1] for t in self.troops]
 
-        ratio = list(settings.enemy_troop_ratio)
-        ratio[0], ratio[1] = ratio[0] or 1, ratio[1] or 1
-
-        t = troops[:]
-        t[0], t[1] = t[0] or 1, t[1] or 1
-
-        if ratio[0] > ratio[1]:
-            return t[0]/t[1] >= ratio[0]/ratio[1]
-        else:
-            return t[0]/t[1] <= ratio[0]/ratio[1]
+        return False not in [a<=b for a,b in zip(troops, limits)]
 
 
 
@@ -197,17 +186,16 @@ class Mail:
 
 
 def main():
-    mail_parser = MailParser('Horror', 'Nightmare')
+    mail_parser = MailParser(settings.enemy_troops)
 
     message = ["""<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5351)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br><br>""",
         """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5351)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>Nightmare(1337)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>""",
         """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Nightmare(1337)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>""",
         """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(2387)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>""",
-        """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(2574)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>Nightmare(2672)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>""",
-        """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(150)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>Nightmare(5000)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""
+        """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Inferno(9293)<br>Attack(120)&nbsp;&nbsp;Defense(40)&nbsp;&nbsp;Health(180)<br>"""
     ]
 
-    print 'Enemy troop ratio we are using: %s' % list(settings.enemy_troop_ratio)
+    print 'Enemy troop ratio we are using: %s' % list(mail_parser.troops)
 
     for m in message:
         troops = mail_parser.find_troops(m)

@@ -80,16 +80,15 @@ soldier_threshold = [
 ]
 
 
-"""
-Ratio of troops which we will consider attacking
+"""                                                                                                                                                  
+Maximum number of troops which we will consider attacking
 
 eg.
-Horror 3000
-Nightmare 1000
+Horror 100
+Nightmare 200
+Inferno 9500
 """
-enemy_troop_ratio = (3000, 1000)
-
-enemy_troops = ('Horror', 'Nightmare')
+enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
 
 
 

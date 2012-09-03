@@ -5,3 +5,5 @@ class DevilArmy:
     FOUR_STAR = 3
     FIVE_STAR = 2
     SIX_STAR = 1
+    SEVEN_STAR = 7
+    EIGHT_STAR = 8
