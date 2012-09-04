@@ -171,7 +171,7 @@ class EmrossWarBot:
         if not target:
             raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % settings.npc_attack_limit
 
-        rating = range(6, 0, -1)[target.rating-1]
+        rating = (range(6, 0, -1)+range(7,9))[target.rating-1]
         print 'Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack)
 
         return target, army

@@ -100,7 +100,9 @@ class ScoutMailHandler(MailHandler):
                     result = 'REJECTED'
 
 
-                print '%s devil army at [%d/%d] with troops %s(%d), %s(%d)' % (result, mail.data['dx'], mail.data['dy'], settings.enemy_troops[0], troops[0], settings.enemy_troops[1], troops[1] )
+                print '%s devil army at [%d/%d] with troops %s' % (result, mail.data['dx'], mail.data['dy'],
+                    ', '.join(['%s(%d)'] * len(settings.enemy_troops)) % sum(zip([s for s, c in settings.enemy_troops], troops), ()))
+
 
                 mail.processed = True
             except TypeError:
