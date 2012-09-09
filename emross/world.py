@@ -11,8 +11,7 @@ import settings
 class World:
     def __init__(self, bot):
         self.bot = bot
-        self.favs = bot.fav[EmrossWar.DEVIL_ARMY]
-
+        self._map_size = None
 
     def scout(self, city, x, y):
         """
@@ -78,6 +77,8 @@ class World:
         finally:
             logger.debug('Map co-ordinates: %s' % str((x, y, nx, ny)))
 
+        self.favs = self.bot.fav[EmrossWar.DEVIL_ARMY]
+
         spies = 0
 
         while y < ny:
@@ -140,10 +141,24 @@ class World:
             x = 0
 
     def get_page(self, x, y):
-        print 'Get page x=%d y=%d' % (x,y)
+        logger.info('Get page x=%d y=%d' % (x,y))
         json = self.bot.api.call(settings.world_map, x=x, y=y)
 
-        if json['code'] != EmrossWar.SUCCESS:
-            return
-
         return json['ret']
+
+    def map_size(self, x = 1, y = 1):
+        if self._map_size:
+            return self._map_size
+
+        data = self.get_page(x, y)
+        nx = data['xleft'] + data['xright'] - x-1
+        ny = data['yup'] + data['ydown'] - y-1
+        self._map_size = (nx, ny)
+        return self._map_size
+
+
+    if __name__ == "__main__":
+        from bot import bot
+
+        x, y = 1, 1
+        print 'The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y))

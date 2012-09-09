@@ -1,6 +1,6 @@
 import uuid
 from emross.exceptions import EmrossWarApiException
-from helper import api
+from bot import api
 import argparse
 
 
