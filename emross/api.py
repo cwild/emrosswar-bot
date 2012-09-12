@@ -19,17 +19,31 @@ class EmrossWarApi:
         self.game_server = game_server
         self.user_agent = user_agent
 
-        self.pool = {}
+        self.__class__.pool = {}
 
 
-    def call(self, method, server=None, sleep=(), **kargs):
+    def call(self, *args, **kargs):
+        for i in xrange(1,4):
+            json = self._call(*args, **kargs)
+            try:
+                if not isinstance(json['code'], int):
+                    logger.debug('API call attempt %d failed with an invalid client code.' % i)
+                    logger.warning(json)
+                    time.sleep(random.randrange(1,3))
+                else:
+                    return json
+            except (AttributeError, IndexError), e:
+                logger.exception(e)
+
+
+    def _call(self, method, server=None, sleep=(), **kargs):
         """Call API and return result"""
         server = server or self.game_server
 
         try:
-            pool = self.pool[server]
+            pool = self.__class__.pool[server]
         except KeyError:
-            self.pool[server] = pool = HTTPConnectionPool(server, headers=make_headers(
+            self.__class__.pool[server] = pool = HTTPConnectionPool(server, headers=make_headers(
                 user_agent=self.user_agent, keep_alive=True, accept_encoding=True))
 
 
