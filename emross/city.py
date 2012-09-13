@@ -266,8 +266,9 @@ class City:
             raise EmrossWarApiException, 'We have been rate limited. Come back later.'
 
         soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
+
         for k, v in soldiers:
-            i = int(k) - 1
+            i = int(k)
             soldier = [s for s in self.soldiers if i == s[0]][0]
             soldier[1] -= v
 
