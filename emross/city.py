@@ -128,7 +128,7 @@ class City:
             then add them to the army
             """
             try:
-                if (max([h.get_capacity() for h in self.heroes]) < qty):
+                if (max([h.data.get(Hero.COMMAND) for h in self.heroes]) < qty):
                     continue
 
                 soldiers = [s for s in self.soldiers if s[0] == soldier][0]
