@@ -1,6 +1,9 @@
 import math
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.exceptions import InsufficientSoldiers
