@@ -43,6 +43,7 @@ sys.stdout = Unbuffered(sys.stdout)
 class EmrossWarBot:
     def __init__(self, api):
         self.api = api
+        api.bot = self
 
         self.scheduler = s = kronos.ThreadedScheduler()
 
@@ -67,6 +68,13 @@ class EmrossWarBot:
 
         s.start()
 
+    def __del__(self):
+        logger.debug('Clean up bot instance')
+        self.disconnect()
+
+    def disconnect(self):
+        logger.info('Stop the task scheduler for this bot')
+        self.scheduler.stop()
 
     def update(self):
         """
@@ -78,10 +86,6 @@ class EmrossWarBot:
             self.last_update = 0
             raise EmrossWarApiException, 'Error during load'
 
-
-        if json['code'] in [EmrossWar.PVP_ELIMINATED]:
-            print 'You have been eliminated from PvP!'
-            exit()
 
         self.userinfo = userinfo = json['ret']['user']
         self.last_update = time.time()

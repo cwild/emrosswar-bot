@@ -4,28 +4,44 @@ sys.path.extend(['lib/urllib3/'])
 import logging
 import random
 import simplejson
+import threading
 import time
 
 from lib.ordered_dict import OrderedDict
 
 from emross.exceptions import EmrossWarApiException
-from urllib3 import HTTPConnectionPool, make_headers, exceptions
+from emross.handlers import handlers
+
+from urllib3 import PoolManager, make_headers, exceptions
 
 logger = logging.getLogger(__name__)
 
 class EmrossWarApi:
+    _pool = PoolManager()
+
     def __init__(self, api_key, game_server, user_agent):
         self.api_key = api_key
         self.game_server = game_server
         self.user_agent = user_agent
+        self.lock = threading.Lock()
 
-        self.__class__.pool = {}
+    @property
+    def pool(self):
+        return self.__class__._pool
 
+    def create_headers(self):
+        return make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
 
     def call(self, *args, **kargs):
         for i in xrange(1,4):
             json = self._call(*args, **kargs)
             try:
+                if json['code'] in handlers:
+                    handler = handlers[json['code']](self.bot)
+                    result = handler.process(json)
+                    if result is not None:
+                        return result
+
                 if not isinstance(json['code'], int):
                     logger.debug('API call attempt %d failed with an invalid client code.' % i)
                     logger.warning(json)
@@ -40,13 +56,6 @@ class EmrossWarApi:
         """Call API and return result"""
         server = server or self.game_server
 
-        try:
-            pool = self.__class__.pool[server]
-        except KeyError:
-            self.__class__.pool[server] = pool = HTTPConnectionPool(server, headers=make_headers(
-                user_agent=self.user_agent, keep_alive=True, accept_encoding=True))
-
-
         epoch = int(time.time())
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', self.api_key)])
@@ -56,7 +65,8 @@ class EmrossWarApi:
 
         try:
             url = 'http://%s/%s' % (server, method)
-            r = pool.request('GET', url, fields=params)
+            with self.lock:
+                r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
         except exceptions.HTTPError, e :
             logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
@@ -72,9 +82,6 @@ class EmrossWarApi:
             logger.debug(r.data)
             raise EmrossWarApiException, e
 
-        if json['code'] == EmrossWar.ERROR_INVALID_KEY:
-            print 'Invalid API key'
-            exit()
 
         wait = random.random()
         if sleep:
