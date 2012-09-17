@@ -34,8 +34,9 @@ class EmrossWarApi:
 
     def call(self, *args, **kargs):
         for i in xrange(1,4):
-            json = self._call(*args, **kargs)
             try:
+                json = self._call(*args, **kargs)
+
                 if json['code'] in handlers:
                     handler = handlers[json['code']](self.bot)
                     result = handler.process(json)
@@ -50,6 +51,8 @@ class EmrossWarApi:
                     return json
             except (AttributeError, IndexError, ValueError), e:
                 logger.exception(e)
+                logger.info('Wait %f seconds before retry' % i)
+                time.sleep(i*0.25)
 
 
     def _call(self, method, server=None, sleep=(), **kargs):
