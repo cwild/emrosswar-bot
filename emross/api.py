@@ -48,7 +48,7 @@ class EmrossWarApi:
                     time.sleep(random.randrange(1,3))
                 else:
                     return json
-            except (AttributeError, IndexError), e:
+            except (AttributeError, IndexError, ValueError), e:
                 logger.exception(e)
 
 
@@ -70,6 +70,9 @@ class EmrossWarApi:
         except exceptions.HTTPError, e :
             logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
+
+        if r.status not in [200, 304]:
+            raise ValueError, 'Unacceptable HTTP status code %d returned' % r.status
 
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
