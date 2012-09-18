@@ -33,7 +33,7 @@ class EmrossWarApi:
         return make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
 
     def call(self, *args, **kargs):
-        for i in xrange(1,4):
+        for i in xrange(1, 51):
             try:
                 json = self._call(*args, **kargs)
 
@@ -46,13 +46,18 @@ class EmrossWarApi:
                 if not isinstance(json['code'], int):
                     logger.debug('API call attempt %d failed with an invalid client code.' % i)
                     logger.warning(json)
-                    time.sleep(random.randrange(1,3))
+                    time.sleep(random.randrange(2,3))
                 else:
                     return json
-            except (AttributeError, IndexError, ValueError), e:
+            except (AttributeError, IndexError), e:
                 logger.exception(e)
-                logger.info('Wait %f seconds before retry' % i)
-                time.sleep(i*0.25)
+                logger.debug('Pause for a second.')
+                time.sleep(1)
+            except exceptions.HTTPError, e:
+                logger.debug(e)
+                wait = 1 + (i % 10)
+                logger.info('Wait %d seconds before retry' % wait)
+                time.sleep(wait)
 
 
     def _call(self, method, server=None, sleep=(), **kargs):
@@ -74,8 +79,9 @@ class EmrossWarApi:
             logger.exception(e)
             raise EmrossWarApiException, 'Problem connecting to game server.'
 
+
         if r.status not in [200, 304]:
-            raise ValueError, 'Unacceptable HTTP status code %d returned' % r.status
+            raise exceptions.HTTPError, 'Unacceptable HTTP status code %d returned' % r.status
 
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
