@@ -3,7 +3,13 @@ sys.path.extend(['lib/urllib3/'])
 
 import logging
 import random
+
 import simplejson
+try:
+    from simplejson import JSONDecodeError
+except ImportError:
+    class JSONDecodeError(ValueError): pass
+
 import threading
 import time
 
@@ -35,6 +41,7 @@ class EmrossWarApi:
     def call(self, *args, **kargs):
         for i in xrange(1, 51):
             try:
+                logger.debug('API call: attempt #%d' % i)
                 json = self._call(*args, **kargs)
 
                 if json['code'] in handlers:
@@ -49,7 +56,7 @@ class EmrossWarApi:
                     time.sleep(random.randrange(2,3))
                 else:
                     return json
-            except (AttributeError, IndexError), e:
+            except (AttributeError, IndexError, JSONDecodeError), e:
                 logger.exception(e)
                 logger.debug('Pause for a second.')
                 time.sleep(1)
@@ -86,14 +93,8 @@ class EmrossWarApi:
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
 
-        try:
-            json = simplejson.loads(jsonp)
-            logger.debug(json)
-        except ValueError, e:
-            logger.exception(e)
-            logger.debug(r.data)
-            raise EmrossWarApiException, e
-
+        json = simplejson.loads(jsonp)
+        logger.debug(json)
 
         wait = random.random()
         if sleep:
