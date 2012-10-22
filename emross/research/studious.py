@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 class Study(Task):
     STUDY_URL = 'game/study_api.php'
     STUDY_MOD_URL = 'game/study_mod_api.php'
-    TASK_TYPE = TaskType.RESEARCH
 
     def __init__(self, bot):
         super(Study, self).__init__()
@@ -46,10 +45,9 @@ class Study(Task):
                 current_study.add(task['target'])
 
         for city in self.bot.cities:
-            if self.tech_level(city, tech) < level:
-                tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
-                if len(tasks) == 0 and tech not in current_study \
-                    and city.resource_manager.meet_requirements(Tech.cost(tech, level)):
+            tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
+            if len(tasks) == 0 and tech not in current_study and self.tech_level(city, tech) < level \
+                and city.resource_manager.meet_requirements(Tech.cost(tech, level)):
                     ctdwn = self.upgrade(city, tech)
                     city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
                     break

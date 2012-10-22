@@ -44,10 +44,11 @@ class CountdownManager:
         self.bot = bot
         self.city = city
         self._data = None
+        self.last_update = 0
 
     @property
     def data(self):
-        if self._data is None:
+        if self._data is None or (time.time() - self.last_update) > 60:
             self.update()
 
         l = self._data['ret']['cdlist']
@@ -56,6 +57,7 @@ class CountdownManager:
 
     def update(self):
         self._data = self.get_countdown_info()
+        self.last_update = time.time()
 
         for task in self._data['ret']['cdlist']:
             task['secs'] += time.time()
