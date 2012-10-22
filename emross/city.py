@@ -7,11 +7,17 @@ logger = logging.getLogger(__name__)
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.exceptions import InsufficientSoldiers
+from emross.research.studious import Study
+from emross.research.tech import Tech
+from emross.resources import Resource, ResourceManager
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
+from emross.utility.task import CountdownManager
+
 import settings
 
 class City:
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
-    GET_COUNTDOWN_INFO = 'game/get_cdinfo_api.php'
 
     def __init__(self, bot, id, name, x, y):
         self.bot = bot
@@ -24,7 +30,8 @@ class City:
         self.heroes = []
         self.soldiers = []
 
-        self.market = None
+        self.resource_manager = ResourceManager(bot, city=self)
+        self.countdown_manager = CountdownManager(bot, city=self)
         self.next_hero_recruit = time.time()
 
 
@@ -65,49 +72,28 @@ class City:
         json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
         self._data = json['ret']['city']
 
+        self.countdown_manager.update()
 
-    def get_countdown_info(self):
-        """
-        Get info about countdown tasks for this city
-        """
-        return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.id)
-
-
-    def get_data(self, i):
-        return self.data[i]
 
     def get_gold_count(self):
-        return (self.get_data(2), self.get_data(3))
-
-
-    def get_food_count(self):
-        return (self.get_data(4), self.get_data(5))
+        return self.resource_manager.get_amounts_of(Resource.GOLD)
 
 
     def replenish_food(self, amount = None):
-        if not self.market:
-            self.get_local_market_info()
-
         if not amount:
-            food = self.get_food_count()
-            amount = food[1] - food[0]
+            food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
+            amount = food_limit - food
 
-        buy_gold = int(math.ceil(self.market.get_gold_to_food_rate() * amount))
+        buy_gold = int(math.ceil(self.resource_manager.conversion_rate(Resource.GOLD, Resource.FOOD) * amount))
 
-        available_gold = self.get_gold_count()[0]
+        available_gold = self.resource_manager.get_amount_of(Resource.GOLD)
 
         if buy_gold > available_gold:
             buy_gold = available_gold
 
         if buy_gold and buy_gold > 0:
             print 'trying with %d gold' % buy_gold
-            json = self.bot.api.call(settings.local_market, city = self.id, reso_put='giveput', g2f=buy_gold)
-
-
-
-    def get_local_market_info(self):
-        json = self.bot.api.call(settings.local_market, city = self.id)
-        self.market = Market(json['ret'])
+            self.resource_manager.convert(Resource.GOLD, Resource.FOOD, buy_gold)
 
 
 
@@ -254,8 +240,9 @@ class City:
         """
 
         try:
-            if params['cost_food'] > self.get_data(4):
-                self.replenish_food(params['cost_food'] - self.get_data(4))
+            current_food = self.resource_manager.get_amount_of(Resource.FOOD)
+            if params['cost_food'] > current_food:
+                self.replenish_food(params['cost_food'] - current_food)
         except KeyError, e:
             logger.exception(e)
             logger.info(params)
@@ -279,6 +266,10 @@ class City:
             return
 
         if time.time() < self.next_hero_recruit:
+            return
+
+        st = Construct(self.bot)
+        if st.structure_level(self, Building.ARENA) < 1:
             return
 
         print 'Check for heroes at the bar in "%s"' % self.name
@@ -317,14 +308,3 @@ class City:
     def check_war_room(self):
         json = self.bot.api.call(settings.action_confirm, act='warinfo', city=self.id)
 
-
-class Market:
-    def __init__(self, data):
-        """
-        Setup local market info
-        {"code":0,"ret":{"g2w":0.06,"g2f":0.13,"g2i":0.1,"w2g":17,"f2g":80,"i2g":11}}
-        """
-        self.data = data
-
-    def get_gold_to_food_rate(self):
-        return self.data['g2f']

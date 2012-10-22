@@ -34,9 +34,6 @@ world_map = 'game/api_world_map.php'
 action_confirm = 'game/armament_action_do_api.php'
 action_do = 'game/armament_action_task_api.php'
 
-local_market = 'game/local_market_api.php'
-
-
 
 event_timers = {
     'get_user_info':60000
@@ -122,3 +119,27 @@ plugin_api = {
     'auth': 'username:password',
     'url': 'http://emross.cryformercy.com/client/plugins/api/'
 }
+
+
+from emross.research.studious import Study
+from emross.research.tech import Tech
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
+
+build_path = (
+    (
+        (Construct, (Building.HOUSE, 1)),
+        (Construct, (Building.UNIVERSITY, 1))
+    ),
+    (
+        (Construct, (Building.FARM, 5)),
+        (Construct, (Building.SAWMILL, 5)),
+        (Construct, (Building.FACILITY_CENTER, 6)),
+        (Study, (Tech.FORGING, 3))
+    ),
+    (
+        (Construct, (Building.FARM, 20)),
+        (Construct, (Building.HOUSE, 21)),
+        (Study, (Tech.FORGING, 20))
+    )
+)

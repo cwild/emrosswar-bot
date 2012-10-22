@@ -6,6 +6,7 @@ from lib import kronos
 from lib.session import Session
 
 from emross.item import item
+from emross.resources import Resource
 
 import time
 import math
@@ -20,6 +21,7 @@ from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
 from emross.mail import *
+from emross.utility.builder import BuildManager
 from emross.world import World
 
 import settings
@@ -65,6 +67,12 @@ class EmrossWarBot:
 
         self.chatter = Chat(self)
         self.tasks['chat'] = s.add_interval_task(self.chatter.check, "chat handler", 3, 6, kronos.method.threaded, [], None)
+
+        try:
+            self.builder = BuildManager(self, path=settings.build_path)
+            self.tasks['builder'] = s.add_interval_task(self.builder.process, "build handler", 10, 30, kronos.method.threaded, [], None)
+        except AttributeError:
+            pass
 
         s.start()
 
@@ -232,13 +240,13 @@ class EmrossWarBot:
 
 
     def richest_city(self):
-        city = max(self.cities, key = lambda c: c.get_gold_count()[0])
-        print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.get_gold_count()[0])
+        city = max(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
+        print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD))
         return city
 
     def poorest_city(self):
-        city = min(self.cities, key = lambda c: c.get_gold_count()[0])
-        print 'Chosen the city with the least gold, %s (%d)' % (city.name, city.get_gold_count()[0])
+        city = min(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
+        print 'Chosen the city with the least gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD))
         return city
 
 
@@ -283,7 +291,7 @@ class EmrossWarBot:
                 for item_id in sale_list:
                     json = item_manager.sell(city = city.id, id = item_id)
                     try:
-                        city.data[2] = json['ret']['gold']
+                        city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                     except KeyError:
                         pass
 
