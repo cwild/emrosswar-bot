@@ -72,8 +72,6 @@ class City:
         json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
         self._data = json['ret']['city']
 
-        self.countdown_manager.update()
-
 
     def get_gold_count(self):
         return self.resource_manager.get_amounts_of(Resource.GOLD)

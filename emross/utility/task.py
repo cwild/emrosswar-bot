@@ -52,14 +52,20 @@ class CountdownManager:
             self.update()
 
         l = self._data['ret']['cdlist']
-        l = [c for c in l if c['secs'] > time.time()]
+        self._data['ret']['cdlist'][:] = [c for c in l if c['secs'] > time.time()]
         return self._data
 
     def update(self):
         self._data = self.get_countdown_info()
         self.last_update = time.time()
+        self._normalise(self._data)
 
-        for task in self._data['ret']['cdlist']:
+    def _normalise(self, tasks):
+        """
+        Convert the secs into timestamps so we actually know when they
+        are expired
+        """
+        for task in tasks['ret']['cdlist']:
             task['secs'] += time.time()
 
     def get_countdown_info(self):
@@ -70,7 +76,8 @@ class CountdownManager:
         return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id)
 
     def get_tasks(self, task_type=None):
-        return [task for task in self.data['ret']['cdlist'] if task_type is None or task_type == task['cdtype']]
+        return [task for task in self.data['ret']['cdlist'] if task_type in (None, task['cdtype'])]
 
     def add_tasks(self, tasks):
+        self._normalise(tasks)
         self.data['ret']['cdlist'].extend(tasks)

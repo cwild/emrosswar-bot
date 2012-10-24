@@ -37,7 +37,7 @@ class Study(Task):
         """
         return self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
 
-    def process(self, tech, level):
+    def process(self, tech, level, *args, **kwargs):
         current_study = set()
         for city in self.bot.cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
