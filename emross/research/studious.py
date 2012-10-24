@@ -1,3 +1,4 @@
+from emross.api import EmrossWar
 from emross.utility.task import Task, TaskType
 from tech import Tech
 import time
@@ -35,7 +36,12 @@ class Study(Task):
         """
         {'code': 0, 'ret': {'cdlist': [{'owner': 0, 'secs': 1557, 'cdtype': 2, 'id': 123456, 'target': 1}]}}
         """
-        return self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
+        json = self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
+        if json['code'] == EmrossWar.SUCCESS:
+            logger.info('Started research tech %d at %s. Time until completion: %d seconds.' % (tech, city.name, json['ret']['cdlist'][0]['secs']))
+        else:
+            logger.debug('Failed to start research %d at city "%s"' % (tech, city.name))
+        return json
 
     def process(self, tech, level, *args, **kwargs):
         current_study = set()

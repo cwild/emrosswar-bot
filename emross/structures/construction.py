@@ -1,3 +1,4 @@
+from emross.api import EmrossWar
 from emross.item import inventory
 from emross.utility.task import Task, TaskType
 
@@ -18,7 +19,12 @@ class Construct(Task):
         """
         {"code":0,"ret":{"cdlist":[{"id":1234567,"cdtype":1,"target":"5","owner":0,"secs":90}]}}
         """
-        return self.bot.api.call(self.__class__.CREATE_TASK_URL, city=city.id, build_type=build_type)
+        json = self.bot.api.call(self.__class__.CREATE_TASK_URL, city=city.id, build_type=build_type)
+        if json['code'] == EmrossWar.SUCCESS:
+            logger.info('Started building build_type %d at %s. Time until completion: %d seconds.' % (build_type, city.name, json['ret']['cdlist'][0]['secs']))
+        else:
+            logger.debug('Failed to upgrade build_type %d at city "%s"' % (build_type, city.name))
+        return json
 
     def downgrade(self, city, build_type):
         return self.bot.api.call(self.__class__.CREATE_TASK_URL, city=city.id, build_type=build_type, build_act='destroy')

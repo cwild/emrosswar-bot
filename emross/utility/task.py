@@ -1,6 +1,9 @@
 import math
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+
 class Task(object):
     """
     This is just an abstraction. Not for direct use.
@@ -48,25 +51,32 @@ class CountdownManager:
 
     @property
     def data(self):
-        if self._data is None or (time.time() - self.last_update) > 60:
+        if self._data is None or (time.time() - self.last_update) > 60 \
+            or self.is_tainted(self._data['ret']['cdlist']):
             self.update()
 
-        l = self._data['ret']['cdlist']
-        self._data['ret']['cdlist'][:] = [c for c in l if c['secs'] > time.time()]
         return self._data
 
     def update(self):
         self._data = self.get_countdown_info()
         self.last_update = time.time()
-        self._normalise(self._data)
+        d = self._data['ret']['cdlist']
+        d[:] = self._normalise(d)
 
     def _normalise(self, tasks):
         """
         Convert the secs into timestamps so we actually know when they
         are expired
         """
-        for task in tasks['ret']['cdlist']:
+        for task in tasks:
             task['secs'] += time.time()
+        return tasks
+
+    def is_tainted(self, tasks):
+        tainted = len(tasks) != len([t for t in tasks if t['secs'] > time.time()])
+        if tainted:
+            logger.debug('Tainted task list (time=%f): %s', (time.time(), tasks))
+        return tainted
 
     def get_countdown_info(self):
         """
@@ -79,5 +89,12 @@ class CountdownManager:
         return [task for task in self.data['ret']['cdlist'] if task_type in (None, task['cdtype'])]
 
     def add_tasks(self, tasks):
-        self._normalise(tasks)
-        self.data['ret']['cdlist'].extend(tasks)
+        tasks = self._normalise(tasks)
+        self._data['ret']['cdlist'].extend(tasks)
+
+        """
+        The Emross client does this when one of the events has completed.
+        This is important as you cannot initiate any task if you have not synced with the server.
+        """
+        self.update()
+        self.city.update()
