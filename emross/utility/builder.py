@@ -10,7 +10,6 @@ class BuildManager(object):
     def __init__(self, bot, path=None, *args, **kwargs):
         self.bot = bot
         self.path = path
-        self.stage = 0
 
         self.tasks = {}
         for task in self.__class__.TASKS:

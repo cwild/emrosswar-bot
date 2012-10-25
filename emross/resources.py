@@ -49,7 +49,7 @@ class ResourceManager:
 
 
     def _convert(self, **kwargs):
-        logger.debug('Exchanging resources :s' % (kwargs))
+        logger.debug('Exchanging resources %s' % (kwargs))
         json = self.bot.api.call(self.LOCAL_MARKET_URL, city = self.city.id, reso_put='giveput', **kwargs)
 
         if json['code'] == EmrossWar.SUCCESS:
