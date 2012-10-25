@@ -75,7 +75,7 @@ class CountdownManager:
     def is_tainted(self, tasks):
         tainted = len(tasks) != len([t for t in tasks if t['secs'] > time.time()])
         if tainted:
-            logger.debug('Tainted task list (time=%f): %s', (time.time(), tasks))
+            logger.debug('Tainted task list (time=%f): %s' % (time.time(), tasks))
         return tainted
 
     def get_countdown_info(self):
