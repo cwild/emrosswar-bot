@@ -11,10 +11,6 @@ class Construct(Task):
     CREATE_TASK_URL = 'game/building_create_task_api.php'
     EXTRA_SLOT_ITEMS = (inventory.BLESS_OF_BUILDING_I[0], inventory.BLESS_OF_BUILDING_II[0])
 
-    def __init__(self, bot):
-        super(Construct, self).__init__()
-        self.bot = bot
-
     def upgrade(self, city, build_type):
         """
         {"code":0,"ret":{"cdlist":[{"id":1234567,"cdtype":1,"target":"5","owner":0,"secs":90}]}}

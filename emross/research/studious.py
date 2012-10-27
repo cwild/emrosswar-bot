@@ -10,11 +10,6 @@ class Study(Task):
     STUDY_URL = 'game/study_api.php'
     STUDY_MOD_URL = 'game/study_mod_api.php'
 
-    def __init__(self, bot):
-        super(Study, self).__init__()
-        self.bot = bot
-
-
     def tech_levels(self, city):
         logger.info('Find tech levels for this city, %s' % city.name)
         try:

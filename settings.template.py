@@ -16,7 +16,6 @@ user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) 
 game_server = 'YOURSERVER.emrosswar.com'
 
 get_user_info = 'game/get_userinfo_api.php'
-get_city_countdown_info = 'game/get_cdinfo_api.php'
 get_goods = 'game/goods_api.php'
 
 get_heroes = 'game/gen_conscribe_api.php'
@@ -126,7 +125,17 @@ from emross.research.tech import Tech
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 
+from emross.utility.task import Task
+
+class MyTask(Task):
+    def process(self, a=1, b=2, gems=0, *args, **kwargs):
+        print 'my task run', args, kwargs
+        print a, b, gems
+
 build_path = (
+    (
+        (MyTask, (5, 6), {'gems':100}),
+    ),
     (
         (Construct, (Building.HOUSE, 1)),
         (Construct, (Building.UNIVERSITY, 1))

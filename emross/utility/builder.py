@@ -1,21 +1,12 @@
-from emross.research.studious import Study
-from emross.structures.construction import Construct
-
 import logging
 logger = logging.getLogger(__name__)
 
 class BuildManager(object):
-    TASKS = (Study, Construct)
 
     def __init__(self, bot, path=None, *args, **kwargs):
         self.bot = bot
         self.path = path
-
         self.tasks = {}
-        for task in self.__class__.TASKS:
-            t = task(self.bot)
-            self.tasks[t.__class__] = t
-
         super(BuildManager, self).__init__(*args, **kwargs)
 
     def process(self):
@@ -31,7 +22,15 @@ class BuildManager(object):
             results[:] = []
             for parts in stage:
                 try:
-                    handler = self.tasks[parts[0]]
+                    cls = parts[0]
+                    handler = self.tasks[cls]
+                except KeyError, e:
+                    handler = self.tasks[cls] = cls(self.bot)
+                except TypeError, e:
+                    logger.exception(e)
+                    continue
+
+                try:
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
                     result = handler.process(*args, **kwargs)

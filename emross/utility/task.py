@@ -8,6 +8,9 @@ class Task(object):
     """
     This is just an abstraction. Not for direct use.
     """
+    def __init__(self, bot, *args, **kwargs):
+        self.bot = bot
+        super(Task, self).__init__(*args, **kwargs)
 
     def process(self, *args, **kwargs): pass
 
