@@ -25,7 +25,7 @@ class City:
         self.name = name.encode('utf-8')
         self.x = x
         self.y = y
-        self._data = None
+        self._data = []
 
         self.heroes = []
         self.soldiers = []
@@ -37,7 +37,7 @@ class City:
 
     @property
     def data(self):
-        if self._data is None:
+        if not self._data:
             self.update()
         return self._data
 
@@ -70,7 +70,7 @@ class City:
         """
 
         json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
-        self._data = json['ret']['city']
+        self._data[:] = json['ret']['city']
 
 
     def get_gold_count(self):

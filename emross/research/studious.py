@@ -55,7 +55,8 @@ class Study(Task):
             if len(tasks) == 0 and tech not in current_study and self.tech_level(city, tech) < level \
                 and city.resource_manager.meet_requirements(Tech.cost(tech, level)):
                     ctdwn = self.upgrade(city, tech)
-                    city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
+                    if ctdwn['code'] == EmrossWar.SUCCESS:
+                        city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
                     break
 
 

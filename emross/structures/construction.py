@@ -46,7 +46,8 @@ class Construct(Task):
                 if len(tasks) < capacity and structure not in [t['target'] for t in tasks] \
                     and city.resource_manager.meet_requirements(Building.cost(structure, level)):
                     ctdwn = self.upgrade(city, structure)
-                    city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
+                    if ctdwn['code'] == EmrossWar.SUCCESS:
+                        city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
                 else:
                     result = False
 
