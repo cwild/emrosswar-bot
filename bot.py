@@ -52,7 +52,7 @@ def main():
                 #bot.clear_favs()
 
                 print 'There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[2]),
-                            sum([settings.npc_attack_limit - x.attack for x in bot.fav[2]]) )
+                            sum([bot.npc_attack_limit - x.attack for x in bot.fav[2]]) )
 
                 concurrent_attacks = []
 
@@ -159,7 +159,7 @@ def main():
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
 
                 ratings = dict(settings.soldier_threshold)
-                if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < settings.npc_attack_limit and f.rating in ratings]):
+                if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < bot.npc_attack_limit and f.rating in ratings]):
                     print 'We have some more Devil Armies to attack!'
                 else:
                     print 'None found, sleep for 30 minutes'
@@ -175,10 +175,11 @@ def main():
             bot.scout_map()
             bot.clean_war_reports()
 
-            try:
-                bot.donator.make_donations(settings.donation_tech_preference)
-            except AttributeError:
-                pass
+            if not bot.pvp:
+                try:
+                    bot.donator.make_donations(settings.donation_tech_preference)
+                except AttributeError:
+                    pass
 
             bot.clearout_inventory()
 

@@ -8,8 +8,9 @@ from lib.session import Session
 from emross.item import item
 from emross.resources import Resource
 
-import time
 import math
+import re
+import time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -43,9 +44,14 @@ sys.stdout = Unbuffered(sys.stdout)
 
 
 class EmrossWarBot:
+    PVP_MODE_RE = re.compile('^p\d+\.')
+
     def __init__(self, api):
         self.api = api
         api.bot = self
+
+        self.pvp = self.__class__.PVP_MODE_RE.match(api.game_server) is not None
+        self.npc_attack_limit = 3 if not self.pvp else 5
 
         self.scheduler = s = kronos.ThreadedScheduler()
 
@@ -167,7 +173,7 @@ class EmrossWarBot:
                 favs = [e for e in self.fav[cat] if e.rating is rating]
 
                 for t in favs:
-                    if t.attack < settings.npc_attack_limit:
+                    if t.attack < self.npc_attack_limit:
                         target = t
                         done = True
                         break
@@ -182,7 +188,7 @@ class EmrossWarBot:
             raise InsufficientSoldiers
 
         if not target:
-            raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % settings.npc_attack_limit
+            raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % self.npc_attack_limit
 
         rating = (range(6, 0, -1)+range(7,9))[target.rating-1]
         print 'Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack)
