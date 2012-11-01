@@ -82,7 +82,10 @@ class ResourceManager:
                     total_gold += gold_amount
                     conversion['%s2%s' % (Resource.GOLD, res)] = gold_amount
 
-        if total_gold == 0:
+
+        if self.get_amount_of(Resource.GOLD) < resource_levels[Resource.GOLD]:
+            logger.debug('Not enough gold available for required resource levels.')
+        elif total_gold == 0:
             logger.debug('No need to exchange any resources')
             return True
         elif total_gold < self.get_amount_of(Resource.GOLD):

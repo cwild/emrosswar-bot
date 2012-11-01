@@ -38,6 +38,13 @@ class Study(Task):
             logger.debug('Failed to start research %d at city "%s"' % (tech, city.name))
         return json
 
+    def can_study(self, city, tech, level):
+        try:
+            return self.tech_level(city, tech) < level
+        except IndexError:
+            logger.debug('The university at %s is not high enough to study tech %d yet.' % (city.name, tech))
+            return False
+
     def process(self, tech, level, *args, **kwargs):
         current_study = set()
         for city in self.bot.cities:
@@ -47,12 +54,12 @@ class Study(Task):
 
         for city in self.bot.cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
-            if len(tasks) == 0 and tech not in current_study and self.tech_level(city, tech) < level \
+            if len(tasks) == 0 and tech not in current_study and self.can_study(city, tech, level) \
                 and city.resource_manager.meet_requirements(Tech.cost(tech, level)):
                     ctdwn = self.upgrade(city, tech)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
-                    break
+                        break
 
 
 if __name__ == "__main__":
