@@ -176,10 +176,16 @@ class City:
         json = self.bot.api.call(settings.get_heroes, city=self.id, action='gen_list', extra=extra)
         self.heroes[:] = []
 
-        heroes = sorted(json['ret']['hero'], key = lambda val: (Hero.LEVEL, Hero.EXPERIENCE))
+        heroes = json['ret']['hero']
+        heroes.sort(key = lambda val: (Hero.LEVEL, Hero.EXPERIENCE))
 
         for data in heroes:
-            #print 'Level %d, Exp %d' % (data['g'], data['ex'])
+            try:
+                if data['gid'] in settings.exclude_heroes:
+                    continue
+            except AttributeError:
+                pass
+
             self.heroes.append(Hero(data))
 
 

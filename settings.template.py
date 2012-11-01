@@ -52,6 +52,8 @@ ignore_cities = [22008]
 TOO_OFTEN_WARNING = '''You visit too often!'''
 concurrent_attack_limit = 18
 
+exclude_heroes = []
+
 
 """
 What types of Devil Army should we scout on the world map?
