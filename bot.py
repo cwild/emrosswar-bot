@@ -139,33 +139,14 @@ def main():
                         print '%s has insufficient troops to launch an attack.' % city.name
                         continue
 
+                    except NoTargetsFound, e:
+                        continue
+
                 concurrent_attacks[:] = [e for e in concurrent_attacks if e > time.time()]
 
             except NoTargetsAvailable, e:
                 logger.exception(e)
                 print 'No targets available to attack.'
-
-            except NoTargetsFound, e:
-                logger.exception(e)
-                print 'No targets found'
-
-                for city in bot.cities:
-                    city.update()
-                    city.recruit_hero()
-                    city.replenish_food()
-
-                bot.scout_map()
-
-                bot.get_fav(EmrossWar.DEVIL_ARMY)
-
-                ratings = dict(settings.soldier_threshold)
-                if len([f for f in bot.fav[EmrossWar.DEVIL_ARMY] if f.attack < bot.npc_attack_limit and f.rating in ratings]):
-                    print 'We have some more Devil Armies to attack!'
-                else:
-                    print 'None found, sleep for 30 minutes'
-                    time.sleep(30*MINUTE)
-
-                continue
 
 
 
@@ -189,7 +170,7 @@ def main():
             time.sleep(5*MINUTE)
 
         except EmrossWarApiException, e:
-            print e
+            logger.exception(e)
             print 'Exception, sleeping for an hour'
             time.sleep(1*HOUR)
 

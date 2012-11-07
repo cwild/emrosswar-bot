@@ -159,14 +159,14 @@ class EmrossWarBot:
         _, x, y, *, attacked
         """
 
-        target = None
-        army = None
+        army, target = None, None
 
         try:
             for rating, threshold in settings.soldier_threshold:
                 try:
                     army = city.create_army(threshold, False)
                 except InsufficientSoldiers:
+                    army, target = None, None
                     continue
 
                 done = False
@@ -188,10 +188,13 @@ class EmrossWarBot:
             raise InsufficientSoldiers
 
         if not target:
+            if len(favs) == 0:
+                raise NoTargetsFound, 'There are no DAs in the favs list for the selected army: %s' % army
+
             raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % self.npc_attack_limit
 
         rating = (range(6, 0, -1)+range(7,9))[target.rating-1]
-        print 'Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack)
+        logger.info('Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack))
 
         return target, army
 
