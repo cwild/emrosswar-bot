@@ -76,7 +76,7 @@ class EmrossWarBot:
 
         try:
             self.builder = BuildManager(self, path=settings.build_path)
-            self.tasks['builder'] = s.add_interval_task(self.builder.process, "build handler", 10, 15, kronos.method.threaded, [], None)
+            self.tasks['builder'] = s.add_interval_task(self.builder.process, "build handler", 1, 1, kronos.method.sequential, [], None)
         except AttributeError:
             pass
 

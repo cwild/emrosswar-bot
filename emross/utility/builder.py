@@ -1,6 +1,8 @@
 import logging
 logger = logging.getLogger(__name__)
 
+import time
+
 class BuildManager(object):
 
     def __init__(self, bot, path=None, *args, **kwargs):
@@ -15,6 +17,7 @@ class BuildManager(object):
         for further processing.
         """
         results = []
+        cycle_start = time.time()
 
         for i, stage in enumerate(self.path):
             logger.debug('Processing build stage %d' % i)
@@ -30,10 +33,11 @@ class BuildManager(object):
                     logger.exception(e)
                     continue
 
+
                 try:
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
-                    result = handler.process(*args, **kwargs)
+                    result = handler.run(cycle_start, *args, **kwargs)
                     results.append(result)
                 except (IndexError, KeyError), e:
                     logger.exception(e)

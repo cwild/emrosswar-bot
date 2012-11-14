@@ -8,12 +8,40 @@ class Task(object):
     """
     This is just an abstraction. Not for direct use.
     """
+    INTERVAL = 60
+
     def __init__(self, bot, *args, **kwargs):
         self.bot = bot
+        self._result = None
+        self._last_cycle = 0
+        self._next_run = 0
         super(Task, self).__init__(*args, **kwargs)
+
+    def run(self, cycle_start, *args, **kwargs):
+        """
+        Run this task if the cycle_start time differs
+
+        A result is returned for this task; either from the previous cycle
+        or as the result of processing this cycle. Necessary incase a blocking
+        task has fired previously and is not rescheduled to run yet.
+        """
+        if self._last_cycle == cycle_start or cycle_start > self._next_run:
+            self._last_cycle = cycle_start
+            self._result = self.process(*args, **kwargs)
+
+            if self._next_run < cycle_start:
+                delay = self.calculate_delay()
+                self.sleep(delay)
+
+        return self._result
 
     def process(self, *args, **kwargs): pass
 
+    def calculate_delay(self):
+        return self.INTERVAL
+
+    def sleep(self, seconds=INTERVAL):
+        self._next_run = time.time() + seconds
 
 class TaskType:
     DEGRADE = 0
