@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.exceptions import InsufficientSoldiers
-from emross.research.studious import Study
-from emross.research.tech import Tech
 from emross.resources import Resource, ResourceManager
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
@@ -69,6 +67,7 @@ class City:
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
+        logger.info('Updating city "%s"' % self.name)
         json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
         self._data[:] = json['ret']['city']
 
@@ -78,6 +77,7 @@ class City:
 
 
     def replenish_food(self, amount = None):
+        logger.info('Replenishing food')
         if not amount:
             food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
             amount = food_limit - food

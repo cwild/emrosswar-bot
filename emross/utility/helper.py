@@ -94,6 +94,7 @@ class EmrossWarBot:
         """
         Setup bot with player account data
         """
+        logger.info('Updating player info')
         json = self.api.call(settings.get_user_info, pushid=settings.pushid, **{'_l':'en'} )
 
         if json['code'] == 2:

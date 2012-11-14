@@ -44,12 +44,10 @@ def main():
 
     while True:
         try:
-            print 'Updating player info'
             bot.update()
 
             try:
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
-                #bot.clear_favs()
 
                 print 'There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[2]),
                             sum([bot.npc_attack_limit - x.attack for x in bot.fav[2]]) )
@@ -57,12 +55,8 @@ def main():
                 concurrent_attacks = []
 
                 for city in bot.cities:
-                    print 'Updating city %s' % city.name
                     city.update()
-
                     city.recruit_hero()
-
-                    print 'Replenishing food'
                     city.replenish_food()
 
                     if bot.is_attack_time() is False:
@@ -162,7 +156,7 @@ def main():
                 except AttributeError:
                     pass
 
-            bot.clearout_inventory()
+                bot.clearout_inventory()
 
             print 'Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True))
 
@@ -171,7 +165,7 @@ def main():
 
         except EmrossWarApiException, e:
             logger.exception(e)
-            print 'Exception, sleeping for an hour'
+            logger.info('Exception, sleeping for an hour')
             time.sleep(1*HOUR)
 
 
