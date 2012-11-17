@@ -55,7 +55,7 @@ class Study(Task):
         for city in self.bot.cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks) == 0 and tech not in current_study and self.can_study(city, tech, level) \
-                and city.resource_manager.meet_requirements(Tech.cost(tech, level)):
+                and city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1)):
                     ctdwn = self.upgrade(city, tech)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])

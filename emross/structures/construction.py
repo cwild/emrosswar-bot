@@ -32,7 +32,8 @@ class Construct(Task):
         result = True
 
         for city in self.bot.cities:
-            if self.structure_level(city, structure) < level:
+            current_level = self.structure_level(city, structure)
+            if current_level < level:
                 tasks = city.countdown_manager.get_tasks(task_type=TaskType.BUILDING)
 
                 buffs = city.data[23]
@@ -40,7 +41,7 @@ class Construct(Task):
                 logger.debug('Build capacity at castle "%s" is %d' % (city.name, capacity))
 
                 if len(tasks) < capacity and structure not in [t['target'] for t in tasks] \
-                    and city.resource_manager.meet_requirements(Building.cost(structure, level)):
+                    and city.resource_manager.meet_requirements(Building.cost(structure, current_level+1)):
                     ctdwn = self.upgrade(city, structure)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
