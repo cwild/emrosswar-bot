@@ -184,7 +184,7 @@ class Scenario:
         """
         game/fb_add_soldier.php?gen=4
         """
-        self.bot.api.call(self.ADD_SOLDIER_URL, gen=gen)
+        return self.bot.api.call(self.ADD_SOLDIER_URL, gen=gen)
 
     def start(self, city, scenario, armies):
         """

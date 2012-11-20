@@ -173,7 +173,7 @@ class ScenarioWalker(Task):
 
         if wait:
             logger.info('We need to wait for a hero to progress. Come back as soon as possible.')
-            this.sleep(min(wait))
+            self.sleep(min(wait))
 
 
     def refill_soldiers(self, gen):
@@ -181,11 +181,13 @@ class ScenarioWalker(Task):
         Refill a heroes army before war
         TODO: Check the containing castle has the desired troops for this
         """
-        self.scenario.restock(gen)
+        json = self.scenario.restock(gen)
+        return json['code'] == EmrossWar.SUCCESS
 
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     walker = ScenarioWalker(None)
 
     now = time.localtime()
