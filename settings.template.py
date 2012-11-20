@@ -125,6 +125,9 @@ from emross.research.tech import Tech
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 
+from emross.scenario.scene import Scenario
+from emross.scenario.walker import ScenarioWalker
+
 from emross.utility.task import Task
 
 class MyTask(Task):
@@ -135,6 +138,20 @@ class MyTask(Task):
 build_path = (
     (
         (MyTask, (5, 6), {'gems':100}),
+    ),
+    (
+        (ScenarioWalker, (Scenario.GLOOMY_CANYON, [
+            {
+                'hero': 4,
+                'troops': [(Soldier.LONUFAL, 1400), (Soldier.KAHKLEH, 1644)],
+                'path': [1, 5, 4, 11, 13]
+            },
+            {
+                'hero': 222,
+                'troops': [(Soldier.LONUFAL, 1400), (Soldier.KAHKLEH, 1182)],
+                'path': [2, 3, 5, 8, 9]
+            },
+        ]), {'times':[(1,45), (14,50), (22,30)]}),
     ),
     (
         (Construct, (Building.HOUSE, 1)),

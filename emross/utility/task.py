@@ -16,6 +16,7 @@ class Task(object):
         self._last_cycle = 0
         self._next_run = 0
         super(Task, self).__init__(*args, **kwargs)
+        self.setup()
 
     def run(self, cycle_start, *args, **kwargs):
         """
@@ -36,6 +37,8 @@ class Task(object):
         return self._result
 
     def process(self, *args, **kwargs): pass
+
+    def setup(self): pass
 
     def calculate_delay(self):
         return self.INTERVAL

@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
-from emross.exceptions import InsufficientSoldiers
+from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.resources import Resource, ResourceManager
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
@@ -102,10 +102,11 @@ class City:
         except TypeError:
             pass
 
-    def create_army(self, threshold, deduct = True):
+    def create_army(self, threshold, deduct = True, heroes = [], mixed = False):
         """
         Return a dict of the various soldiers to include in this army
         """
+        heroes = heroes or self.heroes
 
         army = {}
 
@@ -115,7 +116,10 @@ class City:
             then add them to the army
             """
             try:
-                if (max([h.data.get(Hero.COMMAND) for h in self.heroes]) < qty):
+                if (max([h.data.get(Hero.COMMAND) for h in heroes]) < qty):
+                    if mixed:
+                        raise InsufficientHeroCommand, 'With a mixed army, all troops must be sent'
+
                     continue
 
                 soldiers = [s for s in self.soldiers if s[0] == soldier][0]
@@ -129,10 +133,16 @@ class City:
                     if deduct:
                         soldiers[1] -= qty
 
-                    break
+                    if not mixed:
+                        break
             except (IndexError, ValueError):
                 pass
 
+        if army and mixed:
+            cmd = max([h.data.get(Hero.COMMAND) for h in heroes])
+            total = sum([v for v in army.itervalues()])
+            if total > cmd:
+                raise InsufficientHeroCommand, 'This hero cannot command this many troops'
 
         if not army:
             raise InsufficientSoldiers, 'No soldiers were added to the army'
