@@ -17,7 +17,7 @@ class ScenarioWalker(Task):
     def setup(self):
         self.scenario = None
 
-    def process(self, scenario, armies, times=[], blocking=False, *args, **kwargs):
+    def process(self, scenario, armies, times=[], blocking=False, initial_delay=0.5, *args, **kwargs):
         if self.bot.pvp:
             self.sleep(86400)
             return False
@@ -72,7 +72,7 @@ class ScenarioWalker(Task):
                         if self.scenario.start(city, scenario, armies):
                             # We have started, so let's get going on the next cycle
                             logger.info('Started scenario %d' % scenario)
-                            self.sleep(0.5)
+                            self.sleep(initial_delay)
                     except (InsufficientHeroCommand, InsufficientSoldiers):
                         self.sleep(900)
                         return blocking
