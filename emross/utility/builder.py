@@ -20,7 +20,7 @@ class BuildManager(object):
         cycle_start = time.time()
 
         for i, stage in enumerate(self.path):
-            logger.debug('Processing build stage %d' % i)
+            logger.debug('Processing build stage %d' % (i+1))
 
             results[:] = []
             for parts in stage:

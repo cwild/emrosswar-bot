@@ -17,21 +17,21 @@ class ScenarioWalker(Task):
     def setup(self):
         self.scenario = None
 
-    def process(self, scenario, armies, times=[], blocking=False, initial_delay=0.5, *args, **kwargs):
+    def process(self, scenario, armies, times=[], resume=True, initial_delay=0.5, *args, **kwargs):
         if self.bot.pvp:
             self.sleep(86400)
-            return False
+            return True
 
         if self.scenario is None:
             self.scenario = Scenario(self.bot)
 
         if len(self.bot.cities) == 0:
-            return blocking
+            return resume
 
         json = self.scenario.list()
 
         if json['code'] != EmrossWar.SUCCESS:
-            return blocking
+            return resume
 
         if 'fb_label' in json['ret']:
             # Scenario in progress
@@ -39,12 +39,12 @@ class ScenarioWalker(Task):
             if scenario != int(json['ret']['fb_label']):
                 logger.info('Already on a different scenario')
                 this.sleep(json['ret']['remaining_time'])
-                return blocking
+                return resume
 
             if int(json['ret']['finish']) == 1:
                 self.scenario.finish()
                 self.scenario = None
-                return blocking
+                return resume
 
             if not hasattr(self.scenario, 'armies'):
                 self.scenario.armies = deepcopy(armies)
@@ -75,11 +75,11 @@ class ScenarioWalker(Task):
                             self.sleep(initial_delay)
                     except (InsufficientHeroCommand, InsufficientSoldiers):
                         self.sleep(900)
-                        return blocking
+                        return resume
                 else:
                     self.sleep(3600)
 
-        return blocking
+        return resume
 
 
     def can_start(self, times, start_time=None):
