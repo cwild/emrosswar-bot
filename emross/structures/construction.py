@@ -32,6 +32,11 @@ class Construct(Task):
         result = True
 
         for city in self.bot.cities:
+
+            if city.data[0] == 0:
+                logger.info('City %s is out of free land. Unable to build.' % city.name)
+                continue
+
             current_level = self.structure_level(city, structure)
             if current_level < level:
                 tasks = city.countdown_manager.get_tasks(task_type=TaskType.BUILDING)
