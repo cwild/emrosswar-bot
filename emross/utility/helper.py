@@ -95,7 +95,7 @@ class EmrossWarBot:
         Setup bot with player account data
         """
         logger.info('Updating player info')
-        json = self.api.call(settings.get_user_info, pushid=settings.pushid, **{'_l':'en'} )
+        json = self.api.call('game/get_userinfo_api.php', pushid=settings.pushid, **{'_l':'en'} )
 
         if json['code'] == 2:
             self.last_update = 0
@@ -119,7 +119,7 @@ class EmrossWarBot:
 
     def get_gift(self, gift):
         logger.info('Collecting gift %d' % gift['id'])
-        json = self.api.call(settings.get_goods, action='gift', id=gift['id'], _l='en')
+        json = self.api.call('game/goods_api.php', action='gift', id=gift['id'], _l='en')
 
 
     def get_fav(self, cat = EmrossWar.DEVIL_ARMY):

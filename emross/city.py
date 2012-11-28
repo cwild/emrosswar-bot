@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
+from emross.military.barracks import Barracks
 from emross.resources import Resource, ResourceManager
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
@@ -237,7 +238,7 @@ class City:
         if not params['gen']:
             raise ValueError, 'Need to send a hero to lead the army'
 
-        json = self.bot.api.call(settings.action_confirm, sleep=(5,8), city=self.id, **params)
+        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, sleep=(5,8), city=self.id, **params)
 
         """ Returns the cost of war """
         """
@@ -261,7 +262,7 @@ class City:
             logger.exception(e)
             logger.info(params)
 
-        json = self.bot.api.call(settings.action_do, sleep=(1,3), city=self.id, **params)
+        json = self.bot.api.call(Barracks.ACTION_DO_URL, sleep=(1,3), city=self.id, **params)
 
         if json['code'] == settings.TOO_OFTEN_WARNING:
             raise EmrossWarApiException, 'We have been rate limited. Come back later.'
@@ -320,5 +321,5 @@ class City:
 
 
     def check_war_room(self):
-        json = self.bot.api.call(settings.action_confirm, act='warinfo', city=self.id)
+        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, act='warinfo', city=self.id)
 

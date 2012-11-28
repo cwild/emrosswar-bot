@@ -4,11 +4,14 @@ logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
+from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 
 import settings
 
 class World:
+    MAP_URL = 'game/api_world_map.php'
+
     def __init__(self, bot):
         self.bot = bot
         self._map_size = None
@@ -28,10 +31,10 @@ class World:
             'area_x': y
         }
 
-        json = self.bot.api.call(settings.action_confirm, **params)
+        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, **params)
 
         params.update(json['ret'])
-        json = self.bot.api.call(settings.action_do, **params)
+        json = self.bot.api.call(Barracks.ACTION_DO_URL, **params)
 
         return json['code'] == EmrossWar.SUCCESS
 
@@ -142,7 +145,7 @@ class World:
 
     def get_page(self, x, y):
         logger.info('Get page x=%d y=%d' % (x,y))
-        json = self.bot.api.call(settings.world_map, x=x, y=y)
+        json = self.bot.api.call(self.MAP_URL, x=x, y=y)
 
         return json['ret']
 

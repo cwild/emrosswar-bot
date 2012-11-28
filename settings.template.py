@@ -15,9 +15,6 @@ user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) 
 
 game_server = 'YOURSERVER.emrosswar.com'
 
-get_user_info = 'game/get_userinfo_api.php'
-get_goods = 'game/goods_api.php'
-
 get_heroes = 'game/gen_conscribe_api.php'
 get_soldiers = 'game/soldier_educate_api.php'
 
@@ -25,19 +22,6 @@ hero_conscribe = 'game/gen_conscribe_api.php'
 
 
 api_fav = 'game/api_fav.php'
-war_result_list = 'game/war_result_list_api.php'
-war_result_info = 'game/war_result_info_api.php'
-
-world_map = 'game/api_world_map.php'
-
-action_confirm = 'game/armament_action_do_api.php'
-action_do = 'game/armament_action_task_api.php'
-
-
-event_timers = {
-    'get_user_info':60000
-}
-
 
 
 """Id = 12553, name = crow tree
