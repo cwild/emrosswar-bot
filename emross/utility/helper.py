@@ -299,10 +299,10 @@ class EmrossWarBot:
                 city = self.poorest_city()
 
                 for item_id in sale_list:
-                    json = item_manager.sell(city = city.id, id = item_id)
                     try:
+                        json = item_manager.sell(city = city.id, id = item_id)
                         city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
-                    except KeyError:
+                    except (KeyError, TypeError):
                         pass
 
                 sale_list[:] = []
