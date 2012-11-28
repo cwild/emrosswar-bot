@@ -33,6 +33,11 @@ class ScenarioWalker(Task):
         if json['code'] != EmrossWar.SUCCESS:
             return resume
 
+        if 'hasLottery' in json['ret'] and json['ret']['hasLottery']:
+            self.scenario.finish()
+            self.scenario = Scenario(self.bot)
+            return resume
+
         if 'fb_label' in json['ret']:
             # Scenario in progress
 
