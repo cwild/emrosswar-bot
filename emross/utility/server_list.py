@@ -2,14 +2,14 @@ import sys
 
 sys.path.extend(['lib/', 'lib/urllib3/'])
 
-from urllib3 import HTTPConnectionPool, HTTPError
 import simplejson
+import urllib3
 
 def main():
     master = 'm.emrosswar.com'
     naming = 'naming.php'
 
-    pool = HTTPConnectionPool(master, headers={'User-Agent': ''})
+    pool = urllib3.PoolManager()
 
     servers = []
 
@@ -17,7 +17,7 @@ def main():
     while True:
         try:
             s = 'http://%s/%s?s=s%d.emrosswar.com' % (master, naming, i)
-            r = pool.urlopen('GET', s)
+            r = pool.request('GET', s, headers={'User-Agent': ''})
 
             jsonp = r.data
             jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
@@ -34,7 +34,7 @@ def main():
             print 'PvE %d: %s' % (i, server)
             i += 1
 
-        except (HTTPError, ValueError), e :
+        except (urllib3.exceptions.HTTPError, ValueError), e :
             break
 
 
