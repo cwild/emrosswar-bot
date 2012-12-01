@@ -156,6 +156,9 @@ class ScenarioWalker(Task):
                 continue
 
             point = army['path'][0]
+            if point == 0:
+                continue
+
             info = self.scenario.move(point)
 
             if info['code'] == Scenario.SCENARIO_FINISHED:
