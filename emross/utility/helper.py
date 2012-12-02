@@ -148,7 +148,7 @@ class EmrossWarBot:
 
     def clear_favs(self):
         for f in self.fav[EmrossWar.DEVIL_ARMY]:
-            print 'Deleting fav %d' % f.id
+            logger.info('Deleting fav %d' % f.id)
             self.api.call(settings.api_fav, act='delfavnpc', fid=f.id)
 
 
@@ -203,10 +203,10 @@ class EmrossWarBot:
 
 
     def scout_map(self):
-        print 'Trying to find more targets to attack'
+        logger.info('Trying to find more targets to attack')
 
         if not len(settings.farming_hours):
-            print 'There are no times of day set to farm. No point scouting the map.'
+            logger.info('There are no times of day set to farm. No point scouting the map.')
             return
 
         try:
@@ -215,7 +215,7 @@ class EmrossWarBot:
             last_scan = 0
 
         if time.time() < last_scan + (3 * 86400):
-            print 'The world was scanned less than 3 days ago'
+            logger.info('The world was scanned less than 3 days ago')
         else:
             try:
                 self.world.search(settings.scout_devil_army_types)
@@ -231,7 +231,7 @@ class EmrossWarBot:
                 self.session.save()
 
         try:
-            print 'Look at scout reports to try to locate devil armies'
+            logger.info('Look at scout reports to try to locate devil armies')
             self.scout_mail.process()
         except MailException:
             pass
@@ -251,12 +251,12 @@ class EmrossWarBot:
 
     def richest_city(self):
         city = max(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        print 'Chosen the city with the most gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD))
+        logger.info('Chosen the city with the most gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD)))
         return city
 
     def poorest_city(self):
         city = min(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        print 'Chosen the city with the least gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD))
+        logger.info('Chosen the city with the least gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD)))
         return city
 
 
@@ -295,7 +295,7 @@ class EmrossWarBot:
                     break
 
             if sale_list:
-                print 'Sell %d item/s of type %d' % (len(sale_list), itype)
+                logger.info('Sell %d item/s of type %d' % (len(sale_list), itype))
                 city = self.poorest_city()
 
                 for item_id in sale_list:

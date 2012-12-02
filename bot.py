@@ -33,8 +33,9 @@ def main():
     """
     Steps necessary for the bot to "play" the game
     """
-    print 'Starting bot'
+    logger.info('Starting bot')
     bot.session.start_time = time.time()
+    logger.debug('Farming hours: %s' % settings.farming_hours)
 
     """
     We can make calls directly should we wish to:
@@ -49,8 +50,8 @@ def main():
             try:
                 bot.get_fav(EmrossWar.DEVIL_ARMY)
 
-                print 'There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[2]),
-                            sum([bot.npc_attack_limit - x.attack for x in bot.fav[2]]) )
+                logger.info('There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[EmrossWar.DEVIL_ARMY]),
+                            sum([bot.npc_attack_limit - x.attack for x in bot.fav[EmrossWar.DEVIL_ARMY]]) ))
 
                 concurrent_attacks = []
 
@@ -66,10 +67,10 @@ def main():
                         """
                         How many (decent) soldiers are in this city?
                         """
-                        print 'Getting soldiers'
+                        logger.info('Getting soldiers')
                         city.get_soldiers()
 
-                        print 'Getting available heroes'
+                        logger.info('Getting available heroes')
                         city.get_available_heroes()
 
 
@@ -82,7 +83,7 @@ def main():
                             # choose hero which can lead this army
                             hero = city.choose_hero(sum(army.values()))
                             if not hero:
-                                print 'No available heroes to command this army'
+                                logger.info('No available heroes to command this army')
 
                             # send troops to attack
                             params = {
@@ -98,7 +99,7 @@ def main():
                             cost = city.action_confirm(params)
                             params.update(cost)
 
-                            print 'Sending attack %d/%d' % (target.y, target.x)
+                            logger.info('Sending attack %d/%d' % (target.y, target.x))
                             city.action_do(params)
 
                             try:
@@ -118,7 +119,7 @@ def main():
                                 if len(concurrent_attacks) == settings.concurrent_attack_limit:
                                     delay = max(concurrent_attacks) - time.time()
 
-                                    print 'Maximum number of concurrent attacks, %d, has been reached. Wait for longest current attack to return (%d seconds)' % (settings.concurrent_attack_limit, delay)
+                                    logger.info('Maximum number of concurrent attacks, %d, has been reached. Wait for longest current attack to return (%d seconds)' % (settings.concurrent_attack_limit, delay))
 
                                     concurrent_attacks[:] = []
                                     time.sleep(delay)
@@ -130,7 +131,7 @@ def main():
                         continue
 
                     except InsufficientSoldiers, e:
-                        print '%s has insufficient troops to launch an attack.' % city.name
+                        logger.info('%s has insufficient troops to launch an attack.' % city.name)
                         continue
 
                     except NoTargetsFound, e:
@@ -140,7 +141,7 @@ def main():
 
             except NoTargetsAvailable, e:
                 logger.exception(e)
-                print 'No targets available to attack.'
+                logger.info('No targets available to attack.')
 
 
 
@@ -158,9 +159,9 @@ def main():
 
                 bot.clearout_inventory()
 
-            print 'Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True))
+            logger.info('Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True)))
 
-            print 'Cycle finished, waiting for 5 mins to go again'
+            logger.info('Cycle finished, waiting for 5 mins to go again')
             time.sleep(5*MINUTE)
 
         except EmrossWarApiException, e:
@@ -176,4 +177,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         bot.session.end_time = time.time()
         bot.session.save()
-        print '\nExiting'
+        logger.info('Exiting')

@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 import re
 
 import settings
@@ -64,7 +67,7 @@ class MailHandler:
 
         for part in parts:
             ids = ','.join(str(o.id) for o in part if o is not None)
-            print 'Deleting mail id%s %s' % ("'s" if len(part) > 1 else '', ids)
+            logger.info('Deleting mail id%s %s' % ("'s" if len(part) > 1 else '', ids))
             json = self.api.call(Mail.WAR_RESULT_LIST, action='delete', id=ids)
 
 
@@ -74,7 +77,7 @@ class MailHandler:
         page = 1
         while True:
             max = self.list_mail(page)
-            print 'Reading page %d/%d' % (page, max)
+            logger.info('Reading page %d/%d' % (page, max))
 
             if max == page:
                 break
@@ -88,7 +91,7 @@ class AttackMailHandler(MailHandler):
 
 
     def process(self):
-        print 'Cleaning up war reports...'
+        logger.info('Cleaning up war reports...')
 
         MailHandler.process(self)
 
@@ -129,13 +132,13 @@ class ScoutMailHandler(MailHandler):
                     result = 'REJECTED'
 
 
-                print '%s devil army at [%d/%d] with troops %s' % (result, mail.data['dx'], mail.data['dy'],
-                    ', '.join(['%s(%d)'] * len(settings.enemy_troops)) % sum(zip([s for s, c in settings.enemy_troops], troops), ()))
+                logger.info('%s devil army at [%d/%d] with troops %s' % (result, mail.data['dx'], mail.data['dy'],
+                    ', '.join(['%s(%d)'] * len(settings.enemy_troops)) % sum(zip([s for s, c in settings.enemy_troops], troops), ())))
 
 
                 mail.processed = True
             except TypeError:
-                print 'Error parsing mail: %s\n\n%s\n\n\n%s' % (mail.data, mail.message, '*'*40)
+                logger.info('Error parsing mail: %s\n\n%s\n\n\n%s' % (mail.data, mail.message, '*'*40))
 
 
 
@@ -185,6 +188,8 @@ class MailParser:
 
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
+
     mail_parser = MailParser(settings.enemy_troops)
 
     message = ["""<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5351)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br><br>""",
@@ -194,14 +199,11 @@ def main():
         """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Inferno(9293)<br>Attack(120)&nbsp;&nbsp;Defense(40)&nbsp;&nbsp;Health(180)<br>"""
     ]
 
-    print 'Enemy troop ratio we are using: %s' % list(mail_parser.troops)
+    logger.info('Enemy troop ratio we are using: %s' % list(mail_parser.troops))
 
     for m in message:
         troops = mail_parser.find_troops(m)
-        print 'Troops %s, Attackable: %s' % (troops, mail_parser.is_attackable(troops))
-
-    #print 'Enemy troop ratio we are using: %d' % settings.enemy_troop_ratio
-    #print 'Consider for attack: %s' % mail_parser.is_attackable(troops)
+        logger.info('Troops %s, Attackable: %s' % (troops, mail_parser.is_attackable(troops)))
 
 
 if __name__ == "__main__":

@@ -52,21 +52,21 @@ class World:
                 pass
 
         if choice:
-            print 'Sending spies from %s' % choice.name
+            logger.info('Sending spies from %s' % choice.name)
             return choice
 
-        print 'Unable to locate any available spies, sleeping for 5 mins.'
+        logger.info('Unable to locate any available spies, sleeping for 5 mins.')
         time.sleep(300)
 
 
     def search(self, targets = []):
         if not targets:
-            print 'No targets to scout'
+            logger.info('No targets to scout')
             return
 
         city = self.get_city_with_spies()
         if not city:
-            print 'No cities found with spies.'
+            logger.info('No cities found with spies.')
             return
 
         try:
@@ -96,7 +96,7 @@ class World:
                                 for tries in xrange(2):
                                     city.get_soldiers()
                                     spies = city.soldiers[Soldier.SPY-1][1]
-                                    print 'Found %d spies in the city %s' % (spies, city.name)
+                                    logger.info('Found %d spies in the city %s' % (spies, city.name))
                                     if not spies:
                                         if tries == 0:
                                             logger.info('Check the war room. Try to trigger spy count to update')
@@ -109,10 +109,10 @@ class World:
 
                             favs = [f for f in self.favs if f.x == item[1] and f.y == item[0]]
                             if favs:
-                                print 'Already a fav, skipping'
+                                logger.info('Already a fav, skipping')
                                 continue
 
-                            print 'Scouting [%d, %d]' % (item[0], item[1])
+                            logger.info('Scouting [%d, %d]' % (item[0], item[1]))
                             self.scout(city.id, item[0], item[1])
                             spies -= 1
 
@@ -125,7 +125,7 @@ class World:
                         break
 
                 except WorldException:
-                    print 'Sleeping for 5 mins'
+                    logger.info('Sleeping for 5 mins')
                     time.sleep(600)
 
 
@@ -138,7 +138,7 @@ class World:
                 except AttributeError:
                     pass
 
-                print 'Finished scouting map'
+                logger.info('Finished scouting map')
                 break
 
             x = 0
@@ -161,7 +161,8 @@ class World:
 
 
     if __name__ == "__main__":
+        logging.basicConfig(level=logging.DEBUG)
         from bot import bot
 
         x, y = 1, 1
-        print 'The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y))
+        logger.info('The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y)))

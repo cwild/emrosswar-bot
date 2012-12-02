@@ -101,7 +101,7 @@ class Donator:
         if len(techs) is 0:
             raise ValueError
 
-        print 'Choosing from the following: %s' % (', '.join([Alliance.TECH[t[0]+1] for t in techs]))
+        logger.info('Choosing from the following: %s' % (', '.join([Alliance.TECH[t[0]+1] for t in techs])))
 
         try:
             # Get all the tech IDs
@@ -158,13 +158,13 @@ class Donator:
             # second index is techid but they all share the same timer, so just use 0
             cooldown = self.info[5][0][2]
             if cooldown is not 0:
-                print 'Cannot donate to tech yet. Try again in %d seconds' % cooldown
+                logger.info('Cannot donate to tech yet. Try again in %d seconds' % cooldown)
                 self.tech_timeout = time.time() + cooldown
             else:
                 try:
                     techid = self.choose_preferred_tech(tech_preference)
                     amount = self.get_tech_info(techid)[2]
-                    print 'Donate %d gold to %s' % (amount, Alliance.TECH[techid])
+                    logger.info('Donate %d gold to %s' % (amount, Alliance.TECH[techid]))
 
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
                     city.update()
@@ -176,15 +176,15 @@ class Donator:
         if check_hall:
             cooldown = self.info[4]
             if cooldown is not 0:
-                print 'Cannot donate to hall yet. Try again in %d seconds' % cooldown
+                logger.info('Cannot donate to hall yet. Try again in %d seconds' % cooldown)
                 self.hall_timeout = time.time () + cooldown
             else:
                 try:
                     if self.hall_donation_forced is False:
                         self.info[1] / self.info[2]
                     amount = self.info[3]
-                    print 'Donate %d gold to Hall of Alliance' % amount
+                    logger.info('Donate %d gold to Hall of Alliance' % amount)
                     self.donate_to_hall(gold=amount, city = city.id)
                 except TypeError:
-                    print 'Hall of Alliance is already complete'
+                    logger.info('Hall of Alliance is already complete')
                     self.hall_timeout = None

@@ -91,7 +91,6 @@ class City:
             buy_gold = available_gold
 
         if buy_gold and buy_gold > 0:
-            print 'trying with %d gold' % buy_gold
             self.resource_manager.convert(Resource.GOLD, Resource.FOOD, buy_gold)
 
 
@@ -287,37 +286,37 @@ class City:
         if st.structure_level(self, Building.ARENA) < 1:
             return
 
-        print 'Check for heroes at the bar in "%s"' % self.name
+        logger.info('Check for heroes at the bar in "%s"' % self.name)
         json = self.bot.api.call(settings.hero_conscribe, city=self.id)
 
 
         if 'refresh' in json['ret']:
-            print 'We have to wait before we can do this. Timer: %d' % json['ret']['refresh']
+            logger.info('We have to wait before we can do this. Timer: %d' % json['ret']['refresh'])
             self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
         else:
-            print 'Try buying a drink'
+            logger.info('Try buying a drink')
             json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='pub_process')
 
             if json['code'] == EmrossWar.REACHED_HERO_LIMIT:
-                print 'Hero limit has been reached for this castle.'
+                logger.info('Hero limit has been reached for this castle.')
                 return
 
 
             if json['code'] == EmrossWar.INSUFFICIENT_GOLD:
-                print 'Insufficient gold to buy a drink!'
+                logger.info('Insufficient gold to buy a drink!')
                 return
             else:
                 self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
 
 
             if 'hero' in json['ret'] and json['ret']['hero']['gid'] in settings.recruit_heroes:
-                print 'Found a hero we are looking for: %d' % json['ret']['hero']['gid']
+                logger.info('Found a hero we are looking for: %d' % json['ret']['hero']['gid'])
                 json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='hire_process')
 
                 if json['code'] == EmrossWar.SUCCESS:
-                    print 'Hero recruited!'
+                    logger.info('Hero recruited!')
                 else:
-                    print 'Could not recruit hero.'
+                    logger.info('Could not recruit hero.')
 
 
     def check_war_room(self):
