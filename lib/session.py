@@ -11,7 +11,7 @@ class Session:
         self.key = key
 
     def save(self):
-        pickle.dump(self, file(self.PATH % self.key, 'w'))
+        pickle.dump(self, file(self.PATH % self.key, 'wb'))
 
     @classmethod
     def load(cls, key):
