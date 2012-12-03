@@ -6,14 +6,19 @@ log_level = logging.DEBUG
 
 logfile = '/tmp/emross.log'
 
-session_path = 'build/session.pickle'
-
-api_key = ''
-pushid = ''
-
 user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7'
 
 game_server = 'YOURSERVER.emrosswar.com'
+api_key = ''
+pushid = ''
+
+from emross.utility.player import Player
+multi_bot = []
+multi_bot.append(Player(server='s1.emrosswar.com',key='key1...'))
+multi_bot.append(Player(server='s2.emrosswar.com',key='key2...',pushid='abc'))
+multi_bot.append(Player(server='s3.emrosswar.com',key='key3...',user_agent='my custom agent'))
+
+
 
 get_heroes = 'game/gen_conscribe_api.php'
 get_soldiers = 'game/soldier_educate_api.php'

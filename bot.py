@@ -2,10 +2,12 @@
 
 import locale
 import time
+
 from emross import *
-from emross.api import EmrossWarApi
 from emross.exceptions import InsufficientSoldiers
-from emross.utility.helper import *
+#from emross.utility.helper import *
+from emross.utility.manager import BotManager
+from emross.utility.player import Player
 
 import logging
 logger = logging.getLogger(__name__)
@@ -25,11 +27,9 @@ SECOND = 1
 MINUTE = 60 * SECOND
 HOUR   = 60 * MINUTE
 
-api = EmrossWarApi(settings.api_key, settings.game_server, settings.user_agent)
-bot = EmrossWarBot(api)
 
 
-def main():
+def run_bot(bot):
     """
     Steps necessary for the bot to "play" the game
     """
@@ -172,9 +172,38 @@ def main():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        argument_default=argparse.SUPPRESS,
+        description='The EmrossWar Bot',
+        epilog='%(prog)s --multi'
+        )
+    parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)
+    args = parser.parse_args()
+
+
+    manager = BotManager()
+
     try:
-        main()
+        if not args.multi:
+            player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
+            manager.players.append(player)
+        else:
+            try:
+                manager.players = settings.multi_bot
+            except AttributeError:
+                logger.critical('You must specify multiple bots in your settings file.')
+                exit()
+
+        manager.run(run_bot)
+
     except KeyboardInterrupt:
-        bot.session.end_time = time.time()
-        bot.session.save()
+        for bot in manager.bots:
+            bot.session.end_time = time.time()
+            try:
+                bot.session.save()
+            except IOError:
+                logger.warning('Error saving session')
+
         logger.info('Exiting')

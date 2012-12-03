@@ -63,8 +63,7 @@ class EmrossWarBot:
         self.world = World(self)
         self.scout_mail = ScoutMailHandler(api)
         self.war_mail = AttackMailHandler(api)
-        Session.PATH = settings.session_path
-        self.session = Session.load()
+        self.session = Session.load(api.api_key)
         self.donator = Donator(self)
         try:
             self.donator.hall_donation_forced = settings.hall_donation_forced
