@@ -26,5 +26,13 @@ class BotManager(object):
             worker.start()
             workers.append(worker)
 
-        for worker in workers:
-            worker.join(500)
+
+        while len(workers) > 0:
+            try:
+                # Join all threads using a timeout so it doesn't block
+                # Filter out threads which have been joined or are None
+                workers = [t.join(1000) for t in workers if t is not None and t.isAlive()]
+            except KeyboardInterrupt:
+                for t in workers:
+                    t.kill_received = True
+                raise
