@@ -4,7 +4,11 @@ import locale
 import time
 
 from emross import *
-from emross.exceptions import EmrossWarApiException, InsufficientSoldiers
+from emross.exceptions import (EmrossWarApiException,
+    InsufficientSoldiers,
+    NoTargetsAvailable,
+    NoTargetsFound)
+
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
 
