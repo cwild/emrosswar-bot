@@ -1,4 +1,5 @@
 import logging
+import time
 import threading
 
 logger = logging.getLogger(__name__)
@@ -20,19 +21,17 @@ class BotManager(object):
 
         workers = []
         for bot in self.bots:
-            logger.info('Starting new bot thread')
+            logger.info('Starting new bot thread for api_key=%s' % bot.api.api_key)
             worker = threading.Thread(target=func, args=(bot,))
             worker.daemon = True
             worker.start()
             workers.append(worker)
 
 
-        while len(workers) > 0:
-            try:
-                # Join all threads using a timeout so it doesn't block
-                # Filter out threads which have been joined or are None
-                workers = [t.join(1000) for t in workers if t is not None and t.isAlive()]
-            except KeyboardInterrupt:
-                for t in workers:
-                    t.kill_received = True
-                raise
+        while True:
+            """
+            If this wasn't here, our threads would all stop after.
+            If we use thread.join() then it blocks the main-thread
+            from receiving KeyboardInterrupt
+            """
+            time.sleep(100)
