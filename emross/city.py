@@ -83,6 +83,16 @@ class City:
             food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
             amount = food_limit - food
 
+            try:
+                amount = settings.minimum_food - food
+                if amount < 0:
+                    logger.debug('The current food levels exceed the minimum level specified')
+                    return
+
+                logger.info('Replenishing food reserves by %d to fulfill specified minimum of %d.' % (amount,settings.minimum_food))
+            except AttributeError:
+                pass
+
         buy_gold = int(math.ceil(self.resource_manager.conversion_rate(Resource.GOLD, Resource.FOOD) * amount))
 
         available_gold = self.resource_manager.get_amount_of(Resource.GOLD)

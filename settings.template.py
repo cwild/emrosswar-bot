@@ -37,6 +37,12 @@ Id = 21824, name = Sparta
 Id = 22008, name = Reboot"""
 ignore_cities = [22008]
 
+"""
+Fill the castle food only to the specified minimum level.
+If this is unspecified, the storage will be filled to max capacity.
+"""
+#minimum_food = 100000
+
 
 TOO_OFTEN_WARNING = '''You visit too often!'''
 concurrent_attack_limit = 18
