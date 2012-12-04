@@ -11,11 +11,13 @@ class Session:
         self.key = key
 
     def save(self):
-        pickle.dump(self, file(self.PATH % self.key, 'wb'))
+        pickle.dump(self, open(self.PATH % self.key, 'wb'))
 
     @classmethod
     def load(cls, key):
         try:
-            return pickle.load(file(cls.PATH % key))
+            session = pickle.load(open(cls.PATH % key, 'rb'))
+            session.key = key
+            return session
         except IOError:
             return Session(key)
