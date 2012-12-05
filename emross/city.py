@@ -197,7 +197,7 @@ class City:
         self.heroes[:] = []
 
         heroes = json['ret']['hero']
-        heroes.sort(key = lambda val: (Hero.LEVEL, Hero.EXPERIENCE))
+        heroes.sort(key = lambda val: (val.get(Hero.LEVEL), val.get(Hero.EXPERIENCE)))
 
         for data in heroes:
             try:
