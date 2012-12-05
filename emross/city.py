@@ -176,7 +176,7 @@ class City:
         return count
 
 
-    def get_available_heroes(self, extra=1):
+    def get_available_heroes(self, extra=1, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=True):
         """
         Find the available heroes for this city
         """
@@ -197,11 +197,11 @@ class City:
         self.heroes[:] = []
 
         heroes = json['ret']['hero']
-        heroes.sort(key = lambda val: (val.get(Hero.LEVEL), val.get(Hero.EXPERIENCE)))
+        heroes.sort(key = lambda val: [val.get(stat) for stat in stats])
 
         for data in heroes:
             try:
-                if data['gid'] in settings.exclude_heroes:
+                if exclude and data['gid'] in settings.exclude_heroes:
                     continue
             except AttributeError:
                 pass
