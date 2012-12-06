@@ -50,10 +50,10 @@ class EmrossWarBot:
         self.api = api
         api.bot = self
 
+        self.session = Session.load(api.api_key)
+
         self.pvp = self.__class__.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
-
-        self.scheduler = s = kronos.ThreadedScheduler()
 
         self.last_update = 0
         self.userinfo = None
@@ -63,19 +63,23 @@ class EmrossWarBot:
         self.world = World(self)
         self.scout_mail = ScoutMailHandler(api)
         self.war_mail = AttackMailHandler(api)
-        self.session = Session.load(api.api_key)
+
         self.donator = Donator(self)
         try:
             self.donator.hall_donation_forced = settings.hall_donation_forced
         except AttributeError:
             pass
 
-        self.chatter = Chat(self)
-        self.tasks['chat'] = s.add_interval_task(self.chatter.check, "chat handler", 3, 6, kronos.method.threaded, [], None)
+        self.scheduler = s = kronos.ThreadedScheduler()
+
+        self.core_tasks = []
+        self.core_setup()
+
+        self.builder = BuildManager(self)
+        self.tasks['core_tasks'] = s.add_interval_task(self.builder.process, "core task handler", 1, 1, kronos.method.sequential, [(self.core_tasks,), 'core'], None)
 
         try:
-            self.builder = BuildManager(self, path=settings.build_path)
-            self.tasks['builder'] = s.add_interval_task(self.builder.process, "build handler", 1, 1, kronos.method.sequential, [], None)
+            self.tasks['build_path'] = s.add_interval_task(self.builder.process, "build path handler", 3, 1, kronos.method.sequential, [settings.build_path, 'build'], None)
         except AttributeError:
             pass
 
@@ -88,6 +92,12 @@ class EmrossWarBot:
     def disconnect(self):
         logger.info('Stop the task scheduler for this bot')
         self.scheduler.stop()
+
+    def core_setup(self):
+        """
+        Setup our core tasks. These run in a separate thread.
+        """
+        self.core_tasks.append((Chat,))
 
     def update(self):
         """

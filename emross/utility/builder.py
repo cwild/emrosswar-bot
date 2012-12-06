@@ -1,17 +1,18 @@
 import logging
 logger = logging.getLogger(__name__)
 
+import threading
 import time
 
 class BuildManager(object):
 
-    def __init__(self, bot, path=None, *args, **kwargs):
+    def __init__(self, bot, *args, **kwargs):
         self.bot = bot
-        self.path = path
         self.tasks = {}
+        self.lock = threading.Lock()
         super(BuildManager, self).__init__(*args, **kwargs)
 
-    def process(self):
+    def process(self, tasks, stagename="TASK"):
         """
         Process the build path and pass things to their respective handlers
         for further processing.
@@ -19,19 +20,20 @@ class BuildManager(object):
         results = []
         cycle_start = time.time()
 
-        for i, stage in enumerate(self.path):
-            logger.debug('Processing build stage %d' % (i+1))
+        for i, stage in enumerate(tasks):
+            logger.debug('Processing %s stage %d' % (stagename, i+1))
 
             results[:] = []
             for parts in stage:
-                try:
-                    cls = parts[0]
-                    handler = self.tasks[cls]
-                except KeyError, e:
-                    handler = self.tasks[cls] = cls(self.bot)
-                except TypeError, e:
-                    logger.exception(e)
-                    continue
+                with self.lock:
+                    try:
+                        cls = parts[0]
+                        handler = self.tasks[cls]
+                    except KeyError, e:
+                        handler = self.tasks[cls] = cls(self.bot)
+                    except TypeError, e:
+                        logger.exception(e)
+                        continue
 
 
                 try:
@@ -43,5 +45,5 @@ class BuildManager(object):
                     logger.exception(e)
 
             if False in results:
-                logger.debug('Not all parts of stage %d are complete' % (i+1))
+                logger.debug('Not all parts of %s stage %d are complete' % (stagename, i+1))
                 break

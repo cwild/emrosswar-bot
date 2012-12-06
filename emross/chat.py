@@ -2,14 +2,16 @@ import logging
 import time
 logger = logging.getLogger(__name__)
 
-class Chat:
+from emross.utility.task import Task
+
+class Chat(Task):
+    INTERVAL = 5
     URL = 'game/api_chat2.php'
 
-    def __init__(self, bot):
-        self.bot = bot
+    def setup(self):
         self.lineid = -1
 
-    def check(self):
+    def process(self):
         if time.time() - self.bot.last_update > 60*3:
             return
 
