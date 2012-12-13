@@ -11,12 +11,14 @@ class Session:
         self.key = key
 
     def save(self):
-        pickle.dump(self, open(self.PATH % self.key, 'wb'))
+        with open(self.PATH % self.key, 'wb') as fp:
+            pickle.dump(self, fp)
 
     @classmethod
     def load(cls, key):
         try:
-            session = pickle.load(open(cls.PATH % key, 'rb'))
+            with open(cls.PATH % key, 'rb') as fp:
+                session = pickle.load(fp)
             session.key = key
             return session
         except IOError:
