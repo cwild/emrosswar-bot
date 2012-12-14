@@ -6,6 +6,7 @@ from lib import kronos
 from lib.session import Session
 
 from emross.item import item
+from emross.mobs import NPC
 from emross.resources import Resource
 
 import math
@@ -21,30 +22,16 @@ from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
-from emross.mail import *
+from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.utility.builder import BuildManager
 from emross.world import World
 
 import settings
 
-
-class Unbuffered:
-    def __init__(self, stream):
-        self.stream = stream
-    def write(self, data):
-        self.stream.write(data)
-        data = data.strip()
-        if len(data):
-            logging.info('CLI: %s' % data)
-        self.stream.flush()
-    def __getattr__(self, attr):
-        return getattr(self.stream, attr)
-
-sys.stdout = Unbuffered(sys.stdout)
-
-
 class EmrossWarBot:
     PVP_MODE_RE = re.compile('^p\d+\.')
+
+    USERINFO_URL = 'game/get_userinfo_api.php'
 
     def __init__(self, api):
         self.api = api
@@ -104,12 +91,7 @@ class EmrossWarBot:
         Setup bot with player account data
         """
         logger.info('Updating player info')
-        json = self.api.call('game/get_userinfo_api.php', pushid=settings.pushid, **{'_l':'en'} )
-
-        if json['code'] == 2:
-            self.last_update = 0
-            raise EmrossWarApiException, 'Error during load'
-
+        json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid, _l='en')
 
         self.userinfo = userinfo = json['ret']['user']
         self.last_update = time.time()
@@ -140,10 +122,10 @@ class EmrossWarBot:
         for da in favs:
             #[[14785,115,248,1,3]
             # Seems that x,y are back to front
-            fav = Fav(y = da[1], x = da[2], attack = da[4])
-            fav.id = da[0]
-            fav.rating = da[3]
-            self.fav[cat].append(fav)
+            npc = NPC(y = da[1], x = da[2], attack = da[4])
+            npc.id = da[0]
+            npc.rating = da[3]
+            self.fav[cat].append(npc)
 
 
     def sort_favs(self, city, cat = EmrossWar.DEVIL_ARMY):
@@ -315,10 +297,3 @@ class EmrossWarBot:
                         pass
 
                 sale_list[:] = []
-
-
-class Fav:
-    def __init__(self, x = 0, y = 0, attack = 0):
-        self.x = x
-        self.y = y
-        self.attack = attack
