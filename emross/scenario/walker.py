@@ -42,7 +42,7 @@ class ScenarioWalker(Task):
             # Scenario in progress
 
             if scenario != int(json['ret']['fb_label']):
-                logger.info('Already on a different scenario')
+                logger.info('Already on a different scenario with %d seconds remaining.' % json['ret']['remaining_time'])
                 this.sleep(json['ret']['remaining_time'])
                 return resume
 
@@ -77,6 +77,7 @@ class ScenarioWalker(Task):
                         if self.scenario.start(city, scenario, armies):
                             # We have started, so let's get going on the next cycle
                             logger.info('Started scenario %d' % scenario)
+                            logger.debug('Wait %f seconds before first attack' % (initial_delay,))
                             self.sleep(initial_delay)
                     except (InsufficientHeroCommand, InsufficientSoldiers):
                         self.sleep(900)
@@ -121,7 +122,7 @@ class ScenarioWalker(Task):
         logger.info('Search to see which city has these heroes: %s' % gens)
         heroes = set(gens)
         for city in self.bot.cities:
-            city.get_available_heroes()
+            city.get_available_heroes(exclude=False)
             available = set([int(h.data.get('gid')) for h in city.heroes])
             if heroes.issubset(available):
                 logger.info('%s has these heroes!' % city.name)
@@ -132,6 +133,10 @@ class ScenarioWalker(Task):
 
 
     def parse_paths(self, info):
+        """
+        Look at the scenario paths which have been assigned.
+        Remove any points which we have already successfully visited.
+        """
         army_data = info['ret']['army_data']
 
         for army in self.scenario.armies:
@@ -141,10 +146,18 @@ class ScenarioWalker(Task):
 
             while army['path']:
                 if current['pos'] == 0:
+                    logger.info('Hero %d is at the start!' % army['hero'])
                     break
+                elif str(current['pos']) not in info['ret']['status']:
+                    logger.info('Hero %d is at a point which is not on the chosen path' % army['hero'])
+                    break
+                elif str(army['path'][0]) in info['ret']['status']:
+                    logger.info('Already defeated point %d. We are safe here!' % army['path'][0])
 
-                at = army['path'].popleft()
-                if current['pos'] == at:
+                    pop = army['path'].popleft()
+                    logger.debug('Removed %d from path of hero %d' % (pop,army['hero']))
+                else:
+                    logger.debug('The next point on the path is our next target!')
                     break
 
 
@@ -153,6 +166,7 @@ class ScenarioWalker(Task):
 
         for army in self.scenario.armies:
             if len(army['path']) == 0:
+                logger.info('No more points for hero %d to attack.' % army['hero'])
                 continue
 
             point = army['path'][0]
@@ -162,6 +176,7 @@ class ScenarioWalker(Task):
             info = self.scenario.move(point)
 
             if info['code'] == Scenario.SCENARIO_FINISHED:
+                logger.info('Scenario finished!')
                 self.scenario.finish()
                 self.scenario = None
                 return
@@ -177,6 +192,7 @@ class ScenarioWalker(Task):
                 json = self.scenario.attack(army['hero'], point)
                 if json['code'] == EmrossWar.SUCCESS:
                     cd = int(json['ret']['cd'])
+                    logger.info('Hero %d has a cooldown of %d second(s).' % (army['hero'],cd))
                     self.sleep(cd)
 
         if wait:
