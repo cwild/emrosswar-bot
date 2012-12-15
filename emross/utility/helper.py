@@ -6,7 +6,6 @@ from lib import kronos
 from lib.session import Session
 
 from emross.item import item
-from emross.mobs import NPC
 from emross.resources import Resource
 
 import math
@@ -122,10 +121,10 @@ class EmrossWarBot:
         for da in favs:
             #[[14785,115,248,1,3]
             # Seems that x,y are back to front
-            npc = NPC(y = da[1], x = da[2], attack = da[4])
-            npc.id = da[0]
-            npc.rating = da[3]
-            self.fav[cat].append(npc)
+            fav = Fav(y = da[1], x = da[2], attack = da[4])
+            fav.id = da[0]
+            fav.rating = da[3]
+            self.fav[cat].append(fav)
 
 
     def sort_favs(self, city, cat = EmrossWar.DEVIL_ARMY):
@@ -297,3 +296,10 @@ class EmrossWarBot:
                         pass
 
                 sale_list[:] = []
+
+
+class Fav:
+    def __init__(self, x = 0, y = 0, attack = 0):
+        self.x = x
+        self.y = y
+        self.attack = attack
