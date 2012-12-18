@@ -222,9 +222,9 @@ class Scenario:
         Finish the Scenario by spinning the wheel
         """
         json = self.bot.api.call(self.OUT_URL)
-        logger.info('Total EP: %d' % json['ret']['pvp'])
+        logger.info('Total EP: %d' % int(json['ret']['pvp']))
 
         json = self.list()
-        logger.info('Remaining scenario attempts: ' % json['ret']['times'])
+        logger.info('Remaining scenario attempts: %d' % int(json['ret']['times']))
         self.lottery_wheel(action='list')
         self.lottery_wheel(action='rotate')
