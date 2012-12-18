@@ -167,7 +167,7 @@ class ScenarioWalker(Task):
             visited = set()
             while army['path']:
                 if current['pos'] == 0:
-                    logger.info('Hero %d is at the start!' % hero)
+                    logger.info('Hero %s is at the start!' % hero)
                     break
                 elif str(current['pos']) not in info['ret']['status']:
                     logger.info('Hero %s is at a point which is not on the chosen path' % hero)
