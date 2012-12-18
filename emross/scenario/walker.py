@@ -1,6 +1,11 @@
 from collections import deque
 from copy import deepcopy
 
+try:
+    from HTMLParser import HTMLParser
+except ImportError: #python3
+    from html.parser import HTMLParser
+
 from emross.api import EmrossWar
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.scenario.scene import Scenario
@@ -15,6 +20,7 @@ class ScenarioWalker(Task):
     INTERVAL = 10
 
     def setup(self):
+        self.html_parser = HTMLParser()
         self.scenario = None
 
     def process(self, scenario, armies, times=[], resume=True, initial_delay=0.5, *args, **kwargs):
@@ -56,13 +62,18 @@ class ScenarioWalker(Task):
                 for army in self.scenario.armies:
                     army['path'] = deque(army['path'])
 
-            self.parse_paths(json)
+                # Clean the path (useful incase the scenario had already been started)
+                self.init_paths(json)
+
             self.process_paths()
         else:
             # Not started yet
             if json['ret']['times'] == 0:
                 logger.info('Out of turns in Scenarios. Try later.')
-                self.sleep(3600)
+                if times:
+                    self.can_start(times)
+                else:
+                    self.sleep(3600)
             elif self.can_start(times):
                 generals = [v['hero'] for v in armies]
                 city = self.find_city_with_heroes(gens=generals)
@@ -132,11 +143,12 @@ class ScenarioWalker(Task):
         return None
 
 
-    def parse_paths(self, info):
+    def init_paths(self, info):
         """
         Look at the scenario paths which have been assigned.
         Remove any points which we have already successfully visited.
         """
+        logger.info('Clean the hero paths to ensure we are ready to attack the next point.')
         army_data = info['ret']['army_data']
 
         for army in self.scenario.armies:
@@ -144,18 +156,32 @@ class ScenarioWalker(Task):
             current = army_data[hero]
             current['pos'] = int(current['pos'])
 
+
+            """
+            We are trying to account for paths such as:
+            [1, 2, 3, 2, 4, 5, 6, 7, 8, 7, 9]
+            [0, 0, 0]
+            []
+            """
+            visited = set()
             while army['path']:
                 if current['pos'] == 0:
-                    logger.info('Hero %d is at the start!' % army['hero'])
+                    logger.info('Hero %d is at the start!' % hero)
                     break
                 elif str(current['pos']) not in info['ret']['status']:
-                    logger.info('Hero %d is at a point which is not on the chosen path' % army['hero'])
+                    logger.info('Hero %d is at a point which is not on the chosen path' % hero)
                     break
                 elif str(army['path'][0]) in info['ret']['status']:
-                    logger.info('Already defeated point %d. We are safe here!' % army['path'][0])
+                    node = army['path'][0]
+                    logger.info('Already defeated point %d. We are safe here!' % node)
 
-                    pop = army['path'].popleft()
-                    logger.debug('Removed %d from path of hero %d' % (pop,army['hero']))
+                    if node in visited and node is not current['pos']:
+                        logger.debug('We need to return to node %d on our next move!' % node)
+                        break
+                    else:
+                        node = army['path'].popleft()
+                        logger.debug('Removed %d from path of hero %d' % (node,hero))
+                        visited.add(node)
                 else:
                     logger.debug('The next point on the path is our next target!')
                     break
@@ -171,6 +197,8 @@ class ScenarioWalker(Task):
 
             point = army['path'][0]
             if point == 0:
+                logger.debug('Point is 0 so we do not intend on moving.')
+                army['path'].popleft()
                 continue
 
             info = self.scenario.move(point)
@@ -190,7 +218,21 @@ class ScenarioWalker(Task):
             topup = hero_war_data['add_soldier'] == 1
             if not topup or (topup and self.refill_soldiers(army['hero'])):
                 json = self.scenario.attack(army['hero'], point)
+
                 if json['code'] == EmrossWar.SUCCESS:
+                    war_result = json['ret']['war_report']['war_result']
+
+                    losses = self.html_parser.unescape(war_result['aarmy_loss'])
+                    logger.info('Troop losses for hero %d: %s' % (army['hero'],losses))
+
+                    if int(war_result['aflag']) == 1:
+                        logger.info('Hero %d has moved to point %d' % (army['hero'],point))
+
+                        resources = self.html_parser.unescape(war_result['resource'])
+                        logger.info('Resources won: %s' % resources)
+                        army['path'].popleft()
+
+                    # We need to let our hero rest!
                     cd = int(json['ret']['cd'])
                     logger.info('Hero %d has a cooldown of %d second(s).' % (army['hero'],cd))
                     self.sleep(cd)
