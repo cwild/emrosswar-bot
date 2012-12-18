@@ -90,7 +90,8 @@ class ScenarioWalker(Task):
                             logger.info('Started scenario %d' % scenario)
                             logger.debug('Wait %f seconds before first attack' % (initial_delay,))
                             self.sleep(initial_delay)
-                    except (InsufficientHeroCommand, InsufficientSoldiers):
+                    except (InsufficientHeroCommand, InsufficientSoldiers), e:
+                        logger.warning(e)
                         self.sleep(900)
                         return resume
                 else:
@@ -169,7 +170,7 @@ class ScenarioWalker(Task):
                     logger.info('Hero %d is at the start!' % hero)
                     break
                 elif str(current['pos']) not in info['ret']['status']:
-                    logger.info('Hero %d is at a point which is not on the chosen path' % hero)
+                    logger.info('Hero %s is at a point which is not on the chosen path' % hero)
                     break
                 elif str(army['path'][0]) in info['ret']['status']:
                     node = army['path'][0]
@@ -180,7 +181,7 @@ class ScenarioWalker(Task):
                         break
                     else:
                         node = army['path'].popleft()
-                        logger.debug('Removed %d from path of hero %d' % (node,hero))
+                        logger.debug('Removed %d from path of hero %s' % (node,hero))
                         visited.add(node)
                 else:
                     logger.debug('The next point on the path is our next target!')
@@ -191,6 +192,8 @@ class ScenarioWalker(Task):
         wait = []
 
         for army in self.scenario.armies:
+            logger.info('Processing hero %d with path: %s' % (army['hero'],army['path']))
+
             if len(army['path']) == 0:
                 logger.info('No more points for hero %d to attack.' % army['hero'])
                 continue
@@ -220,17 +223,25 @@ class ScenarioWalker(Task):
                 json = self.scenario.attack(army['hero'], point)
 
                 if json['code'] == EmrossWar.SUCCESS:
-                    war_result = json['ret']['war_report']['war_result']
+                    try:
+                        war_result = json['ret']['war_report']['war_result']
 
-                    losses = self.html_parser.unescape(war_result['aarmy_loss'])
-                    logger.info('Troop losses for hero %d: %s' % (army['hero'],losses))
+                        losses = self.html_parser.unescape(war_result['aarmy_loss'])
+                        logger.info('Troop losses for hero %d: %s' % (army['hero'],losses))
 
-                    if int(war_result['aflag']) == 1:
-                        logger.info('Hero %d has moved to point %d' % (army['hero'],point))
+                        if int(war_result['aflag']) == 1:
+                            logger.info('Hero %d has moved to point %d' % (army['hero'],point))
 
-                        resources = self.html_parser.unescape(war_result['resource'])
-                        logger.info('Resources won: %s' % resources)
-                        army['path'].popleft()
+                            resources = self.html_parser.unescape(war_result['resource'])
+                            logger.info('Resources won: %s' % (resources or 'Nothing',))
+
+                            army['path'].popleft()
+
+                    except KeyError:
+                        logger.info('No war report, we merely moved into position at point %d!' % point)
+                        if int(json['ret']['pos']) == point:
+                            army['path'].popleft()
+
 
                     # We need to let our hero rest!
                     cd = int(json['ret']['cd'])
