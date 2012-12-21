@@ -108,8 +108,9 @@ class EmrossWarBot:
 
 
     def get_gift(self, gift):
-        logger.info('Collecting gift %d' % gift['id'])
-        json = self.api.call('game/goods_api.php', action='gift', id=gift['id'], _l='en')
+        gid = int(gift['id'])
+        logger.info('Collecting gift %d' % gid)
+        json = self.api.call('game/goods_api.php', action='gift', id=gid, _l='en')
 
 
     def get_fav(self, cat = EmrossWar.DEVIL_ARMY):

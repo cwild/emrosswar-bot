@@ -221,8 +221,12 @@ class Scenario:
         """
         Finish the Scenario by spinning the wheel
         """
-        json = self.bot.api.call(self.OUT_URL)
-        logger.info('Total EP: %d' % int(json['ret']['pvp']))
+        try:
+            json = self.bot.api.call(self.OUT_URL)
+            logger.info('Total EP: %d' % int(json['ret']['pvp']))
+        except TypeError:
+            logger.info('Unable to obtain EP total')
+            logger.debug(json)
 
         json = self.list()
         logger.info('Remaining scenario attempts: %d' % int(json['ret']['times']))
