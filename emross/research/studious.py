@@ -40,7 +40,7 @@ class Study(Task):
 
     def can_study(self, city, tech, level):
         try:
-            return self.tech_level(city, tech) < level
+            return 0 < self.tech_level(city, tech) < level
         except IndexError:
             logger.debug('The university at %s is not high enough to study tech %d yet.' % (city.name, tech))
             return False
