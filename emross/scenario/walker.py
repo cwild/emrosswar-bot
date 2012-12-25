@@ -28,6 +28,10 @@ class ScenarioWalker(Task):
             self.sleep(86400)
             return True
 
+        if self.bot.userinfo.get('status', 0) in [EmrossWar.TRUCE, EmrossWar.VACATION]:
+            self.sleep(60)
+            return True
+
         if self.scenario is None:
             self.scenario = Scenario(self.bot)
 

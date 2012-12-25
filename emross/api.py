@@ -128,6 +128,9 @@ class EmrossWar:
     ATTACK_TYPE_SCOUT = 3
     ACTION_ATTACK = 7
 
+    TRUCE = 1
+    VACATION = 2
+
     LORD = 1
     DEVIL_ARMY = 2
     COLONY = 3
