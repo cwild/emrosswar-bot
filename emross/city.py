@@ -145,6 +145,9 @@ class City:
 
                     if not mixed:
                         break
+
+                elif mixed:
+                    raise InsufficientSoldiers, 'Not enough specified troops'
             except (IndexError, ValueError):
                 pass
 
