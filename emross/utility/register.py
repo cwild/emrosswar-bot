@@ -1,8 +1,9 @@
 import uuid
 from emross.exceptions import EmrossWarApiException
-from bot import api
+from emross.api import EmrossWarApi
 import argparse
 
+api = EmrossWarApi(None, None)
 
 def register(username = None, password = None, referrer = None):
     """
