@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import locale
 import time
 
@@ -184,10 +182,11 @@ if __name__ == "__main__":
         epilog='%(prog)s --multi'
         )
     parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)
+    parser.add_argument('-c', '--console', help='Interactive console', action='store_true', default=False)
     args = parser.parse_args()
 
 
-    manager = BotManager()
+    manager = BotManager(console=args.console)
 
     try:
         if not args.multi:
