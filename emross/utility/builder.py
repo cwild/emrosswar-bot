@@ -12,6 +12,17 @@ class BuildManager(object):
         self.lock = threading.Lock()
         super(BuildManager, self).__init__(*args, **kwargs)
 
+    def task(self, task_class):
+        with self.lock:
+            try:
+                handler = self.tasks[task_class]
+            except KeyError, e:
+                handler = self.tasks[task_class] = task_class(self.bot)
+            except TypeError, e:
+                logger.exception(e)
+                raise e
+        return handler
+
     def process(self, tasks, stagename="TASK"):
         """
         Process the build path and pass things to their respective handlers
@@ -25,23 +36,13 @@ class BuildManager(object):
 
             results[:] = []
             for parts in stage:
-                with self.lock:
-                    try:
-                        cls = parts[0]
-                        handler = self.tasks[cls]
-                    except KeyError, e:
-                        handler = self.tasks[cls] = cls(self.bot)
-                    except TypeError, e:
-                        logger.exception(e)
-                        continue
-
-
                 try:
+                    handler = self.task(parts[0])
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
                     result = handler.run(cycle_start, *args, **kwargs)
                     results.append(result)
-                except (IndexError, KeyError), e:
+                except (IndexError, KeyError, TypeError), e:
                     logger.exception(e)
 
             if False in results:

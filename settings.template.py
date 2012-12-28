@@ -162,5 +162,9 @@ build_path = (
         (Construct, (Building.FARM, 20)),
         (Construct, (Building.HOUSE, 21)),
         (Study, (Tech.FORGING, 20))
+    ),
+    (
+        (Study, (Tech.ATTACK_FORMATION, 20), {'university': 20}),
+        (Study, (Tech.DEFENSE_FORMATION, 20, 22))
     )
 )

@@ -1,4 +1,6 @@
 from emross.api import EmrossWar
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
 from emross.utility.task import Task, TaskType
 from tech import Tech
 import time
@@ -45,14 +47,19 @@ class Study(Task):
             logger.debug('The university at %s is not high enough to study tech %d yet.' % (city.name, tech))
             return False
 
-    def process(self, tech, level, *args, **kwargs):
+    def process(self, tech, level, university=1, *args, **kwargs):
         current_study = set()
         for city in self.bot.cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
                 current_study.add(task['target'])
 
+        construction = self.bot.builder.task(Construct)
         for city in self.bot.cities:
+            if construction.structure_level(city, Building.UNIVERSITY) < university:
+                logger.info('The university at city "%s" does not meet the specified minimum of %d' % (city.name, university))
+                continue
+
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks) == 0 and tech not in current_study and self.can_study(city, tech, level) \
                 and city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1)):
