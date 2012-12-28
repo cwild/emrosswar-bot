@@ -26,8 +26,8 @@ class Study(Task):
         return self._data[1]
 
     def tech_level(self, city, tech):
-        t = self.tech_levels(city)[tech-1]
-        return t[1] if t[2] == 1 else -1
+        tech, level, unlocked = self.tech_levels(city)[tech-1]
+        return level if unlocked == 1 else -1
 
     def upgrade(self, city, tech, owner=0):
         """
@@ -42,7 +42,7 @@ class Study(Task):
 
     def can_study(self, city, tech, level):
         try:
-            return 0 < self.tech_level(city, tech) < level
+            return 0 <= self.tech_level(city, tech) < level
         except IndexError:
             logger.debug('The university at %s is not high enough to study tech %d yet.' % (city.name, tech))
             return False
