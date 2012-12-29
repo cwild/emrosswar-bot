@@ -210,3 +210,14 @@ if __name__ == "__main__":
                 logger.warning('Error saving session')
 
         logger.info('Exiting')
+
+else:
+    def test_bot():
+        manager = BotManager()
+        player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
+        manager.players.append(player)
+        manager.initialise_bots()
+
+        return next(iter(manager.bots), None)
+    bot = test_bot()
+    del test_bot

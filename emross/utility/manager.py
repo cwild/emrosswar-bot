@@ -26,11 +26,14 @@ class BotManager(object):
 
         return None
 
-    def run(self, func):
+    def initialise_bots(self):
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent)
             bot = EmrossWarBot(api)
             self.bots.append(bot)
+
+    def run(self, func):
+        self.initialise_bots()
 
         workers = []
         for bot in self.bots:
