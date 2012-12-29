@@ -23,7 +23,7 @@ from urllib3 import PoolManager, make_headers, exceptions
 logger = logging.getLogger(__name__)
 
 class EmrossWarApi:
-    _pool = PoolManager()
+    _pool = PoolManager(maxsize=10)
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
 
     def __init__(self, api_key, game_server, user_agent=None, pushid=None):
