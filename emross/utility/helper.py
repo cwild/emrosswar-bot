@@ -95,12 +95,14 @@ class EmrossWarBot:
         self.userinfo = userinfo = json['ret']['user']
         self.last_update = time.time()
 
-        if len(self.cities) == 0:
-            cities = [city for city in userinfo['city'] if city['id'] not in settings.ignore_cities]
+        skip = set([city.id for city in self.cities])
+        skip.update(settings.ignore_cities)
+        cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
-            for city in cities:
-                city = City(self, city['id'], city['name'], x = city['x'], y = city['y'])
-                self.cities.append(city)
+        for city in cities:
+            logger.debug('Adding "%s" to city list' % city['name'])
+            city = City(self, city['id'], city['name'], x = city['x'], y = city['y'])
+            self.cities.append(city)
 
 
         for gift in userinfo['gift']:
