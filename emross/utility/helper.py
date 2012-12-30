@@ -69,7 +69,6 @@ class EmrossWarBot:
         except AttributeError:
             pass
 
-        s.start()
 
     def __del__(self):
         logger.debug('Clean up bot instance')
