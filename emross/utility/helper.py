@@ -7,6 +7,7 @@ from lib.session import Session
 
 from emross.item import item
 from emross.resources import Resource
+from emross.shop import Shop
 
 import math
 import re
@@ -46,6 +47,7 @@ class EmrossWarBot:
         self.tasks = {}
         self.cities = []
         self.fav = {}
+        self.shop = Shop(self)
         self.world = World(self)
         self.scout_mail = ScoutMailHandler(api)
         self.war_mail = AttackMailHandler(api)
@@ -298,6 +300,40 @@ class EmrossWarBot:
                         pass
 
                 sale_list[:] = []
+
+    def find_inventory_item(self, search_item):
+        result = []
+
+        item_manager = item.Item(self)
+        it = item.ItemType
+
+        item_id, item_type, item_rank = search_item
+
+        if item_type not in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
+            item_type = it.ITEM
+
+        page = 1
+        found = False
+        while not found:
+            json = item_manager.list(page = page, type = item_type)
+
+            for _item in json['ret']['item']:
+                try:
+                    if _item['item']['sid'] == item_id:
+                        result.append([_item['item']['id'], _item['item']['num']])
+                        found = True
+                    elif found:
+                        logger.debug('We have found all of these items.')
+                        break
+                except KeyError:
+                    pass
+
+            page += 1
+            if page > json['ret']['max']:
+                logger.info('Last page of item type %d' % item_type)
+                break
+
+        return result
 
 
 class Fav:

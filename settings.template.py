@@ -123,16 +123,19 @@ from emross.structures.construction import Construct
 from emross.scenario.scene import Scenario
 from emross.scenario.walker import ScenarioWalker
 
-from emross.utility.task import Task
+from emross.item import inventory
+from emross.trade.auto import AutoTrade
 
-class MyTask(Task):
-    def process(self, a=1, b=2, gems=0, *args, **kwargs):
-        print 'my task run', args, kwargs
-        print a, b, gems
+
+trade_options = (AutoTrade, (AutoTrade.SELLER, [inventory.ALLIANCE_TOKEN]),
+            {'price':5000000, 'vary':50000, 'limit':3, 'city_index':-1}
+        )
+
+#trade_options = (AutoTrade, (AutoTrade.BUYER, 900), {'team':True})
 
 build_path = (
     (
-        (MyTask, (5, 6), {'gems':100}),
+        trade_options,
     ),
     (
         (ScenarioWalker, (Scenario.GLOOMY_CANYON, [

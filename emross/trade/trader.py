@@ -8,30 +8,51 @@ class Trade:
     TRADE_URL = 'game/safe_goods_api.php'
     MARKET_URL = 'game/safe_market_api.php'
 
-
     LIST_ITEM = 'list_auction_item'
     INVENTORY_ITEMS = 'list_invitem'
     SELL_ITEM = 'my_goods_safe'
+
+    SELLING_FEE = 10
+    MAX_ITEMS = 20
+
+    TRADE_LIMIT_REACHED = 3605
 
     def __init__(self, bot):
         self.bot = bot
 
     def _list(self, type, city, page=1):
-        return self.bot.api.call(self.TRADE_URL, action=self.LIST_ITEM, type=type, city=city, page=page)
+        return self.bot.api.call(self.TRADE_URL, action=self.LIST_ITEM, type=type, city=city.id, page=page)
 
     def list_waiting(self, city, *args, **kwargs):
         json = self._list('will', city=city, *args, **kwargs)
         return json
 
     def list_trading(self, city, *args, **kwargs):
-        json = self._list('', city=city, *args, **kwargs)
+        json = self._list(None, city=city, *args, **kwargs)
         return json
 
+    def list_all(self, city, funcs=[]):
+        result = []
+        for func in funcs:
+            page = 1
+
+            while True:
+                json = func(city, page=page)
+                result.extend(json['ret']['item'])
+
+                page += 1
+                if page > json['ret']['max']:
+                    break
+        return result
+
     def sell_item(self, city, id, price):
-        json = self.bot.api.call(self.TRADE_URL, action=self.SELL_ITEM, city=city, id=id, safe_num=1, price=price)
+        json = self.bot.api.call(self.TRADE_URL, action=self.SELL_ITEM, city=city.id, id=id, safe_num=1, price=price)
+
+        if json['code'] == self.TRADE_LIMIT_REACHED:
+            raise TradeException, 'Maximum number of trade items has been reached'
 
         if json['code'] != EmrossWar.SUCCESS:
-            logger.info('Problem selling item %d at city %s for %d gold' % (item, city.name, price))
+            logger.warning('Problem selling item %d at city %s for %d gold' % (item, city.name, price))
             raise TradeException
 
         return EmrossWar.SUCCESS
@@ -40,5 +61,6 @@ class Trade:
         """
         Purchase an item from trade.
         """
-        json = self.bot.api.call(self.MARKET_URL, action='purchasing', city=city, id=id)
-        return json['code'] == EmrossWar.SUCCESS
+        logger.info('Attempting to buy item %s from city "%s"' % (str(id), city.name))
+        json = self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id)
+        return json

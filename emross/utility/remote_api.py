@@ -35,6 +35,11 @@ class RemoteApi(object):
         except ValueError:
             raise RemoteApiException, 'Problem decoding data: %s' % r.data
 
+    def json_decode(self, s):
+        return json.loads(s)
+
+    def json_encode(self, obj):
+        return json.dumps(obj)
 
 if __name__ == "__main__":
     import settings
