@@ -9,6 +9,9 @@ sys.path.extend(['lib/urllib3/'])
 import urllib3
 import urlparse
 
+import logging
+logger = logging.getLogger(__name__)
+
 __version__ = '1.0.0'
 USER_AGENT = 'com.cryformercy.emross.emrosswar-bot %s' % __version__
 
@@ -31,7 +34,9 @@ class RemoteApi(object):
             raise RemoteApiException, 'Incorrect login details'
 
         try:
-            return decoder(r.data)
+            data = decoder(r.data)
+            logger.debug(str(data))
+            return data
         except ValueError:
             raise RemoteApiException, 'Problem decoding data: %s' % r.data
 

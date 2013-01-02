@@ -57,10 +57,10 @@ class Trade:
 
         return EmrossWar.SUCCESS
 
-    def buy_item(self, city, id):
+    def buy_item(self, city, id, *args, **kwargs):
         """
         Purchase an item from trade.
         """
         logger.info('Attempting to buy item %s from city "%s"' % (str(id), city.name))
-        json = self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id)
+        json = self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)
         return json

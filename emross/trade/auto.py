@@ -56,7 +56,7 @@ class AutoTrade(Task):
         return _process(*args, **kwargs)
 
 
-    def buyer_process(self, interval=900, team=False):
+    def buyer_process(self, interval=900, team=False, sleep=(4,5)):
         """Buy items specified by a remote api"""
 
         available = self.remote.list(method='GET', server=self.bot.api.game_server, team=int(team==True))
@@ -66,14 +66,14 @@ class AutoTrade(Task):
         if len(available['items']) > 0:
             city = self.bot.richest_city()
 
-            gold = city.resource_manager.get_amount_of(Resource.GOLD)
-
             purchased, unavailable = [], []
             for item in available['items']:
+                gold = city.resource_manager.get_amount_of(Resource.GOLD)
                 if gold > int(item['price']):
-                    json = self.trade.buy_item(city, item['id'])
+                    json = self.trade.buy_item(city, item['id'], sleep=sleep)
 
                     if json['code'] == EmrossWar.SUCCESS:
+                        city.resource_manager.set_amount_of(Resource.GOLD, gold-int(item['price']))
                         purchased.append(item['id'])
                     elif json['code'] == EmrossWar.INSUFFICIENT_GOLD:
                         logger.info('Not enough gold at city "%s" to purchase item %d' % (city.name, item['id']))
