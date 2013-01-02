@@ -83,7 +83,7 @@ class ScenarioWalker(Task):
                 city = self.find_city_with_heroes(gens=generals)
 
                 if city is not None:
-                    city.get_soldiers()
+                    city.barracks.get_soldiers()
                     heroes = dict([(h.data.get('gid'), h) for h in city.heroes])
 
                     try:

@@ -26,8 +26,8 @@ class City:
         self.y = y
         self._data = []
 
+        self.barracks = Barracks(self.bot, self)
         self.heroes = []
-        self.soldiers = []
 
         self.resource_manager = ResourceManager(bot, city=self)
         self.countdown_manager = CountdownManager(bot, city=self)
@@ -105,13 +105,6 @@ class City:
 
 
 
-    def get_soldiers(self):
-        json = self.bot.api.call(settings.get_soldiers, city = self.id)
-        try:
-            self.soldiers = json['ret']['soldiers']
-        except TypeError:
-            pass
-
     def create_army(self, threshold, deduct = True, heroes = [], mixed = False):
         """
         Return a dict of the various soldiers to include in this army
@@ -132,7 +125,7 @@ class City:
 
                     continue
 
-                soldiers = [s for s in self.soldiers if s[0] == soldier][0]
+                soldiers = [s for s in self.barracks.soldiers if s[0] == soldier][0]
 
                 if soldiers[1] >= qty:
                     army['soldier_num%d' % soldier] = qty
@@ -161,22 +154,6 @@ class City:
             raise InsufficientSoldiers, 'No soldiers were added to the army'
 
         return army
-
-
-    def get_army_count(self):
-        """
-        Calculate the number of armies this castle has
-        """
-        count = 0
-
-        for soldier, qty in settings.soldier_threshold.iteritems():
-            try:
-                soldiers = [s for s in self.soldiers if s[0] == soldier][0]
-                count += int(math.floor(soldiers[1] / qty))
-            except (IndexError, ValueError, ZeroDivisionError):
-                pass
-
-        return count
 
 
     def get_available_heroes(self, extra=1, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=True):
@@ -283,7 +260,7 @@ class City:
 
         for k, v in soldiers:
             i = int(k)
-            soldier = [s for s in self.soldiers if i == s[0]][0]
+            soldier = [s for s in self.barracks.soldiers if i == s[0]][0]
             soldier[1] -= v
 
 
@@ -330,8 +307,3 @@ class City:
                     logger.info('Hero recruited!')
                 else:
                     logger.info('Could not recruit hero.')
-
-
-    def check_war_room(self):
-        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, act='warinfo', city=self.id)
-

@@ -43,7 +43,7 @@ class World:
         """Choose a city with spies"""
         choice = None
         for city in self.bot.cities:
-            city.get_soldiers()
+            city.barracks.get_soldiers()
             try:
                 if city.soldiers[Soldier.SPY-1][1]:
                     if not choice or city.soldiers[Soldier.SPY-1][1] > choice.soldiers[Soldier.SPY-1][1]:
@@ -94,13 +94,13 @@ class World:
                         if item[2] in targets:
                             if not spies:
                                 for tries in xrange(2):
-                                    city.get_soldiers()
+                                    city.barracks.get_soldiers()
                                     spies = city.soldiers[Soldier.SPY-1][1]
                                     logger.info('Found %d spies in the city %s' % (spies, city.name))
                                     if not spies:
                                         if tries == 0:
                                             logger.info('Check the war room. Try to trigger spy count to update')
-                                            city.check_war_room()
+                                            city.barracks.war_room()
                                         else:
                                             raise OutOfSpies, 'No spies available at the moment'
                                     else:

@@ -21,11 +21,7 @@ multi_bot.append(Player(server='s3.emrosswar.com',key='key3...',user_agent='my c
 
 
 get_heroes = 'game/gen_conscribe_api.php'
-get_soldiers = 'game/soldier_educate_api.php'
-
 hero_conscribe = 'game/gen_conscribe_api.php'
-
-
 api_fav = 'game/api_fav.php'
 
 
