@@ -52,7 +52,7 @@ class Trade:
             raise TradeException, 'Maximum number of trade items has been reached'
 
         if json['code'] != EmrossWar.SUCCESS:
-            logger.warning('Problem selling item %d at city %s for %d gold' % (item, city.name, price))
+            logger.warning('Problem selling item %d at city %s for %d gold' % (id, city.name, price))
             raise TradeException
 
         return EmrossWar.SUCCESS
