@@ -20,15 +20,19 @@ class Trade:
     def __init__(self, bot):
         self.bot = bot
 
-    def _list(self, type, city, page=1):
-        return self.bot.api.call(self.TRADE_URL, action=self.LIST_ITEM, type=type, city=city.id, page=page)
+    def _list(self, type, city, url=TRADE_URL, page=1, *args, **kwargs):
+        return self.bot.api.call(url, type=type, city=city.id, page=page, *args, **kwargs)
 
     def list_waiting(self, city, *args, **kwargs):
-        json = self._list('will', city=city, *args, **kwargs)
+        json = self._list('will', action=self.LIST_ITEM, city=city, *args, **kwargs)
         return json
 
     def list_trading(self, city, *args, **kwargs):
-        json = self._list(None, city=city, *args, **kwargs)
+        json = self._list(None, action=self.LIST_ITEM, city=city, *args, **kwargs)
+        return json
+
+    def list_market(self, city, *args, **kwargs):
+        json = self._list(type=1, city=city, url=self.MARKET_URL)
         return json
 
     def list_all(self, city, funcs=[]):
