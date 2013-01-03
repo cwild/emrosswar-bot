@@ -25,7 +25,7 @@ class TradeSniper:
 
                 if item_id in items:
                     city = self.bot.richest_city()
-                    gold = city.resource_manager.set_amount_of(Resource.GOLD)
+                    gold = city.resource_manager.get_amount_of(Resource.GOLD)
 
                     if gold >= price:
                         json = self.trader.buy_item(city, trade_id)
