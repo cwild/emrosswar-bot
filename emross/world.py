@@ -45,8 +45,8 @@ class World:
         for city in self.bot.cities:
             city.barracks.get_soldiers()
             try:
-                if city.soldiers[Soldier.SPY-1][1]:
-                    if not choice or city.soldiers[Soldier.SPY-1][1] > choice.soldiers[Soldier.SPY-1][1]:
+                if city.barracks.soldiers[Soldier.SPY-1][1]:
+                    if not choice or city.barracks.soldiers[Soldier.SPY-1][1] > choice.barracks.soldiers[Soldier.SPY-1][1]:
                         choice = city
             except IndexError:
                 pass
@@ -95,7 +95,7 @@ class World:
                             if not spies:
                                 for tries in xrange(2):
                                     city.barracks.get_soldiers()
-                                    spies = city.soldiers[Soldier.SPY-1][1]
+                                    spies = city.barracks.soldiers[Soldier.SPY-1][1]
                                     logger.info('Found %d spies in the city %s' % (spies, city.name))
                                     if not spies:
                                         if tries == 0:
