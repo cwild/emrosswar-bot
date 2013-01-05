@@ -1,11 +1,6 @@
 from emross.military.camp import Soldier
 from emross.mobs import DevilArmy
 
-import logging
-log_level = logging.DEBUG
-
-logfile = '/tmp/emross.log'
-
 user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7'
 
 game_server = 'YOURSERVER.emrosswar.com'

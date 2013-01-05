@@ -1,4 +1,12 @@
+import logging.config
+try:
+    logging.config.fileConfig('build/logging.conf')
+except Exception:
+    logging.config.fileConfig('logging.conf')
+
 import locale
+locale.setlocale(locale.LC_ALL, '')
+
 import time
 
 from emross import *
@@ -16,19 +24,9 @@ logger = logging.getLogger(__name__)
 
 import settings
 
-logging.basicConfig(level=settings.log_level,
-                    format='%(asctime)s, %(name)s (%(levelname)s): %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    filename=settings.logfile, filemode='a')
-
-
-
-locale.setlocale(locale.LC_ALL, '')
-
 SECOND = 1
 MINUTE = 60 * SECOND
 HOUR   = 60 * MINUTE
-
 
 
 def run_bot(bot):
