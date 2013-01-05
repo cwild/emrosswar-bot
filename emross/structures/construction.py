@@ -1,13 +1,13 @@
 from emross.api import EmrossWar
 from emross.item import inventory
-from emross.utility.task import Task, TaskType
+from emross.utility.task import FilterableCityTask, TaskType
 
 from buildings import Building
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Construct(Task):
+class Construct(FilterableCityTask):
     CREATE_TASK_URL = 'game/building_create_task_api.php'
     EXTRA_SLOT_ITEMS = (inventory.BLESS_OF_BUILDING_I[0], inventory.BLESS_OF_BUILDING_II[0])
 
@@ -31,7 +31,7 @@ class Construct(Task):
     def process(self, structure, level, *args, **kwargs):
         result = True
 
-        for city in self.bot.cities:
+        for city in self.cities(**kwargs):
 
             if city.data[0] == 0:
                 logger.info('City %s is out of free land. Unable to build.' % city.name)

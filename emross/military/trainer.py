@@ -1,6 +1,6 @@
 from emross.api import EmrossWar
 from emross.military.camp import Soldier
-from emross.utility.task import Task, TaskType
+from emross.utility.task import FilterableCityTask, TaskType
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,21 +12,16 @@ class Cavalry:
         self.quantity = quantity
 
 
-class Trainer(Task):
+class Trainer(FilterableCityTask):
     INTERVAL = 600
 
-    def process(self, cavalries, city_names=None, *args, **kwargs):
+    def process(self, cavalries, *args, **kwargs):
         """
         Try to keep cities stocked up on the specified troop specifications (cavalries)
         """
-        if self.bot.pvp or not city_names:
-            cities = self.bot.cities
-        else:
-            cities = [city for city in self.bot.cities if city.name in city_names]
-
         delay = []
 
-        for city in cities:
+        for city in self.cities(**kwargs):
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
                 delay.append(int(tasks[0]['secs']))

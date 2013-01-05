@@ -74,8 +74,19 @@ class CostCalculator(object):
 
         return costs
 
+class FilterableCityTask(Task):
+    def __init__(self, *args, **kwargs):
+        super(FilterableCityTask, self).__init__(*args, **kwargs)
 
-class CountdownManager:
+    def cities(self, city_names=None, **kwargs):
+        if self.bot.pvp or not city_names:
+            cities = self.bot.cities
+        else:
+            cities = [city for city in self.bot.cities if city.name in city_names]
+        return cities
+
+
+class CountdownManager(object):
     GET_COUNTDOWN_INFO = 'game/get_cdinfo_api.php'
 
     def __init__(self, bot, city):

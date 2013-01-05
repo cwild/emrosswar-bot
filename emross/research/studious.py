@@ -1,14 +1,14 @@
 from emross.api import EmrossWar
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
-from emross.utility.task import Task, TaskType
+from emross.utility.task import FilterableCityTask, TaskType
 from tech import Tech
 import time
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Study(Task):
+class Study(FilterableCityTask):
     STUDY_URL = 'game/study_api.php'
     STUDY_MOD_URL = 'game/study_mod_api.php'
 
@@ -48,14 +48,15 @@ class Study(Task):
             return False
 
     def process(self, tech, level, university=1, *args, **kwargs):
+        cities = self.cities(**kwargs)
         current_study = set()
-        for city in self.bot.cities:
+        for city in cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
                 current_study.add(task['target'])
 
         construction = self.bot.builder.task(Construct)
-        for city in self.bot.cities:
+        for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
                 logger.info('The university at city "%s" does not meet the specified minimum of %d' % (city.name, university))
                 continue
