@@ -19,12 +19,18 @@ class Trainer(FilterableCityTask):
         """
         Try to keep cities stocked up on the specified troop specifications (cavalries)
         """
-        delay = []
+        cities = self.cities(**kwargs)
 
-        for city in self.cities(**kwargs):
+        if len(cities) == 0:
+            self.sleep(5)
+            return False
+
+        delays = []
+        for city in cities:
+            delay = self.INTERVAL
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
-                delay.append(int(tasks[0]['secs']))
+                delays.append(int(tasks[0]['secs']))
                 logger.info('Already training troops at castle "%s"' % city.name)
                 continue
 
@@ -53,11 +59,14 @@ class Trainer(FilterableCityTask):
                             if json['code'] == EmrossWar.SUCCESS:
                                 city.countdown_manager.add_tasks(json['ret']['cdlist'])
                                 logger.info('Stop processing the rest of the cavalries list at city "%s"' % city.name)
+                                delay = int(json['ret']['cdlist'][0]['secs'])
                                 break
                 except KeyError:
                     pass
 
-        if delay:
-            secs = (min(delay)-time.time()) / 2
+            delays.append(delay)
+
+        if delays:
+            secs = (min(delays)-time.time()) / 2
             logger.info('Retry troop training in %f seconds' % secs)
             self.sleep(secs)
