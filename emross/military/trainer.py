@@ -34,7 +34,8 @@ class Trainer(FilterableCityTask):
                 logger.info('Already training troops at castle "%s"' % city.name)
                 continue
 
-            troops = city.barracks.total_troops()
+            troops, info = city.barracks.total_troops()
+            camp_space = int(info['ret']['space'])
 
             for cavalry in cavalries:
                 try:
@@ -50,10 +51,8 @@ class Trainer(FilterableCityTask):
                         while city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty+1), convert=False) and qty < desired:
                             qty += 1
 
+                        qty = min(qty, camp_space)
                         if qty > 0:
-                            json = city.barracks.camp_info()
-                            qty = min(qty, int(json['ret']['space']))
-
                             city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty), convert=True)
                             json = city.barracks.train_troops(cavalry.troop, qty)
                             if json['code'] == EmrossWar.SUCCESS:
