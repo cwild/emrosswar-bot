@@ -106,7 +106,16 @@ class Barracks:
 
     def can_train(self, troop):
         try:
-            troop_id, qty, unlocked = self.soldiers[troop]
+            troop_id, qty, unlocked = self.soldiers[troop-1]
             return unlocked is True
         except KeyError:
             return False
+
+if __name__ == "__main__":
+    from emross.military.camp import Soldier
+    from bot import bot
+    bot.update()
+
+    for city in bot.cities:
+        city.barracks.camp_info()
+        print city.barracks.can_train(Soldier.ASSASSIN)
