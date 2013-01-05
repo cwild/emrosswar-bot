@@ -30,7 +30,7 @@ class Trainer(FilterableCityTask):
             delay = self.INTERVAL
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
-                delays.append(int(tasks[0]['secs']))
+                delays.append(int(tasks[0]['secs'])-time.time())
                 logger.info('Already training troops at castle "%s"' % city.name)
                 continue
 
@@ -67,6 +67,6 @@ class Trainer(FilterableCityTask):
             delays.append(delay)
 
         if delays:
-            secs = (min(delays)-time.time()) / 2
-            logger.info('Retry troop training in %f seconds' % secs)
+            secs = min(delays) / 2
+            logger.info('Retry troop training in %d seconds' % secs)
             self.sleep(secs)
