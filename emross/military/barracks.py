@@ -108,7 +108,7 @@ class Barracks:
         try:
             troop_id, qty, unlocked = self.soldiers[troop-1]
             return unlocked is True
-        except KeyError:
+        except (IndexError, TypeError):
             return False
 
 if __name__ == "__main__":
