@@ -58,15 +58,16 @@ class TaskType:
     PROTECT = 8
 
 
-class CostCalculator:
+class CostCalculator(object):
     @classmethod
-    def cost(cls, tech, level):
+    def cost(cls, tech, level=2, modifier=None):
+        modifier = modifier or cls.COST_MODIFIER
         costs = {}
 
         try:
             base_cost = cls.COSTS[tech]
             for t in ['g', 'w', 'f', 'i']:
-                c = base_cost[t] * (1 + cls.COST_MODIFIER)**(level-1)
+                c = base_cost[t] * (1 + modifier)**(level-1)
                 costs[t] = int(math.ceil(c))
         except IndexError:
             pass

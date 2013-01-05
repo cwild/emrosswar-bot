@@ -69,7 +69,7 @@ class ResourceManager:
     def set_amount_of(self, resource, amount):
         self.city.data[Resource.OFFSETS[resource]] = amount
 
-    def meet_requirements(self, resource_levels):
+    def meet_requirements(self, resource_levels, convert=True):
         conversion = {}
         total_gold = 0
         for res, amt in resource_levels.iteritems():
@@ -86,9 +86,13 @@ class ResourceManager:
         if self.get_amount_of(Resource.GOLD) < resource_levels[Resource.GOLD]:
             logger.debug('Not enough gold available for required resource levels.')
         elif total_gold == 0:
-            logger.debug('No need to exchange any resources')
+            if convert is not False:
+                logger.debug('No need to exchange any resources')
             return True
         elif total_gold < self.get_amount_of(Resource.GOLD):
+            if not convert:
+                return True
+
             logger.debug('Total gold cost of conversion is %d' % total_gold)
             json = self._convert(**conversion)
             return json['code'] == EmrossWar.SUCCESS

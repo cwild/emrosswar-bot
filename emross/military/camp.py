@@ -1,4 +1,6 @@
-class Soldier:
+from emross.utility.task import CostCalculator
+
+class Soldier(CostCalculator):
     INFANTRY = 1
     SPY = 2
     PORTER = 3
@@ -18,6 +20,7 @@ class Soldier:
     KAHKLEH = 17
     ASSASSIN = 18
 
+    COST_MODIFIER = 0
     COSTS = {
         INFANTRY: {
             "g": 10,
@@ -165,6 +168,12 @@ class Soldier:
         }
     }
 
+    @classmethod
+    def cost(cls, troop, quantity, *args, **kwargs):
+        return super(Soldier, cls).cost(troop, modifier=quantity-1)
+
 
 if __name__ == "__main__":
     print Soldier.COSTS[Soldier.OVERLORD]
+    print Soldier.cost(Soldier.OVERLORD, quantity=1)
+    print Soldier.cost(Soldier.OVERLORD, quantity=10)

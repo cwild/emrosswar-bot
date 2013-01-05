@@ -129,7 +129,20 @@ trade_options = (AutoTrade, (AutoTrade.SELLER, [inventory.ALLIANCE_TOKEN]),
 
 #trade_options = (AutoTrade, (AutoTrade.BUYER, 900), {'team':True})
 
+from emross.military.trainer import Cavalry, Trainer
+
 build_path = (
+    (
+        (Trainer, ([Cavalry(Soldier.SPY, 50)],) ),
+        (Trainer, (
+            [
+                Cavalry(Soldier.LONUFAL, 3000),
+                Cavalry(Soldier.MASTER, 3000),
+                Cavalry(Soldier.KAHKLEH, 5000)
+            ],),
+            {'city_names': ['my_main_city', 'my_other_city']}
+        )
+    ),
     (
         trade_options,
     ),
