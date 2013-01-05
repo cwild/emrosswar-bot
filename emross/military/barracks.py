@@ -90,7 +90,7 @@ class Barracks:
     def total_troops(self):
         troop_tally = {}
 
-        self.camp_info()
+        info = self.camp_info()
         for soldier, qty, unlocked in self.soldiers:
             troop_tally[soldier] = qty
 
@@ -102,7 +102,7 @@ class Barracks:
                 except KeyError:
                     troop_tally[soldier] = qty
 
-        return troop_tally
+        return troop_tally, info
 
     def can_train(self, troop):
         try:
