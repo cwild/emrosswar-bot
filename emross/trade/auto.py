@@ -94,7 +94,15 @@ class AutoTrade(Task):
         self.sleep(interval)
 
 
-    def seller_process(self, items=[inventory.ALLIANCE_TOKEN], price=1000000, vary=1000, limit=Trade.MAX_ITEMS, city_index=None, *args, **kwargs):
+    def seller_process(self,
+        items=[inventory.ALLIANCE_TOKEN],
+        price=1000000,
+        vary=1000,
+        limit=Trade.MAX_ITEMS,
+        city_index=None,
+        min_gold=None,
+        max_gold=None,
+        *args, **kwargs):
         """Buy items to sell on the market."""
 
         try:
@@ -108,8 +116,20 @@ class AutoTrade(Task):
         trading = self.trade.list_all(city, funcs=[self.trade.list_trading])
 
         remaining = min(Trade.MAX_ITEMS, limit) - len(waiting) - len(trading)
+        can_sell = True
 
-        if remaining > 0:
+        gold = city.resource_manager.get_amount_of(Resource.GOLD)
+        if min_gold:
+            can_sell = gold > min_gold
+            logger.debug('Sell items only if current gold at this city is less than the min gold')
+
+        if max_gold:
+            can_sell = gold < max_gold
+            logger.debug('Sell items only if current gold at this city is less than the max gold')
+
+        if can_sell is False:
+            logger.info('Not selling. Current gold=%d, Min gold=%s, Max gold=%s' % (gold, str(min_gold), str(max_gold)))
+        elif remaining > 0:
             logger.debug('We have %d spare slots to trade items!' % remaining)
 
             for_sale = []
