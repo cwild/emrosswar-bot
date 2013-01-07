@@ -98,12 +98,16 @@ class EmrossWarApi:
         json = simplejson.loads(jsonp)
         logger.debug(json)
 
-        wait = random.random()
-        if sleep:
-            wait += random.randrange(*sleep)
+        if sleep is False:
+            # No delay from our end
+            pass
+        else:
+            wait = random.random()
+            if sleep:
+                wait += random.randrange(*sleep)
 
-        logger.debug('Wait for %f seconds' % wait)
-        time.sleep(wait)
+                logger.debug('Wait for %f seconds' % wait)
+                time.sleep(wait)
 
         return json
 
