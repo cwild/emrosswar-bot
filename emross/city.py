@@ -263,6 +263,14 @@ class City:
             soldier = [s for s in self.barracks.soldiers if i == s[0]][0]
             soldier[1] -= v
 
+        for k, v in params.iteritems():
+            if k.startswith('cost_'):
+                try:
+                    res = k[5]
+                    cur = self.resource_manager.get_amount_of(res)
+                    self.resource_manager.set_amount_of(res, cur - int(v))
+                except KeyError:
+                    pass
 
 
     def recruit_hero(self):
