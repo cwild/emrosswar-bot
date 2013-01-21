@@ -15,6 +15,9 @@ class Scenario:
     ELMOONII_WOODS = 8
     ROSTER_BOG = 9
 
+    NORMAL_MODE = 0
+    HARD_MODE = 1
+
     ADD_SOLDIER_URL = 'game/fb_add_soldier.php'
     ATTACK_URL = 'game/fb_attack.php'
     LIST_URL = 'game/fb_list.php'
@@ -186,7 +189,7 @@ class Scenario:
         """
         return self.bot.api.call(self.ADD_SOLDIER_URL, gen=gen)
 
-    def start(self, city, scenario, armies):
+    def start(self, city, scenario, armies, mode=NORMAL_MODE):
         """
         game/fb_start.php?
         city=123456
@@ -213,7 +216,7 @@ class Scenario:
 
         soldiers = dict(("soldier_num%d" % (key,), "|".join([str(v) for v in val])) for key, val in troops.iteritems())
 
-        json = self.bot.api.call(self.START_URL, city=city.id, fb=scenario, gen=gen, **soldiers)
+        json = self.bot.api.call(self.START_URL, city=city.id, fb=scenario, fb_mode=mode, gen=gen, **soldiers)
 
         return json['code'] == EmrossWar.SUCCESS
 

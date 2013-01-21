@@ -23,10 +23,13 @@ class ScenarioWalker(Task):
         self.html_parser = HTMLParser()
         self.scenario = None
 
-    def process(self, scenario, armies, times=[], resume=True, initial_delay=0.5, *args, **kwargs):
+    def process(self, scenario, armies, times=[], resume=True, initial_delay=0.5, mode=Scenario.NORMAL_MODE, *args, **kwargs):
         if self.bot.pvp:
             self.sleep(86400)
             return True
+
+        if len(self.bot.cities) == 0:
+            return resume
 
         if self.bot.userinfo.get('status', 0) in [EmrossWar.TRUCE, EmrossWar.VACATION]:
             self.sleep(60)
@@ -34,9 +37,6 @@ class ScenarioWalker(Task):
 
         if self.scenario is None:
             self.scenario = Scenario(self.bot)
-
-        if len(self.bot.cities) == 0:
-            return resume
 
         json = self.scenario.list()
 
@@ -89,7 +89,7 @@ class ScenarioWalker(Task):
                     try:
                         gen_armies = [city.create_army(dict(a['troops']), heroes=[heroes[a['hero']]], mixed=True) for a in armies]
 
-                        if self.scenario.start(city, scenario, armies):
+                        if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
                             logger.info('Started scenario %d' % scenario)
                             logger.debug('Wait %f seconds before first attack' % (initial_delay,))
