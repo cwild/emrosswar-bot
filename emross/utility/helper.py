@@ -22,6 +22,7 @@ from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
+from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.utility.builder import BuildManager
 from emross.world import World
@@ -85,6 +86,7 @@ class EmrossWarBot:
         Setup our core tasks. These run in a separate thread.
         """
         self.core_tasks.append((Chat,))
+        self.core_tasks.append((AutoLottery,))
 
     def update(self):
         """
