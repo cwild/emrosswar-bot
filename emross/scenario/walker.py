@@ -216,6 +216,11 @@ class ScenarioWalker(Task):
                 self.scenario = None
                 return
 
+            if info['code'] == Scenario.SCENARIO_EXPIRED:
+                logger.info('Scenario time limit has expired')
+                self.scenario = None
+                return
+
             hero_war_data = info['ret']['soldier'][str(army['hero'])]
 
             if hero_war_data['cd'] > 0:
@@ -240,6 +245,10 @@ class ScenarioWalker(Task):
                             logger.info('Resources won: %s' % (resources or 'Nothing',))
 
                             army['path'].popleft()
+
+                            if len(army['path']) is 0:
+                                logger.debug('This hero has no further points to attack. Refresh scenario info after a one second delay')
+                                wait.append(1)
 
                     except KeyError:
                         logger.info('No war report, we merely moved into position at point %d!' % point)
