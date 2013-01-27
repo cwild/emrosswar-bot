@@ -218,6 +218,7 @@ class ScenarioWalker(Task):
 
             if info['code'] == Scenario.SCENARIO_EXPIRED:
                 logger.info('Scenario time limit has expired')
+                self.scenario.finish()
                 self.scenario = None
                 return
 

@@ -233,5 +233,7 @@ class Scenario:
 
         json = self.list()
         logger.info('Remaining scenario attempts: %d' % int(json['ret']['times']))
-        self.lottery_wheel(action='list')
-        self.lottery_wheel(action='rotate')
+
+        if json['ret']['hasLottery']:
+            self.lottery_wheel(action='list')
+            self.lottery_wheel(action='rotate')
