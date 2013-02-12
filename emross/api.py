@@ -18,6 +18,12 @@ from lib.ordered_dict import OrderedDict
 from emross.exceptions import EmrossWarApiException
 from emross.handlers import handlers
 
+"""
+Import EmrossDataHandler for easier usage elsewhere
+eg. from emross.api import EmrossDatahandler
+"""
+from emross.utility.cache import EmrossCache, EmrossDataHandler
+
 from urllib3 import PoolManager, make_headers, exceptions
 
 logger = logging.getLogger(__name__)
@@ -113,7 +119,9 @@ class EmrossWarApi:
 
 
 
-class EmrossWar:
+class EmrossWar(object):
+    __metaclass__ = EmrossCache
+
     SUCCESS = 0
     ERROR_UNKNOWN = -1
     ERROR_INVALID_KEY = 2
