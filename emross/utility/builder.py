@@ -32,7 +32,6 @@ class BuildManager(object):
         cycle_start = time.time()
 
         for i, stage in enumerate(tasks):
-            logger.debug('Processing %s stage %d' % (stagename, i+1))
 
             results[:] = []
             for parts in stage:
