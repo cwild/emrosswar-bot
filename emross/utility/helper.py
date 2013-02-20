@@ -93,7 +93,7 @@ class EmrossWarBot:
         Setup bot with player account data
         """
         logger.info('Updating player info')
-        json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid, _l='en')
+        json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         self.userinfo = userinfo = json['ret']['user']
         self.last_update = time.time()

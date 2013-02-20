@@ -22,6 +22,7 @@ from emross.handlers import handlers
 Import EmrossDataHandler for easier usage elsewhere
 eg. from emross.api import EmrossDatahandler
 """
+from emross.api import device, lang
 from .cache import EmrossCache, EmrossDataHandler
 
 from urllib3 import PoolManager, make_headers, exceptions
@@ -81,7 +82,7 @@ class EmrossWarApi:
 
         epoch = int(time.time())
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
-                    ('key', self.api_key)])
+                    ('key', self.api_key), ('_l', lang), ('_p', device)])
 
         params.update(kargs)
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
@@ -153,3 +154,9 @@ class EmrossWar(object):
     ITEM_DOES_NOT_EXIST = 3403
 
     PVP_ELIMINATED = 7415
+
+
+if __name__ == "__main__":
+    import emross.api
+    print emross.api.lang
+

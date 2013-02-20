@@ -6,6 +6,8 @@ import threading
 import time
 import urllib3
 
+from emross.api import lang
+
 logger = logging.getLogger(__name__)
 
 CACHE_PATH = 'build/cache/'
@@ -28,6 +30,7 @@ class EmrossContent(object):
     @classmethod
     def load(cls, filename, decoder=json_decoder, force=False):
         with cls.lock:
+            filename = filename % {'lang': lang}
             logger.debug('Checking "%s"' % filename)
             content = None
             localfile = os.path.join(CACHE_PATH, filename)
@@ -46,7 +49,8 @@ class EmrossContent(object):
 
                     with open(localfile, 'wb') as fp:
                         fp.writelines(content)
-
+                else:
+                    logger.critical('Unable to load file %s' % filename)
 
             # Load the localfile from disk
             if not content:
@@ -79,8 +83,8 @@ class EmrossContent(object):
                         d = hash.hexdigest()
                         logger.debug('MD5 sum = %s' % d)
                         return d
-        except IOError, e:
-            logger.exception(e)
+        except IOError as e:
+            logger.warning(e)
             return False
 
 
