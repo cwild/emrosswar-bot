@@ -22,7 +22,7 @@ from emross.handlers import handlers
 Import EmrossDataHandler for easier usage elsewhere
 eg. from emross.api import EmrossDatahandler
 """
-from emross.utility.cache import EmrossCache, EmrossDataHandler
+from .cache import EmrossCache, EmrossDataHandler
 
 from urllib3 import PoolManager, make_headers, exceptions
 
