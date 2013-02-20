@@ -40,7 +40,9 @@ class EmrossContent(object):
                 logger.debug('Create target directory "%s"' % target_dir)
                 os.makedirs(target_dir)
 
-            if force or filename not in cls.FILE_HASHES or \
+            if force is False and filename == 'md5.dat':
+                pass
+            elif force or filename not in cls.FILE_HASHES or \
                 cls.check_hash(localfile) != cls.FILE_HASHES.get(filename):
                 # We need to download the file
                 r = cls.get_file(filename)
@@ -138,7 +140,7 @@ class EmrossDataHandler(object):
 
 # Initialise our cache
 try:
-    force = os.path.getmtime(CACHE_PATH+'md5.dat') < time.time()+86400
+    force = os.path.getmtime(CACHE_PATH+'md5.dat')+86400 < time.time()
 except (IOError, OSError):
     force = True
 
