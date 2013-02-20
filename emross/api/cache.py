@@ -6,8 +6,6 @@ import threading
 import time
 import urllib3
 
-from emross.api import lang
-
 logger = logging.getLogger(__name__)
 
 CACHE_PATH = 'build/cache/'
@@ -30,6 +28,7 @@ class EmrossContent(object):
     @classmethod
     def load(cls, filename, decoder=json_decoder, force=False):
         with cls.lock:
+            from emross.api import lang
             filename = filename % {'lang': lang}
             logger.debug('Checking "%s"' % filename)
             content = None

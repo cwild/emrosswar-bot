@@ -15,21 +15,16 @@ import time
 
 from lib.ordered_dict import OrderedDict
 
+from urllib3 import PoolManager, make_headers, exceptions
+
 from emross.exceptions import EmrossWarApiException
 from emross.handlers import handlers
 
-"""
-Import EmrossDataHandler for easier usage elsewhere
-eg. from emross.api import EmrossDatahandler
-"""
-from emross.api import device, lang
-from .cache import EmrossCache, EmrossDataHandler
-
-from urllib3 import PoolManager, make_headers, exceptions
+from emross.api.cache import EmrossCache
 
 logger = logging.getLogger(__name__)
 
-class EmrossWarApi:
+class EmrossWarApi(object):
     _pool = PoolManager(maxsize=10)
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
 
@@ -80,6 +75,7 @@ class EmrossWarApi:
         """Call API and return result"""
         server = server or self.game_server
 
+        from emross.api import device, lang
         epoch = int(time.time())
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', self.api_key), ('_l', lang), ('_p', device)])
