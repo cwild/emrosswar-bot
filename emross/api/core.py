@@ -18,7 +18,7 @@ from lib.ordered_dict import OrderedDict
 from urllib3 import PoolManager, make_headers, exceptions
 
 from emross.exceptions import EmrossWarApiException
-from emross.handlers import handlers
+from emross.handlers import handlers, HTTP_handlers
 
 from emross.api.cache import EmrossCache
 
@@ -28,11 +28,13 @@ class EmrossWarApi(object):
     _pool = PoolManager(maxsize=10)
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
 
-    def __init__(self, api_key, game_server, user_agent=None, pushid=None):
+    def __init__(self, api_key, game_server, user_agent=None, pushid=None, player=None):
         self.api_key = api_key
         self.game_server = game_server
         self.user_agent = user_agent or self.USER_AGENT
         self.pushid = pushid
+        self.player = player
+        self.errors = []
         self.lock = threading.Lock()
 
     @property
@@ -43,7 +45,7 @@ class EmrossWarApi(object):
         return make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
 
     def call(self, *args, **kargs):
-        for i in xrange(1, 51):
+        for i in xrange(1, 6):
             try:
                 logger.debug('API call: attempt #%d' % i)
                 json = self._call(*args, **kargs)
@@ -53,6 +55,8 @@ class EmrossWarApi(object):
                     result = handler.process(json)
                     if result is not None:
                         return result
+                    # Try the current _call again
+                    continue
 
                 if not isinstance(json['code'], int):
                     logger.debug('API call attempt %d failed with an invalid client code.' % i)
@@ -60,11 +64,11 @@ class EmrossWarApi(object):
                     time.sleep(random.randrange(2,3))
                 else:
                     return json
-            except (AttributeError, IndexError, JSONDecodeError), e:
+            except (AttributeError, EmrossWarApiException, IndexError, JSONDecodeError) as e:
                 logger.exception(e)
                 logger.debug('Pause for a second.')
                 time.sleep(1)
-            except exceptions.HTTPError, e:
+            except exceptions.HTTPError as e:
                 logger.debug(e)
                 wait = 1 + (i % 10)
                 logger.info('Wait %d seconds before retry' % wait)
@@ -77,8 +81,14 @@ class EmrossWarApi(object):
 
         from emross.api import device, lang
         epoch = int(time.time())
+
+        try:
+            key = self.player.key
+        except AttributeError:
+            key = self.api_key
+
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
-                    ('key', self.api_key), ('_l', lang), ('_p', device)])
+                    ('key', key), ('_l', lang), ('_p', device)])
 
         params.update(kargs)
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
@@ -93,7 +103,19 @@ class EmrossWarApi(object):
 
 
         if r.status not in [200, 304]:
+            logger.debug(r.data)
+
+            self.errors.append((r.status, r.data))
+            handler = HTTP_handlers.get(r.status, None)
+            if handler:
+                h = handler(self.bot)
+                result = h.process(self.errors)
+                if result:
+                    return result
+
             raise exceptions.HTTPError, 'Unacceptable HTTP status code %d returned' % r.status
+        else:
+            self.errors[:] = []
 
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]

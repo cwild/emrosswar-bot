@@ -12,6 +12,7 @@ from emross.shop import Shop
 import math
 import re
 import time
+import Queue
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class EmrossWarBot:
     def __init__(self, api):
         self.api = api
         api.bot = self
+        self.errors = Queue.Queue()
 
         self.session = Session.load(api.api_key)
 
