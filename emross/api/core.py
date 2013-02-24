@@ -87,6 +87,10 @@ class EmrossWarApi(object):
         except AttributeError:
             key = self.api_key
 
+        if key is None or len(key.strip()) == 0:
+            logger.debug('API key is missing, send dummy InvalidKey error')
+            return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
+
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', key), ('_l', lang), ('_p', device)])
 
