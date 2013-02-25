@@ -45,11 +45,8 @@ class BotManager(object):
             worker.start()
             workers.append(worker)
 
-        if self.console:
-            sandbox = {'manager': self, 'settings': settings, 'bot':self.bot}
-            code.interact(banner='EmrossWar Bot Management console', local=sandbox)
-            raise KeyboardInterrupt
-        else:
+
+        def _inner_run():
             while len(workers) > 0:
                 """
                 If this wasn't here, our threads would all stop after.
@@ -79,3 +76,21 @@ class BotManager(object):
                         logger.critical('Removed this bot instance')
 
                     time.sleep(2)
+
+
+        """
+        Now we can start the main event loop.
+        If we are running a console then the `code.interact` will block
+        so we need to spawn a thread to process each bot's error queue.
+        """
+        if self.console:
+            worker = threading.Thread(target=_inner_run)
+            worker.daemon = True
+            worker.start()
+
+            sandbox = {'manager': self, 'settings': settings, 'bot':self.bot}
+            code.interact(banner='EmrossWar Bot Management console', local=sandbox)
+            raise KeyboardInterrupt
+        else:
+            # We can run this directly in this thread
+            _inner_run()
