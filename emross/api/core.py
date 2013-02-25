@@ -75,7 +75,7 @@ class EmrossWarApi(object):
                 time.sleep(wait)
 
 
-    def _call(self, method, server=None, sleep=(), **kargs):
+    def _call(self, method, server=None, sleep=(), _lock=True, **kargs):
         """Call API and return result"""
         server = server or self.game_server
 
@@ -87,7 +87,7 @@ class EmrossWarApi(object):
         except AttributeError:
             key = self.api_key
 
-        if key is None or len(key.strip()) == 0:
+        if key == False:
             logger.debug('API key is missing, send dummy InvalidKey error')
             return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
 
@@ -99,7 +99,10 @@ class EmrossWarApi(object):
 
         try:
             url = 'http://%s/%s' % (server, method)
-            with self.lock:
+            if _lock:
+                with self.lock:
+                    r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
+            else:
                 r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
         except exceptions.HTTPError, e :
             logger.exception(e)
