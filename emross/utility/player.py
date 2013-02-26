@@ -15,7 +15,7 @@ class Player(object):
 
     def __init__(self,
         server,
-        key=False,
+        key=None,
         pushid=None,
         user_agent=None,
         username=None,

@@ -87,7 +87,7 @@ class EmrossWarApi(object):
         except AttributeError:
             key = self.api_key
 
-        if key == False:
+        if (key is None or key.strip() == '') and 'key' not in kargs:
             logger.debug('API key is missing, send dummy InvalidKey error')
             return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
 
