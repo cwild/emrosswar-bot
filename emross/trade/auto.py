@@ -53,7 +53,11 @@ class AutoTrade(Task):
         else:
             return None
 
-        return _process(*args, **kwargs)
+        try:
+            return _process(*args, **kwargs)
+        except ValueError as e:
+            logger.debug(e)
+            return None
 
 
     def buyer_process(self, interval=900, team=False, sleep=(4,5)):
