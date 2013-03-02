@@ -165,7 +165,11 @@ def run_bot(bot):
             logger.info('Cycle finished, waiting for 5 mins to go again')
             time.sleep(5*MINUTE)
 
-        except EmrossWarApiException, e:
+        except EmrossWarApiException as e:
+            logger.exception(e)
+            logger.info('EmrossWarApiException, sleeping for 15 minutes')
+            time.sleep(15*MINUTE)
+        except Exception as e:
             logger.exception(e)
             logger.info('Exception, sleeping for an hour')
             time.sleep(1*HOUR)

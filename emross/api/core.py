@@ -25,7 +25,7 @@ from emross.api.cache import EmrossCache
 logger = logging.getLogger(__name__)
 
 class EmrossWarApi(object):
-    _pool = PoolManager(maxsize=10)
+    _pool = PoolManager(maxsize=10, timeout=15)
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
 
     def __init__(self, api_key, game_server, user_agent=None, pushid=None, player=None):
@@ -104,9 +104,17 @@ class EmrossWarApi(object):
                     r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
             else:
                 r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
-        except exceptions.HTTPError, e :
+        except exceptions.HTTPError as e :
             logger.exception(e)
-            raise EmrossWarApiException, 'Problem connecting to game server.'
+            #raise EmrossWarApiException('Problem connecting to game server.')
+
+            class DummyResponse(object):
+                pass
+
+            r = DummyResponse()
+            r.status = 503
+            r.data = e
+
 
 
         if r.status not in [200, 304]:
@@ -120,7 +128,7 @@ class EmrossWarApi(object):
                 if result:
                     return result
 
-            raise exceptions.HTTPError, 'Unacceptable HTTP status code %d returned' % r.status
+            raise exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
         else:
             self.errors[:] = []
 
