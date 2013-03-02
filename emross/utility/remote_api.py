@@ -26,6 +26,7 @@ class RemoteApi(object):
 
     def call(self, uri, method='POST', decoder=json.loads, *args, **kwargs):
         url = urlparse.urljoin(self.url, uri)
+        kwargs = dict([(k, v) for k, v in kwargs if v is not None])
         r = self.__class__.pool.request(method, url, fields=kwargs, headers=self.headers)
         if r.status is 401:
             raise RemoteApiException, 'Incorrect login details'
