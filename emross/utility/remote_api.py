@@ -21,7 +21,7 @@ class RemoteApi(object):
         super(RemoteApi, self).__init__(*args, **kwargs)
 
         self.url = url
-        self.headers = urllib3.util.make_headers(basic_auth = auth, \
+        self.headers = urllib3.make_headers(basic_auth = auth, \
             keep_alive=True, accept_encoding=True, user_agent = USER_AGENT)
 
     def call(self, uri, method='POST', decoder=json.loads, *args, **kwargs):
