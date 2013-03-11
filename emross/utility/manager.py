@@ -3,6 +3,7 @@ import logging
 import time
 import threading
 import Queue
+from lib import kronos
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,12 @@ class BotManager(object):
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
             bot = EmrossWarBot(api)
+            if player.custom_build:
+                bot.tasks['custom'] = bot.scheduler.add_interval_task(
+                    bot.builder.process,
+                    "custom build path handler", 1, 1, kronos.method.sequential,
+                    [player.custom_build, 'custom'], None)
+
             self.bots.append(bot)
 
     def run(self, func):
