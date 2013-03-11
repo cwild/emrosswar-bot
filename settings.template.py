@@ -126,8 +126,11 @@ trade_options = (AutoTrade, (AutoTrade.SELLER, [inventory.ALLIANCE_TOKEN]),
 
 from emross.military.trainer import Cavalry, Trainer
 
+from emross import pvp
+
 build_path = (
     (
+        (pvp.Durability, (100,), {'stop_below': 4}),
         (Trainer, ([Cavalry(Soldier.SPY, 50)],) ),
         (Trainer, (
             [

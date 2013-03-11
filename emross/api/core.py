@@ -176,6 +176,7 @@ class EmrossWar(object):
 
     TRUCE = 1
     VACATION = 2
+    SLEEP = 4
 
     LORD = 1
     DEVIL_ARMY = 2

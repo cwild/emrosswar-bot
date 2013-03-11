@@ -1,3 +1,4 @@
+from __future__ import division
 import sys
 sys.path.extend(['lib/urllib3/'])
 
@@ -5,7 +6,7 @@ sys.path.extend(['lib/urllib3/'])
 from lib import kronos
 from lib.session import Session
 
-from emross.item import item
+from emross.item import inventory, item
 from emross.resources import Resource
 from emross.shop import Shop
 
@@ -324,7 +325,7 @@ class EmrossWarBot:
             for _item in json['ret']['item']:
                 try:
                     if _item['item']['sid'] == item_id:
-                        result.append([_item['item']['id'], _item['item']['num']])
+                        result.append([_item['item']['id'], _item['item']['num'], _item['sale']])
                         found = True
                     elif found:
                         logger.debug('We have found all of these items.')
@@ -339,6 +340,43 @@ class EmrossWarBot:
 
         return result
 
+
+    def find_gold_for_city(self, city, gold, unbrick=False):
+        """
+        Given a city, try to find any items we have that we can sell for gold.
+        """
+        item_manager = item.Item(self)
+        sellable_items = []
+
+        total_amount = lambda: sum([qty*price for id, qty, price in sellable_items])
+
+        if total_amount() < gold and unbrick:
+            sellable_items.extend(self.find_inventory_item(inventory.GOLD_BRICK))
+            sellable_items.extend(self.find_inventory_item(inventory.GOLD_BULLION))
+
+        if total_amount() < gold:
+            return False
+
+        total = 0
+        for item_id, qty, price in sellable_items:
+            remaining = gold - total
+            num = math.ceil(remaining / price)
+            num = int(min(num, qty))
+
+            kwargs = {}
+            if num > 1:
+                kwargs['num'] = num
+
+            json = item_manager.sell(city = city.id, id = item_id, **kwargs)
+
+            if json['code'] == EmrossWar.SUCCESS:
+                city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
+                total += num*price
+
+            if total >= gold:
+                return True
+
+        return False
 
 class Fav:
     def __init__(self, x = 0, y = 0, attack = 0):

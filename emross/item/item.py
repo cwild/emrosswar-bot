@@ -31,8 +31,8 @@ class Item:
     def use(self, city, id):
         return self.bot.api.call(self.__class__.ITEM_OP, action='use', city=city, id=id, num=1)
 
-    def sell(self, city, id):
-        return self.bot.api.call(self.__class__.ITEM_OP, action='sale', city=city, id=id)
+    def sell(self, city, id, **kwargs):
+        return self.bot.api.call(self.__class__.ITEM_OP, action='sale', city=city, id=id, **kwargs)
 
     def upgrade(self, city, id):
         return self.bot.api.call(self.__class__.ITEM_OP, action='upgrade', city=city, id=id)

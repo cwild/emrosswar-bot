@@ -143,9 +143,9 @@ class AutoTrade(Task):
                     for_sale.extend(sellable)
 
             try:
-                sellable_items = sum([int(num) for id, num in for_sale])
+                sellable_items = sum([int(num) for id, num, sale_gold in for_sale])
                 # Flatten the for-sale list
-                for_sale[:] = [id for id, num in for_sale for n in xrange(num)]
+                for_sale[:] = [id for id, num, sale_gold in for_sale for n in xrange(num)]
             except ValueError:
                 sellable_items = 0
 
