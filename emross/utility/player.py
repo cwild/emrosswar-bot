@@ -20,6 +20,7 @@ class Player(object):
         user_agent=None,
         username=None,
         password=None,
+        custom_build = None,
         *args,
         **kwargs):
 
@@ -29,6 +30,7 @@ class Player(object):
         self.user_agent = user_agent
         self.username = username
         self.password = password
+        self.custom_build = custom_build
         self._remote = None
 
     @property
