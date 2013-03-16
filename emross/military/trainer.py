@@ -1,5 +1,7 @@
 from emross.api import EmrossWar
 from emross.military.camp import Soldier
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
 
 import logging
@@ -25,8 +27,13 @@ class Trainer(FilterableCityTask):
             self.sleep(5)
             return False
 
+        construction = self.bot.builder.task(Construct)
         delays = []
         for city in cities:
+            if construction.structure_level(city, Building.BARRACKS) < 1:
+                logger.info('There is no Barracks at castle "%s"' % city.name)
+                continue
+
             delay = self.INTERVAL
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
