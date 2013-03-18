@@ -100,13 +100,13 @@ class EmrossCache(type):
     """
     _cache = InternalCache()
 
-    def extend(self, key, value, model=None):
+    def extend(self, key, value, model=None, **kwargs):
         cache = self.__class__._cache
 
         with cache.lock:
             if key not in cache.DATA:
                 filename = value
-                value = EmrossContent.load(value)
+                value = EmrossContent.load(value, **kwargs)
                 if model:
                     value = model(filename, value)
                 cache.DATA[key] = value
