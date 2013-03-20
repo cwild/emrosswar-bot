@@ -6,6 +6,7 @@ try:
 except ImportError: #python3
     from html.parser import HTMLParser
 
+import emross.arena
 from emross.api import EmrossWar
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.scenario.scene import Scenario
@@ -69,7 +70,7 @@ class ScenarioWalker(Task):
                 # Clean the path (useful incase the scenario had already been started)
                 self.init_paths(json)
 
-            self.process_paths()
+            self.process_paths(scenario)
         else:
             # Not started yet
             if json['ret']['times'] == 0:
@@ -91,7 +92,12 @@ class ScenarioWalker(Task):
 
                         if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
-                            logger.info('Started scenario %d' % scenario)
+                            logger.debug('Started scenario %d' % scenario)
+                            logger.info('Started scenario "%s" with %s' % \
+                                (EmrossWar.SCENARIO_TEXT.map_name(scenario),
+                                ','.join(EmrossWar.HERO[str(a['hero'])]['name'] for a in armies)
+                                )
+                            )
                             logger.debug('Wait %f seconds before first attack' % (initial_delay,))
                             self.sleep(initial_delay)
                     except (InsufficientHeroCommand, InsufficientSoldiers), e:
@@ -192,14 +198,15 @@ class ScenarioWalker(Task):
                     break
 
 
-    def process_paths(self):
+    def process_paths(self, scenario):
         wait = []
 
         for army in self.scenario.armies:
-            logger.info('Processing hero %d with path: %s' % (army['hero'],army['path']))
+            hero_name = EmrossWar.HERO[str(army['hero'])]['name']
+            logger.info('Processing hero %s with path: %s' % (hero_name,army['path']))
 
             if len(army['path']) == 0:
-                logger.info('No more points for hero %d to attack.' % army['hero'])
+                logger.info('No more points for hero "%s" to attack.' % hero_name)
                 continue
 
             point = army['path'][0]
@@ -208,6 +215,7 @@ class ScenarioWalker(Task):
                 army['path'].popleft()
                 continue
 
+            point_name = EmrossWar.SCENARIO_TEXT.point_name(scenario, point)
             info = self.scenario.move(point)
 
             if info['code'] == Scenario.SCENARIO_FINISHED:
@@ -237,10 +245,11 @@ class ScenarioWalker(Task):
                         war_result = json['ret']['war_report']['war_result']
 
                         losses = self.html_parser.unescape(war_result['aarmy_loss'])
-                        logger.info('Troop losses for hero %d: %s' % (army['hero'],losses))
+                        logger.info('Troop losses for hero "%s": %s' % (hero_name,losses))
 
                         if int(war_result['aflag']) == 1:
-                            logger.info('Hero %d has moved to point %d' % (army['hero'],point))
+                            logger.info('"%s" has moved to %s' % (hero_name,point_name))
+                            logger.debug('Hero "%s" has moved to point %d' % (army['hero'],point))
 
                             resources = self.html_parser.unescape(war_result['resource'])
                             logger.info('Resources won: %s' % (resources or 'Nothing',))
@@ -248,18 +257,21 @@ class ScenarioWalker(Task):
                             army['path'].popleft()
 
                             if len(army['path']) is 0:
+                                logger.info("%s has reached it's final destination, %s" % \
+                                    (hero_name,point_name))
                                 logger.debug('This hero has no further points to attack. Refresh scenario info after a one second delay')
                                 wait.append(1)
 
                     except KeyError:
-                        logger.info('No war report, we merely moved into position at point %d!' % point)
+                        logger.info('No war report, we merely moved into position at point %d (%s)!' % \
+                            (point,point_name))
                         if int(json['ret']['pos']) == point:
                             army['path'].popleft()
 
 
                     # We need to let our hero rest!
                     cd = int(json['ret']['cd'])
-                    logger.info('Hero %d has a cooldown of %d second(s).' % (army['hero'],cd))
+                    logger.info('%s has a cooldown of %d second(s).' % (hero_name,cd))
                     self.sleep(cd)
 
         if wait:
@@ -272,6 +284,8 @@ class ScenarioWalker(Task):
         Refill a heroes army before war
         TODO: Check the containing castle has the desired troops for this
         """
+        hero_name = EmrossWar.HERO[str(gen)]['name']
+        logger.info('Restock troops for %s' % hero_name)
         json = self.scenario.restock(gen)
         return json['code'] == EmrossWar.SUCCESS
 
@@ -289,3 +303,6 @@ if __name__ == "__main__":
 
     print walker.can_start([], time.mktime(daybreak))
     print walker.can_start([(2,30), (17,15), (23,30)], time.mktime(daybreak))
+
+    logger.info(EmrossWar.SCENARIO_TEXT.map_name(Scenario.ROSTER_BOG))
+    logger.info(EmrossWar.SCENARIO_TEXT.point_name(Scenario.ROSTER_BOG, 1))
