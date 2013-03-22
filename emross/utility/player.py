@@ -21,6 +21,8 @@ class Player(object):
         username=None,
         password=None,
         custom_build = None,
+        disable_global_build = False,
+        disable_modules = [],
         *args,
         **kwargs):
 
@@ -31,6 +33,8 @@ class Player(object):
         self.username = username
         self.password = password
         self.custom_build = custom_build
+        self.disable_global_build = disable_global_build
+        self.disable_modules = set(disable_modules)
         self._remote = None
 
     @property

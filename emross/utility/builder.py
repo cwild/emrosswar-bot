@@ -37,6 +37,9 @@ class BuildManager(object):
             for parts in stage:
                 try:
                     handler = self.task(parts[0])
+                    if self.bot.api.player and \
+                        handler.__class__ in self.bot.api.player.disable_modules:
+                        continue
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
                     result = handler.run(cycle_start, *args, **kwargs)
