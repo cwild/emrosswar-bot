@@ -70,12 +70,21 @@ class EmrossWarBot:
         self.builder = BuildManager(self)
         self.tasks['core_tasks'] = s.add_interval_task(self.builder.process, "core task handler", 1, 1, kronos.method.sequential, [(self.core_tasks,), 'core'], None)
 
-        if api.player and api.player.disable_global_build == False:
-            try:
-                self.tasks['build_path'] = s.add_interval_task(self.builder.process, "build path handler", 3, 1, kronos.method.sequential, [settings.build_path, 'build'], None)
-            except AttributeError:
-                pass
+        if api.player:
+            if api.player.disable_global_build == False:
+                try:
+                    self.tasks['build_path'] = s.add_interval_task(
+                        self.builder.process,
+                        "build path handler", 3, 1, kronos.method.sequential,
+                        [settings.build_path, 'build'], None)
+                except AttributeError:
+                    pass
 
+            if api.player.custom_build:
+                self.tasks['custom'] = s.add_interval_task(
+                    self.builder.process,
+                    "custom build path handler", 1, 1, kronos.method.sequential,
+                    [api.player.custom_build, 'custom'], None)
 
     def __del__(self):
         logger.debug('Clean up bot instance')

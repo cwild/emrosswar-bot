@@ -37,6 +37,19 @@ class Player(object):
         self.disable_modules = set(disable_modules)
         self._remote = None
 
+    def __repr__(self):
+        parts = []
+
+        if self.username:
+            parts.append('username={0}'.format(self.username))
+
+        if not parts and self.key:
+            parts.append('key={0}'.format(self.key))
+
+        parts = ', '.join(parts)
+
+        return 'Player ({0})'.format(parts)
+
     @property
     def remote(self):
         try:
