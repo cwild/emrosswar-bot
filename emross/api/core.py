@@ -35,6 +35,7 @@ class EmrossWarApi(object):
         self.pushid = pushid
         self.player = player
         self.errors = []
+        self.error_timer = 0
         self.lock = threading.Lock()
 
     @property
@@ -75,7 +76,11 @@ class EmrossWarApi(object):
                 time.sleep(wait)
 
 
-    def _call(self, method, server=None, sleep=(), _lock=True, **kargs):
+    def _call(self, method, server=None,
+        sleep=(),
+        _lock=True,
+        handle_errors=True,
+        **kargs):
         """Call API and return result"""
         server = server or self.game_server
 
@@ -120,16 +125,18 @@ class EmrossWarApi(object):
         if r.status not in [200, 304]:
             logger.debug(r.data)
 
-            self.errors.append((r.status, r.data))
-            handler = HTTP_handlers.get(r.status, None)
-            if handler:
-                h = handler(self.bot)
-                result = h.process(self.errors)
-                if result:
-                    return result
+            if handle_errors:
+                self.errors.append((r.status, r.data))
+                handler = HTTP_handlers.get(r.status, None)
+                if handler:
+                    h = handler(self.bot)
+                    result = h.process(self.errors)
+                    if result:
+                        return result
 
             raise exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
         else:
+            self.error_timer = 0
             self.errors[:] = []
 
         jsonp = r.data

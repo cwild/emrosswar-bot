@@ -80,7 +80,8 @@ class Player(object):
         if self.password is None:
             raise BotException('Account password not set for this bot')
 
-        json = api.call('info.php', server='m.emrosswar.com', user=self.username, action='login', pvp=0, key=None)
+        json = api.call('info.php', server='m.emrosswar.com', user=self.username,
+                    action='login', pvp=0, key=None, handle_errors=False)
 
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException('Invalid account username')
@@ -88,7 +89,8 @@ class Player(object):
         server = json['ret']['server'][7:-1]
         user = json['ret']['user']
 
-        json = api.call('game/login_api.php', server=server, username=user, password=self.password, key=None)
+        json = api.call('game/login_api.php', server=server, username=user, \
+                    password=self.password, key=None, handle_errors=False)
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException('Account password is incorrect')
 

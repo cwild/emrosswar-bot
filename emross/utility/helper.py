@@ -37,6 +37,9 @@ class EmrossWarBot:
     USERINFO_URL = 'game/get_userinfo_api.php'
 
     def __init__(self, api):
+        self.blocked = False
+        self.runnable = True
+
         self.api = api
         api.bot = self
         self.errors = Queue.Queue()
@@ -91,6 +94,7 @@ class EmrossWarBot:
         self.disconnect()
 
     def disconnect(self):
+        self.runnable = False
         logger.info('Stop the task scheduler for this bot')
         self.scheduler.stop()
 

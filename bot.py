@@ -44,7 +44,7 @@ def run_bot(bot):
     bot.api._call(settings.get_user_info, key=1, test=2)
     """
 
-    while True:
+    while bot.runnable:
         try:
             bot.update()
 
