@@ -1,6 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
+from emross.exceptions import EmrossWarException
 from emross.handlers.handler import EmrossHandler
 from emross.handlers.client_errors import InvalidKeyHandler
 
@@ -17,5 +18,5 @@ class ServiceUnavailableHandler(EmrossHandler):
             logger.debug('We keep seeing HTTP error %d; try relogging to clear it' % self.HTTP_STATUS_CODE)
 
             # Just reuse the invalid key handler
-            handler = InvalidKeyHandler(self.bot)
+            handler = InvalidKeyHandler(self.bot, error_exception=EmrossWarException)
             handler.process()

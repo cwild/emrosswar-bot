@@ -62,7 +62,7 @@ class Player(object):
             logger.exception(e)
             return None
 
-    def account_login(self, api, *args, **kwargs):
+    def account_login(self, api, error_exception=BotException, *args, **kwargs):
         """Account login to acquire a new API key"""
 
 
@@ -75,10 +75,10 @@ class Player(object):
         """
 
         if self.username is None:
-            raise BotException('Account username not set for this bot')
+            raise error_exception('Account username not set for this bot')
 
         if self.password is None:
-            raise BotException('Account password not set for this bot')
+            raise error_exception('Account password not set for this bot')
 
         json = api.call('info.php', server=MASTER, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False)
@@ -96,7 +96,7 @@ class Player(object):
 
         return json['ret']['key']
 
-    def update_api_key(self, bot, current_key):
+    def update_api_key(self, bot, current_key, *args, **kwargs):
         """Try to find a new key for this bot to use. Search local cache,
         external API and then fallback to logging in directly"""
 
@@ -128,7 +128,7 @@ class Player(object):
             return
 
         # Last resort... login directly!
-        key = self.account_login(bot.api)
+        key = self.account_login(bot.api, *args, **kwargs)
         self.update_user_cache(self.username, key)
         self.key = key
 
