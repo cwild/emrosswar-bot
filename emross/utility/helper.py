@@ -94,7 +94,6 @@ class EmrossWarBot:
         self.disconnect()
 
     def disconnect(self):
-        self.runnable = False
         logger.info('Stop the task scheduler for this bot')
         self.scheduler.stop()
 

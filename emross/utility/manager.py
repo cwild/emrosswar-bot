@@ -69,21 +69,24 @@ class BotManager(object):
                             error = worker.bot.errors.get_nowait()
                             if error is None:
                                 break
-                            else:
-                                func, args = error
-                                if func in handled:
-                                    logger.debug('This error type has already been handled')
-                                    worker.bot.errors.task_done()
-                                else:
-                                    func(*args)
-                                    handled.add(func)
+
+                            func, args = error
+                            if func in handled:
+                                logger.debug('This error type has already been handled (%s)' % func)
+                                worker.bot.errors.task_done()
+                                continue
+
+                            try:
+                                func(*args)
+                            except BotException as e:
+                                self.runnable = False
+                                workers.remove(worker)
+                                logger.info(e)
+                                logger.critical('Removed this bot instance from workers, marked for shutdown')
+                            finally:
+                                handled.add(func)
                     except Queue.Empty:
                         pass
-                    except BotException as e:
-                        worker.bot.disconnect()
-                        workers.remove(worker)
-                        logger.info(e)
-                        logger.critical('Removed this bot instance')
                     except Exception as e:
                         logger.error(e)
                         t = self._handle_worker_errors(worker, error)

@@ -173,7 +173,7 @@ def run_bot(bot):
             logger.info('Exception, sleeping for an hour')
             time.sleep(1*HOUR)
 
-
+    bot.disconnect()
 
 if __name__ == "__main__":
     import argparse
