@@ -6,10 +6,12 @@ import threading
 import time
 import urllib3
 
+from emross import master as MASTER
+
 logger = logging.getLogger(__name__)
 
 CACHE_PATH = 'build/cache/'
-DATA_URL = 'http://m.emrosswar.com/ver_ipad/build/'
+DATA_URL =  'http://%s/ver_ipad/build/'
 USER_AGENT = 'EmrossWar/1.42 CFNetwork/548.1.4 Darwin/11.0.0'
 
 def json_decoder(data):
@@ -23,16 +25,21 @@ def json_decoder(data):
 class EmrossContent(object):
     lock = threading.Lock()
     pool = urllib3.PoolManager()
-    FILE_HASHES = {}
+    FILE_HASHES = None
 
     @classmethod
     def load(cls, filename, decoder=json_decoder, force=False):
+        if cls.FILE_HASHES is None:
+            cls.FILE_HASHES = {}
+            _init_cache()
+
         with cls.lock:
             from emross.api import lang
             filename = filename % {'lang': lang}
             logger.debug('Checking "%s"' % filename)
             content = None
-            localfile = os.path.join(CACHE_PATH, filename)
+            localfile = os.path.join(CACHE_PATH, MASTER, filename)
+            logger.debug('Local file = %s' % localfile)
 
             target_dir = os.path.dirname(localfile)
             if not os.path.exists(target_dir):
@@ -69,7 +76,7 @@ class EmrossContent(object):
     @classmethod
     def get_file(cls, filename):
         logger.debug('Download file "%s"' % filename)
-        return cls.pool.request('GET', DATA_URL+filename, headers={'User-Agent': USER_AGENT})
+        return cls.pool.request('GET', os.path.join(DATA_URL % MASTER, filename), headers={'User-Agent': USER_AGENT})
 
     @classmethod
     def check_hash(cls, filename):
@@ -138,13 +145,12 @@ class EmrossDataHandler(object):
 
 
 # Initialise our cache
-try:
-    force = os.path.getmtime(CACHE_PATH+'md5.dat')+86400 < time.time()
-except (IOError, OSError):
-    force = True
+def _init_cache():
+    logger.info('Initialise cache using master server "%s"' % MASTER)
+    try:
+        force = os.path.getmtime(os.path.join(CACHE_PATH, MASTER, 'md5.dat'))+86400 < time.time()
+    except (IOError, OSError):
+        force = True
 
-EmrossContent.FILE_HASHES = dict((v, k) for k, v in [(part.split(',')) \
-    for part in EmrossContent.load('md5.dat', None, force).split(';') if len(part) > 0])
-
-# cleanup
-del force
+    EmrossContent.FILE_HASHES = dict((v, k) for k, v in [(part.split(',')) \
+        for part in EmrossContent.load('md5.dat', None, force).split(';') if len(part) > 0])

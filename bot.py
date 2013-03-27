@@ -7,9 +7,9 @@ except Exception:
 import locale
 locale.setlocale(locale.LC_ALL, '')
 
+import settings
 import time
 
-from emross import *
 from emross.api import EmrossWar
 from emross.exceptions import (EmrossWarApiException,
     InsufficientSoldiers,
@@ -22,7 +22,6 @@ from emross.utility.player import Player
 import logging
 logger = logging.getLogger(__name__)
 
-import settings
 
 SECOND = 1
 MINUTE = 60 * SECOND

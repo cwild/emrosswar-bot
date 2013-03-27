@@ -1,13 +1,13 @@
 import pickle
+import settings
 
+from emross import master as MASTER
 from emross.api import EmrossWar
 from emross.exceptions import BotException, EmrossWarApiException
 from emross.utility.remote_api import RemoteApi
 
 import logging
 logger = logging.getLogger(__name__)
-
-import settings
 
 
 class Player(object):
@@ -80,7 +80,7 @@ class Player(object):
         if self.password is None:
             raise BotException('Account password not set for this bot')
 
-        json = api.call('info.php', server='m.emrosswar.com', user=self.username,
+        json = api.call('info.php', server=MASTER, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False)
 
         if json['code'] != EmrossWar.SUCCESS:
