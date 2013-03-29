@@ -62,7 +62,7 @@ class Player(object):
             logger.exception(e)
             return None
 
-    def account_login(self, api, error_exception=BotException, *args, **kwargs):
+    def account_login(self, bot, error_exception=BotException, *args, **kwargs):
         """Account login to acquire a new API key"""
 
 
@@ -73,12 +73,11 @@ class Player(object):
         ^^server game/login_api.php username=myuser password=mypass
         {"code":301,"ret":""} or {"code":0,"ret":{"key":"apikey..."}}
         """
+        api = bot.api
 
-        if self.username is None:
-            raise error_exception('Account username not set for this bot')
+        if None in (self.username, self.password):
+            raise error_exception('Account username/password must both be set to relog with %s' % api.player)
 
-        if self.password is None:
-            raise error_exception('Account password not set for this bot')
 
         json = api.call('info.php', server=MASTER, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False)
@@ -128,8 +127,25 @@ class Player(object):
             return
 
         # Last resort... login directly!
-        key = self.account_login(bot.api, *args, **kwargs)
-        self.update_user_cache(self.username, key)
+        try:
+            key = self.account_login(bot, *args, **kwargs)
+        except Exception as e:
+            logger.info('Error encountered trying to acquire new key via login, try current key to check if it really is stale')
+            try:
+                # Low level api._call to prevent using emross.handlers
+                json = bot.api._call(bot.USERINFO_URL, handle_errors=False)
+                if json['code'] == EmrossWar.SUCCESS:
+                    self.key = current_key
+                    bot.errors.task_done()
+                    return
+            except Exception:
+                pass
+
+            # Current key didn't work out, pass the exception
+            raise e
+
+        if self.username:
+            self.update_user_cache(self.username, key)
         self.key = key
 
         # Sync the key with our external API
