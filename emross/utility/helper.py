@@ -41,7 +41,7 @@ class EmrossWarBot:
         api.bot = self
         self.errors = Queue.Queue()
 
-        self.session = Session.load(api.api_key)
+        self.session = Session(self)
 
         self.pvp = self.__class__.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
