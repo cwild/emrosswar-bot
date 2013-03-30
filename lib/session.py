@@ -3,6 +3,7 @@ try:
 except ImportError, e:
     import pickle
 
+import os
 import logging
 logger = logging.getLogger(__name__)
 
