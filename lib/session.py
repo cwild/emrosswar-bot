@@ -12,6 +12,7 @@ class Session(object):
     def __init__(self, bot):
         self.__dict__['bot'] = bot
         self.__dict__['data'] = set()
+        self.__dict__['exists'] = None
         self.__dict__['loaded'] = False
 
     @property
@@ -48,14 +49,17 @@ class Session(object):
             logger.error(e)
 
     def load(self):
-        if self.__dict__['loaded']:
+        if self.__dict__['loaded'] or self.__dict__['exists'] == False:
             return
 
         try:
+            if self.__dict__['exists'] is None:
+                self.__dict__['exists'] = os.path.exists(self.filename)
+
             with open(self.filename, 'rb') as fp:
                 data = pickle.load(fp)
                 for name, value in data.iteritems():
                     self.__setattr__(name, value)
             self.__dict__['loaded'] = True
         except Exception as e:
-            logger.exception(e)
+            logger.debug(e)
