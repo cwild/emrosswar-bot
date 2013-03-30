@@ -26,7 +26,7 @@ class Session(object):
 
     def __getattr__(self, name):
         self.load()
-        return getattr(self, name)
+        return super(Session, self).__getattr__(name)
 
     def __setattr__(self, name, value):
         super(Session, self).__setattr__(name, value)
