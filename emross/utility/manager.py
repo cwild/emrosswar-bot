@@ -7,11 +7,15 @@ import Queue
 logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWarApi
+from emross.exceptions import BotException
 from emross.utility.helper import EmrossWarBot
 
 import settings
 
 class BotManager(object):
+    WORKER_ERROR_WAIT = 15
+    WORKER_ERROR_MAX_WAIT = 3600
+
     def __init__(self, console=False):
         self.players = []
         self.bots = []
@@ -55,26 +59,38 @@ class BotManager(object):
                 from receiving KeyboardInterrupt
                 """
                 for worker in workers[:]:
+                    if worker.bot.blocked:
+                        continue
+
+                    error = None
                     try:
                         handled = set()
                         while True:
                             error = worker.bot.errors.get_nowait()
                             if error is None:
                                 break
-                            else:
-                                func, args = error
-                                if func in handled:
-                                    logger.debug('This error type has already been handled')
-                                    worker.bot.errors.task_done()
-                                else:
-                                    func(*args)
-                                    handled.add(func)
+
+                            func, args, kwargs = error
+                            if func in handled:
+                                logger.debug('This error type has already been handled (%s)' % func)
+                                worker.bot.errors.task_done()
+                                continue
+
+                            try:
+                                func(*args, **kwargs)
+                            except BotException as e:
+                                self.runnable = False
+                                workers.remove(worker)
+                                logger.exception(e)
+                                logger.critical('Removed this bot instance from workers, marked for shutdown')
+                            finally:
+                                handled.add(func)
                     except Queue.Empty:
                         pass
                     except Exception as e:
-                        logger.exception(e)
-                        workers.remove(worker)
-                        logger.critical('Removed this bot instance')
+                        logger.error(e)
+                        t = self._handle_worker_errors(worker, error)
+                        logger.debug('Error currently processing in %s' % t)
 
                     time.sleep(2)
 
@@ -95,3 +111,23 @@ class BotManager(object):
         else:
             # We can run this directly in this thread
             _inner_run()
+
+    def _handle_worker_errors(self, worker, error, *args, **kwargs):
+        logger.info('Error with worker, spawn new thread to resume error handling after delay')
+
+        worker.bot.api.error_timer += self.WORKER_ERROR_WAIT
+        delay = min(worker.bot.api.error_timer, self.WORKER_ERROR_MAX_WAIT)
+        worker.bot.api.error_timer = delay
+
+        def _handler():
+            logger.debug('Bot blocked for %d seconds.' % delay)
+            worker.bot.blocked = True
+            worker.bot.errors.put(error)
+            time.sleep(delay)
+            worker.bot.blocked = False
+            worker.bot.errors.task_done()
+
+        t = threading.Thread(target=_handler)
+        t.daemon = True
+        t.start()
+        return t

@@ -43,7 +43,7 @@ def run_bot(bot):
     bot.api._call(settings.get_user_info, key=1, test=2)
     """
 
-    while True:
+    while bot.runnable:
         try:
             bot.update()
 
@@ -173,7 +173,7 @@ def run_bot(bot):
             logger.info('Exception, sleeping for an hour')
             time.sleep(1*HOUR)
 
-
+    bot.disconnect()
 
 if __name__ == "__main__":
     import argparse
