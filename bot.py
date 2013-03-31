@@ -159,7 +159,12 @@ def run_bot(bot):
 
                 bot.clearout_inventory()
 
-            logger.info('Total gold amongst all castles: %s' % (locale.format('%d', sum([c.get_gold_count()[0] for c in bot.cities]), True)))
+            logger.info('Total %s amongst all castles: %s' % (\
+                EmrossWar.LANG.get('COIN', 'gold'),
+                locale.format('%d',
+                    sum([c.get_gold_count()[0] for c in bot.cities]), True
+                ))
+            )
 
             logger.info('Cycle finished, waiting for 5 mins to go again')
             time.sleep(5*MINUTE)

@@ -31,6 +31,8 @@ from emross.world import World
 
 import settings
 
+EmrossWar.extend('LANG', 'translation/%(lang)s/lng.js')
+
 class EmrossWarBot:
     PVP_MODE_RE = re.compile('^p\d+\.')
 
@@ -261,16 +263,19 @@ class EmrossWarBot:
         return False
 
 
-    def richest_city(self):
-        city = max(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        logger.info('Chosen the city with the most gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD)))
+    def _city_wealth(self, func=max, text='most'):
+        city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
+        logger.info('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
+            resource=EmrossWar.LANG.get('COIN', 'gold'),
+            city=city.name, amount=city.resource_manager.get_amount_of(Resource.GOLD))
+        )
         return city
+
+    def richest_city(self):
+        return self._city_wealth(max, 'most')
 
     def poorest_city(self):
-        city = min(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        logger.info('Chosen the city with the least gold, %s (%d)' % (city.name, city.resource_manager.get_amount_of(Resource.GOLD)))
-        return city
-
+        return self._city_wealth(min, 'least')
 
     def clean_war_reports(self):
         try:
