@@ -167,6 +167,7 @@ class Barracks(object):
                     except KeyError:
                         pass
 
+        return json
 
 if __name__ == "__main__":
     from emross.military.camp import Soldier

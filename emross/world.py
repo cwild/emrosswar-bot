@@ -7,8 +7,6 @@ from emross.exceptions import WorldException, OutOfSpies
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 
-import settings
-
 class World:
     MAP_URL = 'game/api_world_map.php'
 
@@ -23,19 +21,14 @@ class World:
 
         """ These x,y params seem backwards, d'oh!"""
         params = {
-            'city': city,
+            'city': city.id,
             'action': 'do_war',
             'attack_type': EmrossWar.ATTACK_TYPE_SCOUT,
             'tai_num': 1,
             'area': x,
             'area_x': y
         }
-
-        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, **params)
-
-        params.update(json['ret'])
-        json = self.bot.api.call(Barracks.ACTION_DO_URL, **params)
-
+        json = city.barracks.confirm_and_do(params)
         return json['code'] == EmrossWar.SUCCESS
 
 
@@ -113,7 +106,7 @@ class World:
                                 continue
 
                             logger.info('Scouting [%d, %d]' % (item[0], item[1]))
-                            self.scout(city.id, item[0], item[1])
+                            self.scout(city, item[0], item[1])
                             spies -= 1
 
 
@@ -160,9 +153,9 @@ class World:
         return self._map_size
 
 
-    if __name__ == "__main__":
-        logging.basicConfig(level=logging.DEBUG)
-        from bot import bot
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    from bot import bot
 
-        x, y = 1, 1
-        logger.info('The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y)))
+    x, y = 1, 1
+    logger.info('The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y)))
