@@ -211,68 +211,6 @@ class City:
 
         return hero
 
-
-    def action_confirm(self, params):
-        """
-        We need to confirm that we wish to perform this action.
-
-        Shows the cost of performing the action both in resources and time
-
-        city=12553&action=do_war&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600&_l=en
-        """
-
-        if not hasattr(settings, 'TOO_OFTEN_WARNING'):
-            raise EmrossWarException, 'You need to set the API TOO_OFTEN_WARNING code in your settings file'
-
-        if not params['gen']:
-            raise ValueError, 'Need to send a hero to lead the army'
-
-        json = self.bot.api.call(Barracks.ACTION_CONFIRM_URL, sleep=(5,8), city=self.id, **params)
-
-        """ Returns the cost of war """
-        """
-        {"code":0,"ret":{"carry":820800,"cost_food":108000,"cost_wood":0,"cost_iron":0,"cost_gold":0,"distance":6720,"travel_sec":120}}
-        """
-
-        return json['ret']
-
-    def action_do(self, params):
-        """
-        city=12553&action=war_task&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600
-
-        carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
-        """
-
-        try:
-            current_food = self.resource_manager.get_amount_of(Resource.FOOD)
-            if params['cost_food'] > current_food:
-                self.replenish_food(params['cost_food'] - current_food)
-        except KeyError, e:
-            logger.exception(e)
-            logger.info(params)
-
-        json = self.bot.api.call(Barracks.ACTION_DO_URL, sleep=(1,3), city=self.id, **params)
-
-        if json['code'] == settings.TOO_OFTEN_WARNING:
-            raise EmrossWarApiException, 'We have been rate limited. Come back later.'
-
-        soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
-
-        for k, v in soldiers:
-            i = int(k)
-            soldier = [s for s in self.barracks.soldiers if i == s[0]][0]
-            soldier[1] -= v
-
-        for k, v in params.iteritems():
-            if k.startswith('cost_'):
-                try:
-                    res = k[5]
-                    cur = self.resource_manager.get_amount_of(res)
-                    self.resource_manager.set_amount_of(res, cur - int(v))
-                except KeyError:
-                    pass
-
-
     def recruit_hero(self):
         if not settings.enable_recruit:
             return

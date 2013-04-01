@@ -84,6 +84,9 @@ def run_bot(bot):
                             hero = city.choose_hero(sum(army.values()))
                             if not hero:
                                 logger.info('No available heroes to command this army')
+                                raise ValueError('Need to send a hero to lead the army')
+
+                            logger.info('Sending attack %d/%d' % (target.y, target.x))
 
                             # send troops to attack
                             params = {
@@ -93,19 +96,14 @@ def run_bot(bot):
                                 'area': target.y,
                                 'area_x': target.x
                             }
-
                             params.update(army)
 
-                            cost = city.action_confirm(params)
-                            params.update(cost)
-
-                            logger.info('Sending attack %d/%d' % (target.y, target.x))
-                            city.action_do(params)
+                            city.barracks.confirm_and_do(params, sleep_confirm=(5,8), sleep_do=(1,3))
 
                             try:
                                 roundtrip = params['travel_sec'] * 2
                                 concurrent_attacks.append(time.time() + roundtrip)
-                            except KeyError, e:
+                            except KeyError as e:
                                 logger.exception(e)
                                 logger.debug(params)
                                 continue
@@ -127,19 +125,19 @@ def run_bot(bot):
                                 logger.critical('You need to set a concurrent attack limit.')
 
 
-                    except AttributeError, e:
-                        continue
+                    except AttributeError as e:
+                        logger.exception(e)
 
                     except InsufficientSoldiers, e:
                         logger.info('%s has insufficient troops to launch an attack.' % city.name)
                         continue
 
-                    except NoTargetsFound, e:
+                    except NoTargetsFound:
                         continue
 
                 concurrent_attacks[:] = [e for e in concurrent_attacks if e > time.time()]
 
-            except NoTargetsAvailable, e:
+            except NoTargetsAvailable as e:
                 logger.exception(e)
                 logger.info('No targets available to attack.')
 

@@ -1,9 +1,10 @@
 from emross.api import EmrossWar
+from emross.resources import Resource
 
 import logging
 logger = logging.getLogger(__name__)
 
-class Barracks:
+class Barracks(object):
     ACTION_CONFIRM_URL = 'game/armament_action_do_api.php'
     ACTION_DO_URL = 'game/armament_action_task_api.php'
     SOLDIER_EDUCATE_URL = 'game/soldier_educate_api.php'
@@ -26,6 +27,7 @@ class Barracks:
         self.bot = bot
         self.city = city
         self.soldiers = []
+        super(Barracks, self).__init__()
 
     def camp_info(self):
         """
@@ -110,6 +112,61 @@ class Barracks:
             return unlocked is True
         except (IndexError, TypeError):
             return False
+
+    def confirm_and_do(self, params, sleep_confirm=(), sleep_do=(), **kwargs):
+        json = self._action_confirm(params, sleep=sleep_confirm, **kwargs)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            params.update(json['ret'])
+            return self._action_do(params, sleep=sleep_do, **kwargs)
+        else:
+            logger.info(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
+
+    def _action_confirm(self, params, **kwargs):
+        """
+        We need to confirm that we wish to perform this action.
+        Shows the cost of performing the action both in resources and time
+
+        city=12553&action=do_war&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600
+        {"code":0,"ret":{"carry":820800,"cost_food":108000,"cost_wood":0,"cost_iron":0,"cost_gold":0,"distance":6720,"travel_sec":120}}
+        """
+        kwargs.update(params)
+        return self.bot.api.call(self.ACTION_CONFIRM_URL, city=self.city.id, **kwargs)
+
+
+    def _action_do(self, params, **kwargs):
+        """
+        city=12553&action=war_task&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600
+        carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
+        """
+
+        try:
+            current_food = self.city.resource_manager.get_amount_of(Resource.FOOD)
+            if params['cost_food'] > current_food:
+                self.city.replenish_food(params['cost_food']-current_food)
+        except KeyError as e:
+            logger.exception(e)
+
+        kwargs.update(params)
+        json = self.bot.api.call(self.ACTION_DO_URL, city=self.city.id, **kwargs)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            soldiers = [(k.replace('soldier_num', ''), v) for k, v in params.iteritems() if k.startswith('soldier_num')]
+
+            for k, v in soldiers:
+                i = int(k)
+                soldier = [s for s in self.soldiers if i == s[0]][0]
+                soldier[1] -= v
+
+            for k, v in kwargs.iteritems():
+                if k.startswith('cost_'):
+                    try:
+                        res = k[5] # w,i,f,g
+                        cur = self.city.resource_manager.get_amount_of(res)
+                        self.city.resource_manager.set_amount_of(res, cur-int(v))
+                    except KeyError:
+                        pass
+
 
 if __name__ == "__main__":
     from emross.military.camp import Soldier
