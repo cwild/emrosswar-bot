@@ -1,4 +1,4 @@
-from client_errors import InvalidKeyHandler, PvPEliminationHandler
+from client_errors import InvalidKeyHandler, PvPEliminationHandler, VisitTooOftenHandler
 from http_errors import ServiceUnavailableHandler
 
 handlers = {

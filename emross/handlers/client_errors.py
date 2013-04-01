@@ -2,6 +2,8 @@ import handler
 import logging
 logger = logging.getLogger(__name__)
 
+from emross.exceptions import EmrossWarApiException
+
 class InvalidKeyHandler(handler.EmrossHandler):
     def process(self, json=None):
         logger.warning('Invalid API key!')
@@ -17,3 +19,7 @@ class PvPEliminationHandler(handler.EmrossHandler):
     def process(self, json):
         logger.warning('You have been eliminated from PvP!')
         self.bot.disconnect()
+
+class VisitTooOftenHandler(handler.EmrossHandler):
+    def process(self, json):
+        raise EmrossWarApiException('We have been rate limited. Come back later.')

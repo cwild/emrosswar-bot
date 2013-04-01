@@ -16,6 +16,12 @@ from emross.exceptions import (EmrossWarApiException,
     NoTargetsAvailable,
     NoTargetsFound)
 
+try:
+    import emross.handlers
+    emross.handlers.handlers[settings.TOO_OFTEN_WARNING] = emross.handlers.VisitTooOftenHandler
+except AttributeError:
+    raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
+
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
 
