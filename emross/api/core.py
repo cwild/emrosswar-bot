@@ -185,10 +185,6 @@ class EmrossWar(object):
     VACATION = 2
     SLEEP = 4
 
-    LORD = 1
-    DEVIL_ARMY = 2
-    COLONY = 3
-
     REACHED_HERO_LIMIT = 1304
     RECRUITING_CLOSED  = 1305
     INSUFFICIENT_GOLD  = 1306

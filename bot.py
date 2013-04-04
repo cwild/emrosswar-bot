@@ -1,8 +1,12 @@
-import logging.config
-try:
-    logging.config.fileConfig('build/logging.conf')
-except Exception:
-    logging.config.fileConfig('logging.conf')
+import logging
+logger = logging.getLogger(__name__)
+
+if len(logging.root.handlers) == 0:
+    import logging.config
+    try:
+        logging.config.fileConfig('build/logging.conf')
+    except Exception:
+        logging.config.fileConfig('logging.conf')
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
@@ -15,6 +19,7 @@ from emross.exceptions import (EmrossWarApiException,
     InsufficientSoldiers,
     NoTargetsAvailable,
     NoTargetsFound)
+from emross.favourites import Favourites
 
 try:
     import emross.handlers
@@ -24,9 +29,6 @@ except AttributeError:
 
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 SECOND = 1
@@ -54,10 +56,12 @@ def run_bot(bot):
             bot.update()
 
             try:
-                bot.get_fav(EmrossWar.DEVIL_ARMY)
+                bot.favourites.get_favs(Favourites.DEVIL_ARMY)
 
-                logger.info('There are a total of %d DA which can be attacked a further %d times.' % (len(bot.fav[EmrossWar.DEVIL_ARMY]),
-                            sum([bot.npc_attack_limit - x.attack for x in bot.fav[EmrossWar.DEVIL_ARMY]]) ))
+                logger.info('There are a total of %d DA which can be attacked a further %d times.' % (\
+                    len(bot.favourites.favs[Favourites.DEVIL_ARMY]),
+                    sum([bot.npc_attack_limit - x.attack for x in bot.favourites.favs[Favourites.DEVIL_ARMY]])\
+                ))
 
                 concurrent_attacks = []
 
@@ -81,10 +85,10 @@ def run_bot(bot):
 
 
                         if hasattr(settings, 'prefer_closer') and settings.prefer_closer:
-                            bot.sort_favs(city)
+                            bot.favourites.sort_favs(city)
 
                         while True:
-                            target, army = bot.find_target_for_army(city, EmrossWar.DEVIL_ARMY)
+                            target, army = bot.find_target_for_army(city, Favourites.DEVIL_ARMY)
 
                             # choose hero which can lead this army
                             hero = city.choose_hero(sum(army.values()))

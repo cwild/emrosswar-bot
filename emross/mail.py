@@ -14,46 +14,40 @@ class Mail:
     WAR_RESULT_INFO = 'game/war_result_info_api.php'
     WAR_RESULT_LIST = 'game/war_result_list_api.php'
 
-    def __init__(self, api, id, data):
-        self.api = api
+    def __init__(self, bot, id, data):
+        self.bot = bot
         self.id = id
         self.data = data
         self.message = None
         self.processed = False
 
-
     def fetch(self):
-        json = self.api.call(self.WAR_RESULT_INFO, id=self.id)
-
-        self.message = json['ret']
-
+        self.message = self.bot.api.call(self.WAR_RESULT_INFO, id=self.id)['ret']
 
     def delete(self):
-        json = self.api.call(self.WAR_RESULT_LIST, action='delete', id=self.id)
-
+        return self.bot.api.call(self.WAR_RESULT_LIST, action='delete', id=self.id)
 
     def add_fav(self, cat):
-        json = self.api.call(settings.api_fav, act='addreport', wid=self.id, cat=cat)
-
+        return self.bot.favourites.add(wid=self.id, cat=cat)
 
 
 class MailHandler:
 
-    def __init__(self, api, type):
-        self.api = api
+    def __init__(self, bot, type):
+        self.bot = bot
         self.mail = []
         self.type = type
 
 
     def list_mail(self, page=1):
-        json = self.api.call(Mail.WAR_RESULT_LIST, page=page, type=self.type)
+        json = self.bot.api.call(Mail.WAR_RESULT_LIST, page=page, type=self.type)
 
         if json['ret']:
             if len(json['ret']['war']) == 0:
                 raise NoMailInInbox
 
             for m in json['ret']['war']:
-                mail = Mail(self.api, m['id'], m)
+                mail = Mail(self.bot, m['id'], m)
                 self.mail.append(mail)
 
             return json['ret']['max']
@@ -68,7 +62,7 @@ class MailHandler:
         for part in parts:
             ids = ','.join(str(o.id) for o in part if o is not None)
             logger.info('Deleting mail id%s %s' % ("'s" if len(part) > 1 else '', ids))
-            json = self.api.call(Mail.WAR_RESULT_LIST, action='delete', id=ids)
+            json = self.bot.api.call(Mail.WAR_RESULT_LIST, action='delete', id=ids)
 
 
     def process(self):
@@ -86,8 +80,8 @@ class MailHandler:
 
 
 class AttackMailHandler(MailHandler):
-    def __init__(self, api):
-        MailHandler.__init__(self, api, type=-1)
+    def __init__(self, bot):
+        MailHandler.__init__(self, bot, type=-1)
 
 
     def process(self):
@@ -102,8 +96,8 @@ class AttackMailHandler(MailHandler):
         self.mail[:] = []
 
 class ScoutMailHandler(MailHandler):
-    def __init__(self, api):
-        MailHandler.__init__(self, api, type=3)
+    def __init__(self, bot):
+        MailHandler.__init__(self, bot, type=3)
         self.parser = MailParser(settings.enemy_troops)
 
 

@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
+from emross.favourites import Favourites
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 
@@ -73,7 +74,7 @@ class World:
         finally:
             logger.debug('Map co-ordinates: %s' % str((x, y, nx, ny)))
 
-        self.favs = self.bot.fav[EmrossWar.DEVIL_ARMY]
+        self.favs = self.bot.favourites.favs[Favourites.DEVIL_ARMY]
 
         spies = 0
 

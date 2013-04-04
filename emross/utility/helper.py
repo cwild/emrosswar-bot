@@ -1,33 +1,31 @@
 from __future__ import division
-import sys
-sys.path.extend(['lib/urllib3/'])
 
-
-from lib import kronos
-from lib.session import Session
-
-from emross.item import inventory, item
-from emross.resources import Resource
-from emross.shop import Shop
-
+import logging
 import math
 import re
 import time
 import Queue
+import sys
+sys.path.extend(['lib/urllib3/'])
 
-import logging
-logger = logging.getLogger(__name__)
-
+from lib import kronos
+from lib.session import Session
 
 from emross.alliance import Donator
 from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
+from emross.favourites import Favourites
+from emross.item import inventory, item
 from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
+from emross.resources import Resource
+from emross.shop import Shop
 from emross.utility.builder import BuildManager
 from emross.world import World
+
+logger = logging.getLogger(__name__)
 
 import settings
 
@@ -55,11 +53,11 @@ class EmrossWarBot:
         self.userinfo = None
         self.tasks = {}
         self.cities = []
-        self.fav = {}
+        self.favourites = Favourites(self)
         self.shop = Shop(self)
         self.world = World(self)
-        self.scout_mail = ScoutMailHandler(api)
-        self.war_mail = AttackMailHandler(api)
+        self.scout_mail = ScoutMailHandler(self)
+        self.war_mail = AttackMailHandler(self)
 
         self.donator = Donator(self)
         try:
@@ -125,7 +123,6 @@ class EmrossWarBot:
             city = City(self, city['id'], city['name'], x = city['x'], y = city['y'])
             self.cities.append(city)
 
-
         for gift in userinfo['gift']:
             self.get_gift(gift)
 
@@ -135,38 +132,7 @@ class EmrossWarBot:
         logger.info('Collecting gift %d' % gid)
         json = self.api.call('game/goods_api.php', action='gift', id=gid)
 
-
-    def get_fav(self, cat = EmrossWar.DEVIL_ARMY):
-        json = self.api.call(settings.api_fav, act = 'getfavnpc', cat = cat)
-
-        favs = json['ret']['favs']
-
-        self.fav[cat] = []
-        for da in favs:
-            #[[14785,115,248,1,3]
-            # Seems that x,y are back to front
-            fav = Fav(y = da[1], x = da[2], attack = da[4])
-            fav.id = da[0]
-            fav.rating = da[3]
-            self.fav[cat].append(fav)
-
-
-    def sort_favs(self, city, cat = EmrossWar.DEVIL_ARMY):
-        """
-        Sort favs based on proximity from city (ascending distance)
-        """
-        nx, ny = city.y, city.x # Backwards..?
-        max = self.world.map_size()
-        self.fav[cat].sort(key=lambda fav: math.sqrt( min(abs(fav.x-nx), max[0]-abs(fav.x-nx))**2  + min( abs(fav.y-ny), max[1]-abs(fav.y-ny) )**2) )
-
-
-    def clear_favs(self):
-        for f in self.fav[EmrossWar.DEVIL_ARMY]:
-            logger.info('Deleting fav %d' % f.id)
-            self.api.call(settings.api_fav, act='delfavnpc', fid=f.id)
-
-
-    def find_target_for_army(self, city, cat = EmrossWar.DEVIL_ARMY):
+    def find_target_for_army(self, city, cat=Favourites.DEVIL_ARMY):
         """
         Get next fav which is available for attack
 
@@ -212,9 +178,6 @@ class EmrossWarBot:
         logger.info('Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack))
 
         return target, army
-
-
-
 
     def scout_map(self):
         logger.info('Trying to find more targets to attack')
@@ -282,8 +245,6 @@ class EmrossWarBot:
             self.war_mail.process()
         except MailException:
             pass
-
-
 
     def clearout_inventory(self):
         logger.info('Clear the item inventories')
@@ -395,9 +356,3 @@ class EmrossWarBot:
                 return True
 
         return False
-
-class Fav:
-    def __init__(self, x = 0, y = 0, attack = 0):
-        self.x = x
-        self.y = y
-        self.attack = attack
