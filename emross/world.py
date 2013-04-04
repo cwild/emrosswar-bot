@@ -22,7 +22,6 @@ class World:
 
         """ These x,y params seem backwards, d'oh!"""
         params = {
-            'city': city.id,
             'action': 'do_war',
             'attack_type': EmrossWar.ATTACK_TYPE_SCOUT,
             'tai_num': 1,
