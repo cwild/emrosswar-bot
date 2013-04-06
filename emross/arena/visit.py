@@ -219,24 +219,8 @@ if __name__ == "__main__":
 
     visit = HeroVisit(None)
 
-    # 1 specific Queen, 1 specific Jack
-    heroes = visit.split_heroes('172|d|1,68|c|4')
-    current = visit.calculate_components( [(h['rank'], h['race']) for h in heroes] )
-
-    visit.compare_heroes(current, visit.calculate_components( [(h['rank'], h['race']) for h in heroes] ))
-
-    # any 1 Queen, any 1 Jack
-    target = {Hero.QUEEN: {'*': 1}, Hero.JACK: {'*': 1}}
-    visit.compare_heroes(current, target)
-
+    current = {Hero.QUEEN: {2: 1}, Hero.JACK: {2: 3}}
     # any 1 Queen, any 3 Jack
-    target = {'c': {'*': 1}, 'd': {'*': 3}}
-    #logging.info('Should be: FALSE')
-    visit.compare_heroes(current, target)
-
-
-    current = {'c': {2: 1}, 'd': {2: 3}}
-    # any 1 Queen, any 1 Jack
     target = {Hero.QUEEN: {'*': 1}, Hero.JACK: {'*': 3}}
     if visit.compare_heroes(current, target):
         visit.reward_conversion(target)
@@ -247,64 +231,3 @@ if __name__ == "__main__":
     target = {Hero.QUEEN: {'*': 2}}
     if visit.compare_heroes(current, target):
         visit.reward_conversion(target)
-
-
-    visit.reward_conversion({Hero.QUEEN: {2: 2}})
-
-    logger.info('J,Q,K (3_b_c_d)')
-    visit.reward_conversion({
-        Hero.JACK: {'*': 1},
-        Hero.QUEEN: {'*': 1},
-        Hero.KING: {'*': 1}
-    })
-
-    logger.info('3 of a kind (3_same)')
-    visit.reward_conversion({Hero.TEN: {'*': 3}})
-    visit.reward_conversion({Hero.JACK: {'*': 3}})
-    visit.reward_conversion({Hero.QUEEN: {'*': 3}})
-    visit.reward_conversion({Hero.KING: {'*': 3}})
-    visit.reward_conversion({Hero.ACE: {'*': 3}})
-
-    logger.info('4 of a kind')
-    visit.reward_conversion({Hero.TEN: {'*': 4}})
-    visit.reward_conversion({Hero.JACK: {'*': 4}})
-    visit.reward_conversion({Hero.QUEEN: {'*': 4}})
-    visit.reward_conversion({Hero.KING: {'*': 4}})
-    visit.reward_conversion({Hero.ACE: {'*': 4}})
-
-    logger.info('2 pairs')
-    visit.reward_conversion({Hero.JACK: {'*': 2}, Hero.TEN: {1: 2}})
-    visit.reward_conversion({Hero.QUEEN: {'*': 2}, Hero.JACK: {1: 2}})
-    visit.reward_conversion({Hero.KING: {'*': 2}, Hero.QUEEN: {1: 2}})
-    visit.reward_conversion({Hero.ACE: {'*': 2}, Hero.KING: {1: 2}})
-
-    logger.info('5 of a kind')
-    visit.reward_conversion({Hero.TEN: {'*': 5}})
-    visit.reward_conversion({Hero.JACK: {'*': 5}})
-    visit.reward_conversion({Hero.QUEEN: {'*': 5}})
-    visit.reward_conversion({Hero.KING: {'*': 5}})
-    visit.reward_conversion({Hero.ACE: {'*': 5}})
-
-    logger.info('Straight')
-    visit.reward_conversion({
-        Hero.TEN: {Hero.HEARTS: 1},
-        Hero.JACK: {Hero.CLUBS: 1},
-        Hero.QUEEN: {Hero.SPADES: 1},
-        Hero.KING: {Hero.DIAMONDS: 1},
-        Hero.ACE: {Hero.HEARTS: 1}
-    })
-
-    logger.info('Royal flush')
-    visit.reward_conversion({
-        Hero.TEN: {Hero.HEARTS: 1},
-        Hero.JACK: {Hero.HEARTS: 1},
-        Hero.QUEEN: {Hero.HEARTS: 1},
-        Hero.KING: {Hero.HEARTS: 1},
-        Hero.ACE: {Hero.HEARTS: 1}
-    })
-
-    logger.info('Full house (3 of same face) + pair')
-    visit.reward_conversion({
-        Hero.ACE: {Hero.DIAMONDS: 3},
-        Hero.JACK: {Hero.CLUBS: 2}
-    })
