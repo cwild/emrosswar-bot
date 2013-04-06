@@ -17,6 +17,7 @@ from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
 from emross.favourites import Favourites
+from emross.gift import GiftCollector
 from emross.item import inventory, item
 from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
@@ -103,6 +104,7 @@ class EmrossWarBot:
         """
         self.core_tasks.append((Chat,))
         self.core_tasks.append((AutoLottery,))
+        self.core_tasks.append((GiftCollector,))
 
     def update(self):
         """
