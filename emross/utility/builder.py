@@ -42,7 +42,7 @@ class BuildManager(object):
                         continue
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
-                    result = handler.run(cycle_start, *args, **kwargs)
+                    result = handler.run(cycle_start, i, *args, **kwargs)
                     results.append(result)
                 except (IndexError, KeyError, TypeError), e:
                     logger.exception(e)

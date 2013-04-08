@@ -12,13 +12,13 @@ class Task(object):
 
     def __init__(self, bot, *args, **kwargs):
         self.bot = bot
-        self._result = None
+        self._result = dict()
         self._last_cycle = 0
         self._next_run = 0
         super(Task, self).__init__(*args, **kwargs)
         self.setup()
 
-    def run(self, cycle_start, *args, **kwargs):
+    def run(self, cycle_start, stage, *args, **kwargs):
         """
         Run this task if the cycle_start time differs
 
@@ -28,13 +28,13 @@ class Task(object):
         """
         if self._last_cycle == cycle_start or cycle_start > self._next_run:
             self._last_cycle = cycle_start
-            self._result = self.process(*args, **kwargs)
+            self._result[stage] = self.process(*args, **kwargs)
 
             if self._next_run < cycle_start:
                 delay = self.calculate_delay()
                 self.sleep(delay)
 
-        return self._result
+        return self._result.get(stage, None)
 
     def process(self, *args, **kwargs): pass
 
