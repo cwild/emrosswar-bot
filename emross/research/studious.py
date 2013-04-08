@@ -34,17 +34,18 @@ class Study(FilterableCityTask):
         {'code': 0, 'ret': {'cdlist': [{'owner': 0, 'secs': 1557, 'cdtype': 2, 'id': 123456, 'target': 1}]}}
         """
         json = self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
+        name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH %d' % tech)
         if json['code'] == EmrossWar.SUCCESS:
-            logger.info('Started research tech %d at %s. Time until completion: %d seconds.' % (tech, city.name, json['ret']['cdlist'][0]['secs']))
+            logger.info('Started research "%s" at "%s". Time until completion: %d seconds.' % (name, city.name, json['ret']['cdlist'][0]['secs']))
         else:
-            logger.debug('Failed to start research %d at city "%s"' % (tech, city.name))
+            logger.debug('Failed to start "%s" at city "%s"' % (name, city.name))
         return json
 
     def can_study(self, city, tech, level):
         try:
             return 0 <= self.tech_level(city, tech) < level
         except IndexError:
-            logger.debug('The university at %s is not high enough to study tech %d yet.' % (city.name, tech))
+            logger.debug('The university at "%s" is not high enough to study tech %d yet.' % (city.name, tech))
             return False
 
     def process(self, tech, level, university=1, *args, **kwargs):
