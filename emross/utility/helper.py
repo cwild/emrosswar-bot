@@ -153,7 +153,7 @@ class EmrossWarBot:
                     continue
 
                 done = False
-                favs = [e for e in self.fav[cat] if e.rating is rating]
+                favs = [e for e in self.favourites.favs[cat] if e.rating is rating]
 
                 for t in favs:
                     if t.attack < self.npc_attack_limit:

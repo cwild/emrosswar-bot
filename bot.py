@@ -1,5 +1,4 @@
 import logging
-logger = logging.getLogger(__name__)
 
 if len(logging.root.handlers) == 0:
     import logging.config
@@ -35,6 +34,7 @@ SECOND = 1
 MINUTE = 60 * SECOND
 HOUR   = 60 * MINUTE
 
+logger = logging.getLogger(__name__)
 
 def run_bot(bot):
     """
