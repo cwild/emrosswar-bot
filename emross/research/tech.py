@@ -20,6 +20,8 @@ class Tech(CostCalculator):
     ARTIFACT = 17
     ATTACK_FORMATION = 18
     DEFENSE_FORMATION = 19
+    COLLECTION = 20
+    ENHANCEMENT = 21
 
 
     COST_MODIFIER = 0.5
@@ -169,6 +171,22 @@ class Tech(CostCalculator):
                 "v": 0
             },
         DEFENSE_FORMATION: {
+                "g": 25000,
+                "w": 25000,
+                "f": 25000,
+                "i": 25000,
+                "t": 21600,
+                "v": 0
+            },
+        COLLECTION: {
+                "g": 25000,
+                "w": 25000,
+                "f": 25000,
+                "i": 25000,
+                "t": 21600,
+                "v": 0
+            },
+        ENHANCEMENT: {
                 "g": 25000,
                 "w": 25000,
                 "f": 25000,
