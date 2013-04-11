@@ -69,7 +69,11 @@ class ResourceManager:
     def set_amount_of(self, resource, amount):
         self.city.data[Resource.OFFSETS[resource]] = amount
 
-    def meet_requirements(self, resource_levels, convert=True):
+    def meet_requirements(self, resource_levels, convert=True, unbrick=False, **kwargs):
+        """
+        Try to match the desired resource levels at the current city. Optionally,
+        we can check to see if we can sell stashed gold bricks to meet these levels
+        """
         conversion = {}
         total_gold = 0
         for res, amt in resource_levels.iteritems():
@@ -83,20 +87,37 @@ class ResourceManager:
                     conversion['%s2%s' % (Resource.GOLD, res)] = gold_amount
 
 
-        if self.get_amount_of(Resource.GOLD) < resource_levels[Resource.GOLD]:
-            logger.debug('Not enough gold available for required resource levels.')
-        elif total_gold == 0:
-            if convert is not False:
-                logger.debug('No need to exchange any resources')
-            return True
-        elif total_gold < self.get_amount_of(Resource.GOLD):
-            if not convert:
-                return True
+        if total_gold+resource_levels[Resource.GOLD] > self.get_amount_of(Resource.GOLD) \
+            and unbrick is False:
+                logger.debug('Not enough gold available for required resource levels.')
+                return False
 
-            logger.debug('Total gold cost of conversion is %d' % total_gold)
-            json = self._convert(**conversion)
-            return json['code'] == EmrossWar.SUCCESS
-        else:
-            logger.debug('Unfortunately, we are lacking gold for the exchange')
+        if convert:
+            should_convert = True
+
+            if total_gold == 0:
+                logger.debug('No need to exchange any resources')
+                should_convert = False
+
+            if unbrick:
+                gold_required = total_gold + resource_levels[Resource.GOLD] -\
+                                self.get_amount_of(Resource.GOLD)
+
+                if gold_required > 0:
+                    logger.info('We need to unbrick %d %s before converting' % \
+                        (gold_required, EmrossWar.LANG.get('COIN', 'gold')))
+
+                    should_convert = self.bot.find_gold_for_city(self.city,
+                        gold_required,
+                        unbrick=True)
+
+            if should_convert:
+                logger.debug('Total gold cost of conversion is %d' % total_gold)
+                json = self._convert(**conversion)
+                return json['code'] == EmrossWar.SUCCESS
+
+        elif total_gold == 0 and self.get_amount_of(Resource.GOLD) > resource_levels[Resource.GOLD]:
+            logger.debug('No need to exchange any resources')
+            return True
 
         return False

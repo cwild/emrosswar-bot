@@ -47,7 +47,7 @@ class Construct(FilterableCityTask):
                 logger.debug('Build capacity at castle "%s" is %d' % (city.name, capacity))
 
                 if len(tasks) < capacity and structure not in [t['target'] for t in tasks] \
-                    and city.resource_manager.meet_requirements(Building.cost(structure, current_level+1)):
+                    and city.resource_manager.meet_requirements(Building.cost(structure, current_level+1), **kwargs):
                     ctdwn = self.upgrade(city, structure)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
