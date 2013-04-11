@@ -117,7 +117,7 @@ class ResourceManager:
                 return json['code'] == EmrossWar.SUCCESS
 
         elif total_gold == 0 and self.get_amount_of(Resource.GOLD) > resource_levels[Resource.GOLD]:
-            logger.debug('No need to exchange any resources')
             return True
 
+        logger.debug('Target resource requirements not met')
         return False
