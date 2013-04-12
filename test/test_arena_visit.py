@@ -10,7 +10,7 @@ class TestArenaVisit(unittest.TestCase):
 
     def test_hero_parsing(self):
         heroes = self.visit.split_heroes('172|d|1,68|c|4')
-        current = self.visit.calculate_components( [(h['rank'], h['race']) for h in heroes] )
+        current = self.visit.calculate_components( [(Hero(h).client['rank'], Hero(h).client['race']) for h in heroes] )
         expected = {'c': {4: 1}, 'd': {1: 1}}
         self.assertEqual(current, expected)
         self.assertTrue(self.visit.compare_heroes(current, expected))

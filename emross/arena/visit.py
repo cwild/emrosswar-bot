@@ -28,7 +28,7 @@ class HeroVisit(Task):
         logger.info('Heroes already visited: %s' % ', '.join([str(Hero(h)) for h in already_visited]))
         logger.info('Heroes available to visit: %s' % ', '.join([str(Hero(h)) for h in can_visit_list]))
 
-        visited = self.calculate_components([(h['rank'], h['race']) for h in already_visited])
+        visited = self.calculate_components([(Hero(h).client['rank'], Hero(h).client['race']) for h in already_visited])
 
         cooldown = int(json['ret']['refresh_time'])
 
@@ -55,7 +55,7 @@ class HeroVisit(Task):
             for chunk in data.split(','):
                 # HeroID, 10/J/Q/K/A, face of card
                 gid, rank, face = chunk.split('|')
-                heroes.append(EmrossWar.HERO[str(gid)])
+                heroes.append({'gid':gid, 'rank':rank, 'face':face})
         except ValueError:
             pass
         return heroes

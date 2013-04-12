@@ -1,6 +1,7 @@
 """
 Attributes of Emross heroes
 """
+from emross.api import EmrossWar
 
 class Hero(object):
     TEN = 'e'
@@ -43,16 +44,21 @@ class Hero(object):
     def update(self, data):
         self.data = data
 
+    @property
+    def client(self):
+        return EmrossWar.HERO[str(self.data.get('gid'))]
+
     def __repr__(self):
-        parts = [self.data.get('name', 'Unknown')]
+        hero_data = self.client
+        parts = [hero_data.get('name', 'Unknown')]
 
         parts.append('(')
 
-        if 'rank' in self.data:
-            parts.append('%s' % self.RANKS.get(self.data['rank']))
+        if 'rank' in hero_data:
+            parts.append('%s' % self.RANKS.get(hero_data['rank']))
 
-        if 'race' in self.data:
-            parts.append(' of %s' % self.FACES.get(self.data['race']))
+        if 'race' in hero_data:
+            parts.append(' of %s' % self.FACES.get(hero_data['race']))
 
         parts.append(')')
 
