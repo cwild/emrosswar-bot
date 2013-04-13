@@ -1,5 +1,10 @@
+import locale
 import logging
+import time
 
+"""
+If logging hasn't already been configured, setup our own from logging.conf files
+"""
 if len(logging.root.handlers) == 0:
     import logging.config
     try:
@@ -7,11 +12,9 @@ if len(logging.root.handlers) == 0:
     except Exception:
         logging.config.fileConfig('logging.conf')
 
-import locale
+
 locale.setlocale(locale.LC_ALL, '')
 
-import settings
-import time
 
 from emross.api import EmrossWar
 from emross.exceptions import (EmrossWarApiException,
@@ -20,14 +23,17 @@ from emross.exceptions import (EmrossWarApiException,
     NoTargetsFound)
 from emross.favourites import Favourites
 
+from emross.utility.manager import BotManager
+from emross.utility.player import Player
+
+# Application settings, configurable
+import settings
+
 try:
     import emross.handlers
     emross.handlers.handlers[settings.TOO_OFTEN_WARNING] = emross.handlers.VisitTooOftenHandler
 except AttributeError:
     raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
-
-from emross.utility.manager import BotManager
-from emross.utility.player import Player
 
 
 SECOND = 1
