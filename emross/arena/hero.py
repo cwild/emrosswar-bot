@@ -72,6 +72,9 @@ class Hero(object):
     def client(self):
         return EmrossWar.HERO[str(self.data.get('gid'))]
 
+    def stat(self, attribute):
+        return self.data.get(attribute, None)
+
     def __repr__(self):
         hero_data = self.client
         parts = [hero_data.get('name', 'Unknown')]

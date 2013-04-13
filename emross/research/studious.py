@@ -1,11 +1,13 @@
+import logging
+import time
+
 from emross.api import EmrossWar
+from emross.arena.hero import Hero
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
 from tech import Tech
-import time
 
-import logging
 logger = logging.getLogger(__name__)
 
 class Study(FilterableCityTask):
@@ -48,13 +50,16 @@ class Study(FilterableCityTask):
             logger.debug('The university at "%s" is not high enough to study tech %d yet.' % (city.name, tech))
             return False
 
-    def process(self, tech, level, university=1, *args, **kwargs):
+    def process(self, tech, level, university=1, use_hero=False, *args, **kwargs):
         cities = self.cities(**kwargs)
         current_study = set()
         for city in cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
                 current_study.add(task['target'])
+
+        if tech in current_study:
+            return
 
         construction = self.bot.builder.task(Construct)
         for city in cities:
@@ -63,9 +68,28 @@ class Study(FilterableCityTask):
                 continue
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
-            if len(tasks) == 0 and tech not in current_study and self.can_study(city, tech, level) \
-                and city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1), **kwargs):
-                    ctdwn = self.upgrade(city, tech)
+            if len(tasks):
+                logger.debug('{hero} is already researching {tech} at {city}'.format(\
+                    hero=city.hero_manager.heroes[tasks[0].get('owner')],
+                    tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
+                    city=city.name))
+                continue
+
+            owner = 0
+            if use_hero:
+                hero = city.hero_manager.highest_stat_hero(Hero.WISDOM)
+                if hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
+                    owner = hero.data.get('gid', 0)
+                    logger.info('{0} chosen to research {1} at {2}'.format(hero,
+                        EmrossWar.TECHNOLOGY[str(tech)].get('name', '?'),
+                        city.name))
+                else:
+                    logger.info('{0} needs to rest before starting research'.format(hero))
+                    continue
+
+            if self.can_study(city, tech, level) and \
+                city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1), **kwargs):
+                    ctdwn = self.upgrade(city, tech, owner)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
                         break
