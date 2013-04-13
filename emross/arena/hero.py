@@ -1,7 +1,11 @@
 """
-Attributes of Emross heroes
+Define the interactions between a hero and his world!
 """
+import logging
+
 from emross.api import EmrossWar
+
+logger = logging.getLogger(__name__)
 
 class Hero(object):
     TEN = 'e'
@@ -30,13 +34,33 @@ class Hero(object):
         SPADES: 'Spades'
     }
 
-    ATTACK = "p"
-    DEFENSE = "c1"
-    COMMAND = "c2"
-    EXPERIENCE = "ex"
-    LEVEL = "g"
-    VIGOR = "e"
-    WISDOM = "i"
+    # Attributes
+    ATTACK = 'p'
+    DEFENSE = 'c1'
+    COMMAND = 'c2'
+    EXPERIENCE = 'ex'
+    GUARDING = 'fy'
+    LEVEL = 'g'
+    STATE = 's'
+    VIGOR = 'e'
+    WISDOM = 'i'
+
+    ATTRIBUTE_NAMES = {
+        ATTACK: EmrossWar.LANG.get('ATTACK', 'Attack'),
+        DEFENSE: EmrossWar.LANG.get('DEFENSE', 'Defense'),
+        COMMAND: EmrossWar.LANG.get('MAXTROOP', 'Command'),
+        LEVEL: EmrossWar.LANG.get('LEVEL', 'Level'),
+        WISDOM: EmrossWar.LANG.get('WISDOM', 'Wisdom')
+    }
+
+    # States
+    AVAILABLE = 0
+    CAPTURED = 3
+    DEAD = 2
+    LOOTING = 1
+    MOVING = 6
+    WAR = 4
+    WORKING = 5
 
     def __init__(self, data = {}):
         self.data = data

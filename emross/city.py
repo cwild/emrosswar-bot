@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
+from emross.arena.heroes import HeroManager
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.military.barracks import Barracks
 from emross.resources import Resource, ResourceManager
@@ -27,6 +28,7 @@ class City:
         self._data = []
 
         self.barracks = Barracks(self.bot, self)
+        self.hero_manager = HeroManager(bot, self)
         self.heroes = []
 
         self.resource_manager = ResourceManager(bot, city=self)
