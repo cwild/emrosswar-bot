@@ -11,10 +11,9 @@ sys.path.extend(['lib/urllib3/'])
 from lib import kronos
 from lib.session import Session
 
-from emross.api import EmrossWar
-EmrossWar.extend('LANG', 'translation/%(lang)s/lng.js')
 
 from emross.alliance import Donator
+from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
@@ -28,9 +27,9 @@ from emross.shop import Shop
 from emross.utility.builder import BuildManager
 from emross.world import World
 
-logger = logging.getLogger(__name__)
-
 import settings
+
+logger = logging.getLogger(__name__)
 
 class EmrossWarBot:
     PVP_MODE_RE = re.compile('^p\d+\.')
