@@ -58,9 +58,10 @@ def run_bot(bot):
             try:
                 bot.favourites.get_favs(Favourites.DEVIL_ARMY)
 
-                logger.info('There are a total of %d DA which can be attacked a further %d times.' % (\
-                    len(bot.favourites.favs[Favourites.DEVIL_ARMY]),
-                    sum([bot.npc_attack_limit - x.attack for x in bot.favourites.favs[Favourites.DEVIL_ARMY]])\
+                logger.info('There are a total of {num} {monster} which can be attacked a further {remain} times.'.format(\
+                    num=len(bot.favourites.favs[Favourites.DEVIL_ARMY]),
+                    monster=EmrossWar.LANG.get('MONSTER', 'NPCs'),
+                    remain=sum([bot.npc_attack_limit - x.attack for x in bot.favourites.favs[Favourites.DEVIL_ARMY]])\
                 ))
 
                 concurrent_attacks = []
