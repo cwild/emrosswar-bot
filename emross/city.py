@@ -9,6 +9,7 @@ from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.military.barracks import Barracks
+from emross.military.camp import Soldier
 from emross.resources import Resource, ResourceManager
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
@@ -107,31 +108,53 @@ class City:
 
 
 
-    def create_army(self, threshold, deduct = True, heroes = [], mixed = False):
+    def create_army(self, threshold, deduct=True, heroes=[], mixed=False):
         """
-        Return a dict of the various soldiers to include in this army
+        Return a dict of the various soldiers to include in this army.
+        `threshold` can be a dict-like object or a list
         """
         heroes = heroes or self.heroes
 
         army = {}
 
-        for soldier, qty in threshold.iteritems():
+        max_carry = max([hero.stat(Hero.COMMAND) for hero in heroes])
+        remaining_hero_command = max_carry
+
+        try:
+            iterable = threshold.iteritems()
+        except AttributeError:
+            iterable = threshold
+
+        for soldier, qty in iterable:
             """
             If there are enough of a given soldier to send
             then add them to the army
             """
             try:
-                if (max([h.data.get(Hero.COMMAND) for h in heroes]) < qty):
+                if qty is not Soldier.REMAINING and max_carry < qty:
                     if mixed:
-                        raise InsufficientHeroCommand, 'With a mixed army, all troops must be sent'
+                        raise InsufficientHeroCommand('With a mixed army, all troops must be sent')
 
                     continue
 
                 soldiers = [s for s in self.barracks.soldiers if s[0] == soldier][0]
+                use_remaining = False
 
-                if soldiers[1] >= qty:
-                    army['soldier_num%d' % soldier] = qty
+                if qty is Soldier.REMAINING:
+                    qty = min([soldiers[1], remaining_hero_command])
+                    use_remaining = qty>0
 
+                    if use_remaining is False:
+                        # We are not able to take any more of this troop
+                        continue
+
+                if use_remaining or soldiers[1] >= qty:
+                    try:
+                        army['soldier_num%d' % soldier] += qty
+                    except KeyError:
+                        army['soldier_num%d' % soldier] = qty
+
+                    remaining_hero_command -= qty
                     """
                     Update soldier cache
                     """
@@ -142,18 +165,17 @@ class City:
                         break
 
                 elif mixed:
-                    raise InsufficientSoldiers, 'Not enough specified troops'
+                    raise InsufficientSoldiers('Not enough specified troops')
             except (IndexError, ValueError):
                 pass
 
         if army and mixed:
-            cmd = max([h.data.get(Hero.COMMAND) for h in heroes])
             total = sum([v for v in army.itervalues()])
-            if total > cmd:
-                raise InsufficientHeroCommand, 'This hero cannot command this many troops'
+            if total > max_carry:
+                raise InsufficientHeroCommand('This hero cannot command this many troops')
 
         if not army:
-            raise InsufficientSoldiers, 'No soldiers were added to the army'
+            raise InsufficientSoldiers('No soldiers were added to the army')
 
         return army
 

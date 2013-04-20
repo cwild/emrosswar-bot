@@ -26,8 +26,14 @@ class Barracks(object):
     def __init__(self, bot, city):
         self.bot = bot
         self.city = city
-        self.soldiers = []
+        self._soldiers = None
         super(Barracks, self).__init__()
+
+    @property
+    def soldiers(self):
+        if self._soldiers is None:
+            self.camp_info()
+        return self._soldiers
 
     def camp_info(self):
         """
@@ -39,11 +45,13 @@ class Barracks(object):
             [15, 126, True], [16, 0, True], [17, 7163, True], [18, 200, True]],
         'def': 2}}
         """
-        json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, city = self.city.id)
+        json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
+        soldiers = []
         try:
-            self.soldiers[:] = json['ret']['soldiers']
+            soldiers = json['ret']['soldiers']
+            self._soldiers[:] = soldiers
         except TypeError:
-            pass
+            self._soldiers = soldiers
 
         return json
 

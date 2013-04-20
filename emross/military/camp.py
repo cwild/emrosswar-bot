@@ -1,6 +1,8 @@
 from emross.utility.task import CostCalculator
 
 class Soldier(CostCalculator):
+    REMAINING = '*'
+
     INFANTRY = 1
     SPY = 2
     PORTER = 3
