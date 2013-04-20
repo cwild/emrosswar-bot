@@ -89,8 +89,9 @@ class ScenarioWalker(Task):
 
                     try:
                         gen_armies = [city.create_army(dict(a['troops']), heroes=[heroes[a['hero']]], mixed=True) for a in armies]
+                        armies = [{'hero':hero, 'troops':troops} for hero, troops in zip([a['hero'] for a in armies], gen_armies)]
 
-                        if self.scenario.start(city, scenario, gen_armies, mode=mode):
+                        if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
                             logger.debug('Started scenario %d' % scenario)
                             logger.info('Started scenario "%s" with %s' % \
