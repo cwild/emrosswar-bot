@@ -214,7 +214,7 @@ class Scenario:
                 troops[troop][pos] = qty
 
 
-        soldiers = dict(("soldier_num%d" % (key,), "|".join([str(v) for v in val])) for key, val in troops.iteritems())
+        soldiers = dict(("soldier_num{0}".format(key), "|".join([str(v) for v in val])) for key, val in troops.iteritems())
 
         json = self.bot.api.call(self.START_URL, city=city.id, fb=scenario, fb_mode=mode, gen=gen, **soldiers)
 
