@@ -20,6 +20,7 @@ class BotManager(object):
         self.players = []
         self.bots = []
         self.console = console
+        self._initialised = False
 
     def bot(self, nickname=None, *args, **kwargs):
         """A helper function to locate a running bot"""
@@ -32,11 +33,16 @@ class BotManager(object):
         return None
 
     def initialise_bots(self):
+        if self._initialised:
+            return
+
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
             bot = EmrossWarBot(api)
 
             self.bots.append(bot)
+
+        self._initialised = True
 
     def run(self, func):
         self.initialise_bots()
@@ -79,9 +85,10 @@ class BotManager(object):
                             try:
                                 func(*args, **kwargs)
                             except BotException as e:
-                                self.runnable = False
+                                bot.runnable = False
                                 workers.remove(worker)
                                 logger.exception(e)
+                                worker.bot.errors.task_done()
                                 logger.critical('Removed this bot instance from workers, marked for shutdown')
                             finally:
                                 handled.add(func)

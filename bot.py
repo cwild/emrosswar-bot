@@ -234,11 +234,21 @@ if __name__ == "__main__":
         logger.info('Exiting')
 
 else:
+    import threading
     def test_bot():
         manager = BotManager()
-        player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
+        try:
+            player = settings.multi_bot[0]
+        except AttributeError:
+            player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
         manager.players.append(player)
         manager.initialise_bots()
+
+        do_nothing = lambda bot: bot
+
+        t = threading.Thread(target=manager.run, args=(do_nothing,))
+        t.daemon = True
+        t.start()
 
         return next(iter(manager.bots), None)
     bot = test_bot()
