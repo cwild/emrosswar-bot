@@ -3,6 +3,7 @@ import time
 
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
+from emross.item import inventory
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
@@ -13,6 +14,12 @@ logger = logging.getLogger(__name__)
 class Study(FilterableCityTask):
     STUDY_URL = 'game/study_api.php'
     STUDY_MOD_URL = 'game/study_mod_api.php'
+
+    COUNTDOWN_ITEMS = [
+        (inventory.FAST_RESEARCH_I[0], 900),
+        (inventory.FAST_RESEARCH_II[0], 3600),
+        (inventory.FAST_RESEARCH_III[0], 3600*8)
+    ]
 
     def tech_levels(self, city):
         logger.info('Find tech levels for this city, %s' % city.name)
@@ -50,16 +57,19 @@ class Study(FilterableCityTask):
             logger.debug('The university at "%s" is not high enough to study tech %d yet.' % (city.name, tech))
             return False
 
-    def process(self, tech, level, university=1, use_hero=False, *args, **kwargs):
+    def process(self, tech, level, university=1,
+        use_hero=False, use_scrolls=False, *args, **kwargs):
+
         cities = self.cities(**kwargs)
-        current_study = set()
         for city in cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
-                current_study.add(task['target'])
+                if tech == task['target']:
+                    if use_scrolls:
+                        city.countdown_manager.use_items_for_task(task, self.COUNTDOWN_ITEMS)
 
-        if tech in current_study:
-            return
+                    # Already researching this tech
+                    return
 
         construction = self.bot.builder.task(Construct)
         for city in cities:

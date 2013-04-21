@@ -1,16 +1,26 @@
 import logging
 import time
 
+from emross.api import EmrossWar
+from emross.item.item import Item
+from emross.utility.task import TaskType
+
 logger = logging.getLogger(__name__)
 
 class CountdownManager(object):
     GET_COUNTDOWN_INFO = 'game/get_cdinfo_api.php'
+    GET_COUNTDOWN_PRICE = 'game/api_getcdprice.php'
+    COUNTDOWN_PRICE_INTERVAL = 300
+    COUNTDOWN_ACTIONS = {
+        TaskType.RESEARCH: 'study'
+    }
 
     def __init__(self, bot, city):
         self.bot = bot
         self.city = city
         self._data = None
         self.last_update = 0
+        self.last_cdprice_check = 0
 
     @property
     def data(self):
@@ -61,3 +71,47 @@ class CountdownManager(object):
         """
         self.update()
         self.city.update()
+
+    def use_items_for_task(self, task, items):
+        if (time.time() - self.last_cdprice_check) < self.COUNTDOWN_PRICE_INTERVAL:
+            return
+        else:
+            self.last_cdprice_check = time.time()
+
+        logger.info('Decrease task time using items')
+        logger.debug(task)
+
+        sorted_items = items[:]
+        sorted_items.sort(key=lambda item: item[1], reverse=True)
+        logger.debug(sorted_items)
+
+        remaining = int(task['secs'] - time.time())
+
+        logger.debug('Remaining time for task is {0} seconds'.format(remaining))
+
+        ids = ','.join([str(item_id) for item_id, time_offset in items])
+        json = self.bot.api.call(Item.ITEM_LIST, extra=1, ids=ids)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            available = dict([(item['sid'], item) for item in json['ret']['item']])
+
+            for item_id, time_offset in sorted_items:
+                try:
+                    action = self.COUNTDOWN_ACTIONS[task['cdtype']]
+
+                    while remaining > time_offset and available[item_id]['num'] > 0:
+                        json = self._reduce_with_item(task['id'], action, item_id)
+
+                        if json['code'] != EmrossWar.SUCCESS:
+                            break
+
+                        remaining = json['ret']['secs']
+                        available[item_id]['num'] -= 1
+                except KeyError:
+                    pass
+
+            logger.info('Finished using items: {0} seconds remain'.format(remaining))
+            task['secs'] = remaining + time.time()
+
+    def _reduce_with_item(self, tid, action, item_id):
+        return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id, tid=tid, action=action, iid=item_id)
