@@ -11,6 +11,12 @@ class Construct(FilterableCityTask):
     CREATE_TASK_URL = 'game/building_create_task_api.php'
     EXTRA_SLOT_ITEMS = (inventory.BLESS_OF_BUILDING_I[0], inventory.BLESS_OF_BUILDING_II[0])
 
+    COUNTDOWN_ITEMS = [
+        (inventory.FAST_BUILDING_I[0], 900),
+        (inventory.FAST_BUILDING_II[0], 3600),
+        (inventory.FAST_BUILDING_III[0], 3600*8)
+    ]
+
     def upgrade(self, city, build_type):
         """
         {"code":0,"ret":{"cdlist":[{"id":1234567,"cdtype":1,"target":"5","owner":0,"secs":90}]}}
@@ -29,7 +35,7 @@ class Construct(FilterableCityTask):
     def structure_level(self, city, building):
         return city.data[Building.OFFSET[building]]
 
-    def process(self, structure, level, *args, **kwargs):
+    def process(self, structure, level, use_scrolls=False, *args, **kwargs):
         result = True
 
         for city in self.cities(**kwargs):
@@ -46,7 +52,13 @@ class Construct(FilterableCityTask):
                 capacity = 1 + len([b for b in buffs if b['itemid'] in self.EXTRA_SLOT_ITEMS])
                 logger.debug('Build capacity at castle "%s" is %d' % (city.name, capacity))
 
-                if len(tasks) < capacity and structure not in [t['target'] for t in tasks] \
+                current_build = dict([(t['target'], t) for t in tasks])
+
+                if structure in current_build and use_scrolls:
+                    task = current_build[structure]
+                    city.countdown_manager.use_items_for_task(task, self.COUNTDOWN_ITEMS)
+
+                if len(tasks) < capacity and structure not in current_build \
                     and city.resource_manager.meet_requirements(Building.cost(structure, current_level+1), **kwargs):
                     ctdwn = self.upgrade(city, structure)
                     if ctdwn['code'] == EmrossWar.SUCCESS:

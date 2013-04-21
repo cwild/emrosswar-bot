@@ -12,6 +12,7 @@ class CountdownManager(object):
     GET_COUNTDOWN_PRICE = 'game/api_getcdprice.php'
     COUNTDOWN_PRICE_INTERVAL = 300
     COUNTDOWN_ACTIONS = {
+        TaskType.BUILDING: 'build',
         TaskType.RESEARCH: 'study'
     }
 
