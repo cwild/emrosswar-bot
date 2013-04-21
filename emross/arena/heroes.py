@@ -54,3 +54,17 @@ class HeroManager(object):
         heroes = self.heroes.values()
         heroes.sort(key = lambda hero: [hero.data.get(stat) for stat in stats], reverse=reverse)
         return heroes
+
+    def ordered_by_scored_stats(self, scoring=[(Hero.COMMAND, 1)]):
+        result = []
+
+        for hero_id, hero in self.heroes.iteritems():
+            score = 0
+            for stat, weight in scoring:
+                score += hero.data.get(stat, 0) * weight
+            result.append((hero, score))
+
+        result.sort(key = lambda hero: hero[1], reverse=True)
+        logger.debug(result)
+
+        return result
