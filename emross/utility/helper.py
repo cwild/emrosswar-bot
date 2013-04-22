@@ -54,6 +54,7 @@ class EmrossWarBot:
         self.tasks = {}
         self.cities = []
         self.favourites = Favourites(self)
+        self.item_manager = item.Item(self)
         self.shop = Shop(self)
         self.world = World(self)
         self.scout_mail = ScoutMailHandler(self)
@@ -250,7 +251,6 @@ class EmrossWarBot:
     def clearout_inventory(self):
         logger.info('Clear the item inventories')
 
-        item_manager = item.Item(self)
         it = item.ItemType
         for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
             page = 1
@@ -258,7 +258,7 @@ class EmrossWarBot:
 
             logger.info('Find items of type %d' % itype)
             while True:
-                json = item_manager.list(page = page, type = itype)
+                json = self.item_manager.list(page = page, type = itype)
 
                 for _item in json['ret']['item']:
                     try:
@@ -279,7 +279,7 @@ class EmrossWarBot:
 
                 for item_id in sale_list:
                     try:
-                        json = item_manager.sell(city = city.id, id = item_id)
+                        json = self.item_manager.sell(city = city.id, id = item_id)
                         city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                     except (KeyError, TypeError):
                         pass
@@ -288,8 +288,6 @@ class EmrossWarBot:
 
     def find_inventory_item(self, search_item):
         result = []
-
-        item_manager = item.Item(self)
         it = item.ItemType
 
         item_id, item_type, item_rank = search_item
@@ -300,7 +298,7 @@ class EmrossWarBot:
         page = 1
         found = False
         while not found:
-            json = item_manager.list(page = page, type = item_type)
+            json = self.item_manager.list(page=page, type=item_type)
 
             for _item in json['ret']['item']:
                 try:
@@ -325,7 +323,6 @@ class EmrossWarBot:
         """
         Given a city, try to find any items we have that we can sell for gold.
         """
-        item_manager = item.Item(self)
         sellable_items = []
 
         total_amount = lambda: sum([qty*price for id, qty, price in sellable_items])
@@ -347,7 +344,7 @@ class EmrossWarBot:
             if num > 1:
                 kwargs['num'] = num
 
-            json = item_manager.sell(city = city.id, id = item_id, **kwargs)
+            json = self.item_manager.sell(city = city.id, id = item_id, **kwargs)
 
             if json['code'] == EmrossWar.SUCCESS:
                 city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])

@@ -2,7 +2,6 @@ import logging
 import time
 
 from emross.api import EmrossWar
-from emross.item.item import Item
 from emross.utility.task import TaskType
 
 logger = logging.getLogger(__name__)
@@ -90,8 +89,7 @@ class CountdownManager(object):
 
         logger.debug('Remaining time for task is {0} seconds'.format(remaining))
 
-        ids = ','.join([str(item_id) for item_id, time_offset in items])
-        json = self.bot.api.call(Item.ITEM_LIST, extra=1, ids=ids)
+        json = self.bot.item_manager.find([item_id for item_id, time_offset in items])
 
         if json['code'] == EmrossWar.SUCCESS:
             available = dict([(item['sid'], item) for item in json['ret']['item']])
