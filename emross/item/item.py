@@ -7,6 +7,11 @@ class Item:
     def __init__(self, bot):
         self.bot = bot
 
+    def find(self, items=[]):
+        if items:
+            ids = ','.join([str(item_id) for item_id in items])
+            return self.bot.api.call(self.ITEM_LIST, extra=1, ids=ids)
+
     def list(self, page=1, type=3):
         """
         List goods from inventory
