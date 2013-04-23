@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
-from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
+from emross.exceptions import (InsufficientHeroCommand,
+    InsufficientSoldiers, NoHeroesAvailable)
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 from emross.resources import Resource, ResourceManager
@@ -114,6 +115,8 @@ class City:
         `threshold` can be a dict-like object or a list
         """
         heroes = heroes or self.heroes
+        if len(heroes) == 0:
+            raise NoHeroesAvailable('Cannot find any available heroes at "{0}"'.format(self.name))
 
         army = {}
 
