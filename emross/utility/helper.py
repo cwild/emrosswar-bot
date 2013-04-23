@@ -46,7 +46,7 @@ class EmrossWarBot:
 
         self.session = Session(self)
 
-        self.pvp = self.__class__.PVP_MODE_RE.match(api.game_server) is not None
+        self.pvp = self.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
 
         self.last_update = 0
@@ -121,8 +121,8 @@ class EmrossWarBot:
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
         for city in cities:
-            logger.debug('Adding "%s" to city list' % city['name'])
-            city = City(self, city['id'], city['name'], x = city['x'], y = city['y'])
+            logger.debug('Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
+            city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self.cities.append(city)
 
         for gift in userinfo['gift']:
@@ -131,8 +131,13 @@ class EmrossWarBot:
 
     def get_gift(self, gift):
         gid = int(gift['id'])
-        logger.info('Collecting gift %d' % gid)
-        json = self.api.call('game/goods_api.php', action='gift', id=gid)
+        try:
+            gift_item = EmrossWar.ITEM[str(gid)]['name']
+        except KeyError:
+            gift_item = gid
+
+        logger.info('Collecting gift "{0}"'.format(gift_item))
+        return self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
     def find_target_for_army(self, city, cat=Favourites.DEVIL_ARMY):
         """

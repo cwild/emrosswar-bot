@@ -1,4 +1,9 @@
-import inventory
+import logging
+
+from emross.api import EmrossWar
+EmrossWar.extend('ITEM', 'translation/%(lang)s/item_data.js')
+
+logger = logging.getLogger(__name__)
 
 class Item:
     ITEM_LIST = 'game/goods_api.php'
@@ -31,16 +36,16 @@ class Item:
             }]
         }
         """
-        return self.bot.api.call(self.__class__.ITEM_LIST, action='goods_list', page=page, type=type)
+        return self.bot.api.call(self.ITEM_LIST, action='goods_list', page=page, type=type)
 
     def use(self, city, id):
-        return self.bot.api.call(self.__class__.ITEM_OP, action='use', city=city, id=id, num=1)
+        return self.bot.api.call(self.ITEM_OP, action='use', city=city, id=id, num=1)
 
     def sell(self, city, id, **kwargs):
-        return self.bot.api.call(self.__class__.ITEM_OP, action='sale', city=city, id=id, **kwargs)
+        return self.bot.api.call(self.ITEM_OP, action='sale', city=city, id=id, **kwargs)
 
     def upgrade(self, city, id):
-        return self.bot.api.call(self.__class__.ITEM_OP, action='upgrade', city=city, id=id)
+        return self.bot.api.call(self.ITEM_OP, action='upgrade', city=city, id=id)
 
 
 class ItemRank:
@@ -59,9 +64,13 @@ class ItemType:
     BOOK = 6
 
 
-ITEMS = dict((v[0], {'type':v[1], 'rank':v[2]}) for (k, v) in vars(inventory).iteritems() if not k.startswith('_'))
-
+ITEMS = dict([(int(sid), item) for sid, item in EmrossWar.ITEM.iteritems()])
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+
     item = ITEMS[113]
-    print 'Type: %s, Rank: %s' % (item['type'], item['rank'])
+    logger.info('Type: %s, Rank: %s' % (item['type'], item['rank']))
+
+    logger.info(EmrossWar.ITEM[str(113)])
+    logger.info(EmrossWar.ITEM[str(113)].get('name', 'UNKNOWN'))
