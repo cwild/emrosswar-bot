@@ -65,7 +65,7 @@ class ScenarioWalker(Task):
             # Scenario in progress
 
             if scenario != int(json['ret']['fb_label']):
-                logger.info('Already on a different scenario with %d seconds remaining.' % json['ret']['remaining_time'])
+                logger.info('Already on a different scenario with {0} seconds remaining.'.format(json['ret']['remaining_time']))
                 this.sleep(json['ret']['remaining_time'])
                 return resume
 
@@ -76,7 +76,17 @@ class ScenarioWalker(Task):
 
             if not hasattr(self.scenario, 'armies'):
                 self.scenario.armies = deepcopy(armies)
-                for army in self.scenario.armies:
+                generals = [int(gen) for gen in json['ret']['army_data'].keys()]
+                city = self.find_city_with_heroes(generals, extra=None)
+                logger.info('CITY {0}, GENERALS {1}'.format(city, generals))
+                heroes = city.hero_manager.ordered_by_scored_stats(scoring, heroes=dict(
+                        [(hero.data['id'], hero) for hero in city.hero_manager.heroes.itervalues() if hero.data['gid'] in generals]))
+
+                logger.info('Our heroes are {0}'.format(heroes))
+
+                for hero, army in zip(heroes, self.scenario.armies):
+                    hero, score = hero
+                    army['hero'] = hero.data['gid'] if army['hero'] == self.AUTO_HERO else army['hero']
                     army['path'] = deque(army['path'])
 
                 # Clean the path (useful incase the scenario had already been started)
@@ -153,8 +163,7 @@ class ScenarioWalker(Task):
                             return resume
 
                     try:
-                        gen_armies = [city.create_army(troops,
-                            heroes=[heroes[hero]], deduct=False, mixed=True)
+                        gen_armies = [city.create_army(troops, heroes=[heroes[hero]], mixed=True)
                             for troops, hero in zip([a['troops'] for a in armies], generals)
                             ]
 
@@ -171,7 +180,7 @@ class ScenarioWalker(Task):
                             )
                             logger.debug('Wait {0} seconds before first attack'.format(initial_delay))
                             self.sleep(initial_delay)
-                    except (InsufficientHeroCommand, InsufficientSoldiers), e:
+                    except (InsufficientHeroCommand, InsufficientSoldiers) as e:
                         logger.warning(e)
                         self.sleep(900)
                         return resume
@@ -211,11 +220,11 @@ class ScenarioWalker(Task):
         return False
 
 
-    def find_city_with_heroes(self, gens):
+    def find_city_with_heroes(self, gens, **kwargs):
         logger.info('Search to see which city has these heroes: %s' % gens)
         heroes = set(gens)
         for city in self.bot.cities:
-            city.get_available_heroes(exclude=False)
+            city.get_available_heroes(exclude=False, **kwargs)
             available = set([int(h.data.get('gid')) for h in city.heroes])
             if heroes.issubset(available):
                 logger.info('%s has these heroes!' % city.name)
