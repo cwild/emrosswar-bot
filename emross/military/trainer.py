@@ -63,9 +63,9 @@ class Trainer(FilterableCityTask):
                             city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty), convert=True)
                             json = city.barracks.train_troops(cavalry.troop, qty)
                             if json['code'] == EmrossWar.SUCCESS:
+                                delay = int(json['ret']['cdlist'][0]['secs'])
                                 city.countdown_manager.add_tasks(json['ret']['cdlist'])
                                 logger.info('Stop processing the rest of the cavalries list at city "%s"' % city.name)
-                                delay = int(json['ret']['cdlist'][0]['secs'])
                                 break
                 except KeyError:
                     pass
