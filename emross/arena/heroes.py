@@ -50,15 +50,21 @@ class HeroManager(object):
         except IndexError:
             pass
 
-    def ordered_by_stats(self, stats=[Hero.LEVEL, Hero.EXPERIENCE], reverse=True):
-        heroes = self.heroes.values()
-        heroes.sort(key = lambda hero: [hero.data.get(stat) for stat in stats], reverse=reverse)
+    def ordered_by_stats(self, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=[]):
+        exclude = set(exclude)
+        heroes = [hero for hero in self.heroes.values() if hero.stat('gid') not in exclude]
+        heroes.sort(key = lambda hero: [hero.data.get(stat) for stat in stats], reverse=True)
         return heroes
 
-    def ordered_by_scored_stats(self, scoring=[(Hero.COMMAND, 1)]):
+    def ordered_by_scored_stats(self, scoring=[(Hero.COMMAND, 1)], heroes=None, exclude=[]):
         result = []
+        exclude = set(exclude)
+        heroes = self.heroes if heroes is None else heroes
 
-        for hero_id, hero in self.heroes.iteritems():
+        for hero_id, hero in heroes.iteritems():
+            if hero_id in exclude:
+                continue
+
             score = 0
             for stat, weight in scoring:
                 score += hero.data.get(stat, 0) * weight

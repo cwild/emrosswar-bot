@@ -8,7 +8,9 @@ except ImportError: #python3
 
 import emross.arena
 from emross.api import EmrossWar
+from emross.arena.hero import Hero
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
+from emross.military.camp import Soldier
 from emross.scenario.scene import Scenario
 from emross.utility.task import Task
 
@@ -19,12 +21,22 @@ import time
 
 class ScenarioWalker(Task):
     INTERVAL = 10
+    AUTO_HERO = -1
 
     def setup(self):
         self.html_parser = HTMLParser()
         self.scenario = None
 
-    def process(self, scenario, armies, times=[], resume=True, initial_delay=0.5, mode=Scenario.NORMAL_MODE, *args, **kwargs):
+    def process(self, scenario, armies, times=[], resume=True,
+        initial_delay=0.5, mode=Scenario.NORMAL_MODE,
+        scoring=[
+            (Hero.ATTACK, 1.4),
+            (Hero.DEFENSE, 1.2),
+            (Hero.WISDOM, 0.8),
+            (Hero.COMMAND, 1)
+            ],
+        *args, **kwargs):
+
         if self.bot.pvp:
             self.sleep(86400)
             return True
@@ -80,18 +92,74 @@ class ScenarioWalker(Task):
                 else:
                     self.sleep(3600)
             elif self.can_start(times):
-                generals = [v['hero'] for v in armies]
-                city = self.find_city_with_heroes(gens=generals)
+                city = None
+                find_heroes = len(armies)
+                generals = [v['hero'] for v in armies if v['hero'] != self.AUTO_HERO]
+                if generals:
+                    city = self.find_city_with_heroes(gens=generals)
+
+                cities = [city] if city else self.bot.cities
+
+                # Auto-hero selection
+                remaining = find_heroes - len(generals)
+                if remaining:
+                    army_min_carry = [sum(num for troop, num in a['troops']
+                        if num != Soldier.REMAINING)
+                        for a in armies[-remaining:]
+                        ]
+
+                    champion_heroes_by_city = {}
+
+                    for c in cities:
+                        logger.debug('Minimum troop carry is {0}'.format(army_min_carry))
+                        commands = [dict((h.data['gid'], h) for h in c.hero_manager.ordered_by_stats([Hero.COMMAND], exclude=generals)
+                            if h.stat(Hero.COMMAND) >= carry)
+                            for carry in army_min_carry]
+
+                        logger.debug(commands)
+                        exclude = []
+                        champion_heroes_by_city[c] = []
+                        for command in commands:
+                            scored = c.hero_manager.ordered_by_scored_stats(scoring, command, exclude)
+                            try:
+                                hero, score = scored[0]
+                                exclude.append(hero.data['gid'])
+                                champion_heroes_by_city[c].append(scored[0])
+                            except IndexError:
+                                pass
+
+                    logger.debug(champion_heroes_by_city)
+
+                    highest = 0
+                    for champion_city, champions in champion_heroes_by_city.iteritems():
+                        city_score = sum([score for hero, score in champions])
+                        if city_score > highest:
+                            highest = city_score
+                            city = champion_city
+
+                    if city:
+                        logger.info('Chosen city "{0}" with strongest heroes'.format(city.name))
+                        generals = [hero.data['gid'] for hero, score in champion_heroes_by_city[city]]
+                        logger.debug(generals)
 
                 if city is not None:
-                    city.barracks.get_soldiers()
-                    heroes = dict([(h.data.get('gid'), h) for h in city.heroes])
+                    city.barracks.camp_info()
+                    heroes = dict([(h.data.get('gid'), h) for h in city.hero_manager.heroes.itervalues()])
+
+                    for general in generals:
+                        if heroes[general].stat(Hero.STATE) != Hero.AVAILABLE:
+                            logger.info('Hero "{0}" is not available, try again in 5 minutes'.format(heroes[general]))
+                            self.sleep(300)
+                            return resume
 
                     try:
-                        gen_armies = [city.create_army(dict(a['troops']), heroes=[heroes[a['hero']]], mixed=True) for a in armies]
+                        gen_armies = [city.create_army(troops,
+                            heroes=[heroes[hero]], deduct=False, mixed=True)
+                            for troops, hero in zip([a['troops'] for a in armies], generals)
+                            ]
 
                         armies = [{'hero':hero, 'troops':[(s.replace('soldier_num',''), qty) for s, qty in troops.iteritems()]}
-                                  for hero, troops in zip([a['hero'] for a in armies], gen_armies)]
+                                  for hero, troops in zip(generals, gen_armies)]
 
                         if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
@@ -101,7 +169,7 @@ class ScenarioWalker(Task):
                                 ','.join(EmrossWar.HERO[str(a['hero'])]['name'] for a in armies)
                                 )
                             )
-                            logger.debug('Wait %f seconds before first attack' % (initial_delay,))
+                            logger.debug('Wait {0} seconds before first attack'.format(initial_delay))
                             self.sleep(initial_delay)
                     except (InsufficientHeroCommand, InsufficientSoldiers), e:
                         logger.warning(e)
