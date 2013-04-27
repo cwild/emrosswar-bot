@@ -116,7 +116,7 @@ class ResourceManager:
                 json = self._convert(**conversion)
                 return json['code'] == EmrossWar.SUCCESS
 
-        elif total_gold == 0 and self.get_amount_of(Resource.GOLD) > resource_levels[Resource.GOLD]:
+        elif self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
             return True
 
         logger.debug('Target resource requirements not met')
