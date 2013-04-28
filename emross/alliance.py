@@ -1,6 +1,8 @@
 import logging
 import time
 
+from emross.api import EmrossWar
+
 logger = logging.getLogger(__name__)
 
 class AllianceTechStatus:
@@ -31,29 +33,6 @@ class Alliance:
     BLOODFLAG = 19
     MILICADEMY = 20
 
-    TECH = {
-        1:  'Civilisation',
-        2:  'Veteran',
-        3:  'Silos',
-        4:  'Diligence',
-        5:  'Valor',
-        6:  'Tenacity',
-        7:  'Vault',
-        8:  'Stonecraft',
-        9:  'Pedagogics',
-        10: 'Propaganda',
-        11: 'Incentive',
-        12: 'Toughness',
-        13: 'Thrifty',
-        14: 'Discipline',
-        15: 'Camping',
-        16: 'Inspiration',
-        17: 'Battlecry',
-        18: 'Logistics',
-        19: 'Bloodflag',
-        20: 'Milicademy'
-    }
-
 
 class Donator:
     UNION_INFO = 'game/api_union_info.php'
@@ -67,7 +46,7 @@ class Donator:
         self.tech_timeout = 0
 
     def update(self):
-        json = self.bot.api.call(Donator.UNION_INFO, op='info')
+        json = self.bot.api.call(self.UNION_INFO, op='info')
         self.info = json['ret']
 
     def donate_to_hall(self, gold, city):
@@ -81,7 +60,7 @@ class Donator:
             # Catch hall being max already
             if self.hall_donation_forced is False:
                 i[1] / i[2]
-            json = self.bot.api.call(Donator.UNION_INFO, op='donate', num=gold, city=city)
+            json = self.bot.api.call(self.UNION_INFO, op='donate', num=gold, city=city)
             self.hall_timeout = time.time() + json['ret'][4]
         except IndexError:
             pass
@@ -90,7 +69,7 @@ class Donator:
 
 
     def get_tech_info(self, techid):
-        json = self.bot.api.call(Donator.UNION_INFO, op='techinfo', techid=techid)
+        json = self.bot.api.call(self.UNION_INFO, op='techinfo', techid=techid)
         return json['ret']
 
 
@@ -101,7 +80,7 @@ class Donator:
         if len(techs) is 0:
             raise ValueError
 
-        logger.info('Choosing from the following: %s' % (', '.join([Alliance.TECH[t[0]+1] for t in techs])))
+        logger.info('Choosing from the following: %s' % (', '.join([EmrossWar.LANG['ALLY_TECH'][str(t[0]+1)]['name'] for t in techs])))
 
         try:
             # Get all the tech IDs
@@ -125,7 +104,7 @@ class Donator:
 
     def donate_to_tech(self, gold, techid, city):
         try:
-            json = self.bot.api.call('game/api_union_info.php', op='tdonate',
+            json = self.bot.api.call(self.UNION_INFO, op='tdonate',
                                 num=gold, techid=techid, city=city)
 
             self.tech_timeout = time.time() + json['ret'][1][4]
@@ -164,7 +143,7 @@ class Donator:
                 try:
                     techid = self.choose_preferred_tech(tech_preference)
                     amount = self.get_tech_info(techid)[2]
-                    logger.info('Donate %d gold to %s' % (amount, Alliance.TECH[techid]))
+                    logger.info('Donate %d gold to %s' % (amount, EmrossWar.LANG['ALLY_TECH'][str(techid)]['name']))
 
                     self.donate_to_tech(gold=amount, techid = techid, city = city.id)
                     city.update()
