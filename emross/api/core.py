@@ -1,8 +1,8 @@
-import sys
-sys.path.extend(['lib/urllib3/'])
-
 import logging
 import random
+import sys
+import threading
+import time
 
 import simplejson
 try:
@@ -10,13 +10,13 @@ try:
 except ImportError:
     class JSONDecodeError(ValueError): pass
 
-import threading
-import time
-
 from lib.ordered_dict import OrderedDict
 
+sys.path.extend(['lib/urllib3/'])
 from urllib3 import PoolManager, make_headers, exceptions
 
+
+from emross import device, lang
 from emross.exceptions import EmrossWarApiException
 from emross.handlers import handlers, HTTP_handlers
 
@@ -84,7 +84,6 @@ class EmrossWarApi(object):
         """Call API and return result"""
         server = server or self.game_server
 
-        from emross.api import device, lang
         epoch = int(time.time())
 
         try:
@@ -194,6 +193,6 @@ class EmrossWar(object):
 
 
 if __name__ == "__main__":
-    import emross.api
-    print emross.api.lang
+    import emross
+    print emross.lang
 

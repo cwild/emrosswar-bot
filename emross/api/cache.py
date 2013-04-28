@@ -34,7 +34,7 @@ class EmrossContent(object):
             _init_cache()
 
         with cls.lock:
-            from emross.api import lang
+            from emross import lang
             filename = filename % {'lang': lang}
             logger.debug('Checking "%s"' % filename)
             content = None

@@ -15,6 +15,8 @@ if len(logging.root.handlers) == 0:
 
 locale.setlocale(locale.LC_ALL, '')
 
+# Application settings, configurable
+import settings
 
 from emross.api import EmrossWar
 from emross.exceptions import (EmrossWarApiException,
@@ -25,9 +27,6 @@ from emross.favourites import Favourites
 
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
-
-# Application settings, configurable
-import settings
 
 try:
     import emross.handlers
