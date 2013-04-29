@@ -87,10 +87,12 @@ class ResourceManager:
                     conversion['%s2%s' % (Resource.GOLD, res)] = gold_amount
 
 
-        if total_gold+resource_levels[Resource.GOLD] > self.get_amount_of(Resource.GOLD) \
-            and unbrick is False:
-                logger.debug('Not enough gold available for required resource levels.')
-                return False
+        if self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
+            logger.debug('We have enough gold to cover the requirements')
+            return True
+        elif unbrick is False:
+            logger.debug('Not enough gold available for required resource levels.')
+            return False
 
         if convert:
             should_convert = True
@@ -115,9 +117,6 @@ class ResourceManager:
                 logger.debug('Total gold cost of conversion is %d' % total_gold)
                 json = self._convert(**conversion)
                 return json['code'] == EmrossWar.SUCCESS
-
-        elif self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
-            return True
 
         logger.debug('Target resource requirements not met')
         return False
