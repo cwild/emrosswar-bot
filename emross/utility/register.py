@@ -1,17 +1,18 @@
+import argparse
+import logging
 import uuid
+
 from emross.exceptions import EmrossWarApiException
 from emross.api import EmrossWarApi
-import argparse
 
 api = EmrossWarApi(None, None)
+api.bot = None
 
-def register(username = None, password = None, referrer = None):
+def register(username=None, password=None, referrer=None):
     """
     user=creative&action=reg&referer=rm9y5w&code=875628a8-ccf7-11e0-9fbd-00216b4d955c
     """
-    json = api.call('info.php', server='m.emrosswar.com', user = username, action = 'reg', referer = referrer, code = uuid.uuid4(), key=None)
-
-    print json
+    json = api._call('info.php', server='m.emrosswar.com', user=username, action='reg', referer=referrer, code=uuid.uuid4(), key=False)
 
     """
     {'code': 11, 'ret': {'refercode': 'yourReferCode', 'referer': 'referedBy', 'server': 'http://sXX.emrosswar.com/'}}
@@ -19,14 +20,17 @@ def register(username = None, password = None, referrer = None):
     """
 
     try:
-        print api.call('register_api.php', server = json['ret']['server'][7:-1], txtUserName = json['ret']['refercode'], txtPassword = password, referer = json['ret']['referer'], txtEmail = '')
-    except TypeError:
-        print 'There was an error during registration.'
+        api._call('register_api.php', server=json['ret']['server'][7:-1], txtUserName=json['ret']['refercode'], txtPassword=password, referer=json['ret']['referer'], txtEmail='', key=False)
+    except TypeError as e:
+        logging.exception(e)
+        logging.warning('There was an error during registration.')
 
 
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+
     parser = argparse.ArgumentParser(
         argument_default=argparse.SUPPRESS,
         description='Register a new Emross Wars account.',
@@ -41,4 +45,4 @@ if __name__ == '__main__':
     try:
         register(args.username, args.password, referrer = args.referrer)
     except EmrossWarApiException, e:
-        print e
+        logging.exception(e)

@@ -99,7 +99,7 @@ class EmrossWarApi(object):
                     ('key', key), ('_l', lang), ('_p', device)])
 
         params.update(kargs)
-        params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
+        params = (OrderedDict([(k,v) for k,v in params.iteritems() if v not in (None,False)]))
 
         try:
             url = 'http://%s/%s' % (server, method)
