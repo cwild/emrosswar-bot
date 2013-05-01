@@ -87,10 +87,8 @@ class ResourceManager:
                     conversion['%s2%s' % (Resource.GOLD, res)] = gold_amount
 
 
-        if self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
-            logger.debug('We have enough gold to cover the requirements')
-            return True
-        elif unbrick is False:
+        if self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD] \
+            and unbrick is False:
             logger.debug('Not enough gold available for required resource levels.')
             return False
 
