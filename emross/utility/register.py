@@ -8,11 +8,19 @@ from emross.api import EmrossWarApi
 api = EmrossWarApi(None, None)
 api.bot = None
 
-def register(username=None, password=None, referrer=None):
+logger = logging.getLogger(__name__)
+
+def register(username=None, password=None, referrer=None, server=None):
     """
     user=creative&action=reg&referer=rm9y5w&code=875628a8-ccf7-11e0-9fbd-00216b4d955c
     """
-    json = api._call('info.php', server='m.emrosswar.com', user=username, action='reg', referer=referrer, code=uuid.uuid4(), key=False)
+    json = api._call('info.php',
+        server=server or 'm.emrosswar.com',
+        user=username,
+        action='reg',
+        referer=referrer,
+        code=uuid.uuid4(),
+        key=None, handle_errors=False)
 
     """
     {'code': 11, 'ret': {'refercode': 'yourReferCode', 'referer': 'referedBy', 'server': 'http://sXX.emrosswar.com/'}}
@@ -20,10 +28,16 @@ def register(username=None, password=None, referrer=None):
     """
 
     try:
-        api._call('register_api.php', server=json['ret']['server'][7:-1], txtUserName=json['ret']['refercode'], txtPassword=password, referer=json['ret']['referer'], txtEmail='', key=False)
+        api._call('register_api.php',
+            server=json['ret']['server'][7:-1],
+            txtUserName=json['ret']['refercode'],
+            txtPassword=password,
+            referer=json['ret']['referer'],
+            txtEmail='',
+            key=False, handle_errors=False)
     except TypeError as e:
         logging.exception(e)
-        logging.warning('There was an error during registration.')
+        logger.warning('There was an error during registration.')
 
 
 
@@ -39,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--username', help='Account username', default=None, required=True)
     parser.add_argument('-p', '--password', help='Account password', default=None, required=True)
     parser.add_argument('-r', '--referrer', help='Account refer code', default=None)
+    parser.add_argument('-s', '--server', help='Game "MASTER" server', default=None)
 
     args = parser.parse_args()
 

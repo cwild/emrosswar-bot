@@ -91,7 +91,7 @@ class EmrossWarApi(object):
         except AttributeError:
             key = self.api_key
 
-        if (key is None or key.strip() == '') and 'key' not in kargs:
+        if handle_errors and (key is None or key.strip() == '') and 'key' not in kargs:
             logger.debug('API key is missing, send dummy InvalidKey error')
             return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
 
@@ -99,7 +99,7 @@ class EmrossWarApi(object):
                     ('key', key), ('_l', lang), ('_p', device)])
 
         params.update(kargs)
-        params = (OrderedDict([(k,v) for k,v in params.iteritems() if v not in (None,False)]))
+        params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
 
         try:
             url = 'http://%s/%s' % (server, method)
@@ -110,7 +110,6 @@ class EmrossWarApi(object):
                 r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
         except exceptions.HTTPError as e :
             logger.exception(e)
-            #raise EmrossWarApiException('Problem connecting to game server.')
 
             class DummyResponse(object):
                 pass
@@ -165,8 +164,6 @@ class EmrossWar(object):
     SUCCESS = 0
     ERROR_UNKNOWN = -1
     ERROR_INVALID_KEY = 2
-    #ERROR_AUTHFAIL = {12:1, 14:1, 301:1, 302:1}
-
 
     """
     3: "Scout",
