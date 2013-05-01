@@ -91,13 +91,12 @@ class ResourceManager:
             and unbrick is False:
             logger.debug('Not enough gold available for required resource levels.')
             return False
+        elif total_gold == 0:
+            logger.debug('No need to exchange any resources')
+            return True
 
         if convert:
             should_convert = True
-
-            if total_gold == 0:
-                logger.debug('No need to exchange any resources')
-                should_convert = False
 
             if unbrick:
                 gold_required = total_gold + resource_levels[Resource.GOLD] -\
