@@ -9,8 +9,9 @@ if len(logging.root.handlers) == 0:
     import logging.config
     try:
         logging.config.fileConfig('build/logging.conf')
-    except Exception:
+    except Exception as e:
         logging.config.fileConfig('logging.conf')
+        logging.exception(e)
 
 
 locale.setlocale(locale.LC_ALL, '')
