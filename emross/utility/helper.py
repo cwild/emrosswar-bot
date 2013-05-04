@@ -121,7 +121,7 @@ class EmrossWarBot:
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
         for city in cities:
-            logger.debug('Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
+            logger.debug(u'Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self.cities.append(city)
 
