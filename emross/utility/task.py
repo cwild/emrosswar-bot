@@ -1,21 +1,23 @@
+import logging
 import math
 import time
 
-import logging
+from emross.utility.base import EmrossBaseObject
+
 logger = logging.getLogger(__name__)
 
-class Task(object):
+class Task(EmrossBaseObject):
     """
     This is just an abstraction. Not for direct use.
     """
     INTERVAL = 60
 
     def __init__(self, bot, *args, **kwargs):
-        self.bot = bot
+        super(Task, self).__init__(bot, __name__, *args, **kwargs)
+
         self._result = dict()
         self._last_cycle = 0
         self._next_run = 0
-        super(Task, self).__init__(*args, **kwargs)
         self.setup()
 
     def run(self, cycle_start, stage, *args, **kwargs):
@@ -36,9 +38,11 @@ class Task(object):
 
         return self._result.get(stage, None)
 
-    def process(self, *args, **kwargs): pass
+    def process(self, *args, **kwargs):
+        logger.warning('You need to implement a `process` method for this Task.')
 
-    def setup(self): pass
+    def setup(self):
+        pass
 
     def calculate_delay(self):
         return self.INTERVAL
