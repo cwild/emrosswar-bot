@@ -305,7 +305,7 @@ class EmrossWarBot:
         for id in items:
             try:
                 i = EmrossWar.ITEM[str(id)]
-                logger.debug('{0}: {1}'.format(id, i.get('name')))
+                logger.debug('Searching for item {0}: "{1}"'.format(id, i.get('name')))
                 item_type = it.ITEM if i['type'] not in item_types else i['type']
                 search_items.setdefault(item_type, {})[id] = False
             except KeyError:
@@ -343,8 +343,9 @@ class EmrossWarBot:
         total_amount = lambda: sum([qty*price for id, qty, price in sellable_items])
 
         if total_amount() < gold and unbrick:
-            sellable_items.extend(self.find_inventory_item(inventory.GOLD_BRICK))
-            sellable_items.extend(self.find_inventory_item(inventory.GOLD_BULLION))
+            sellable_items.extend(self.find_inventory_items([
+                inventory.GOLD_BRICK[0], inventory.GOLD_BULLION[0]
+            ]))
 
         if total_amount() < gold:
             return False
