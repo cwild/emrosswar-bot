@@ -58,7 +58,7 @@ class ChestOpener(Task):
 
                     if q['status'] == 0:
                         self.quest_manager.accept(q['id'])
-                except ValueError:
+                except IndexError:
                     continue
 
                 while to_convert > 0:
