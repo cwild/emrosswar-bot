@@ -292,37 +292,47 @@ class EmrossWarBot:
                 sale_list[:] = []
 
     def find_inventory_item(self, search_item):
-        result = []
-        it = item.ItemType
-
         item_id, item_type, item_rank = search_item
+        return self.find_inventory_items([item_id]).get(item_id)
 
-        if item_type not in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
-            item_type = it.ITEM
+    def find_inventory_items(self, items):
+        result = {}
 
-        page = 1
-        found = False
-        while not found:
-            json = self.item_manager.list(page=page, type=item_type)
+        it = item.ItemType
+        item_types = [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]
+        search_items = dict()
 
-            for _item in json['ret']['item']:
-                try:
-                    if _item['item']['sid'] == item_id:
-                        result.append([_item['item']['id'], _item['item']['num'], _item['sale']])
-                        found = True
-                    elif found:
-                        logger.debug('We have found all of these items.')
-                        break
-                except KeyError:
-                    pass
+        for id in items:
+            try:
+                i = EmrossWar.ITEM[str(id)]
+                logger.debug('{0}: {1}'.format(id, i.get('name')))
+                item_type = it.ITEM if i['type'] not in item_types else i['type']
+                search_items.setdefault(item_type, {})[id] = False
+            except KeyError:
+                pass
 
-            page += 1
-            if page > json['ret']['max']:
-                logger.info('Last page of item type %d' % item_type)
-                break
+        logger.debug(search_items)
+
+        for item_type, search in search_items.iteritems():
+            page = 1
+            while False in search.values():
+                json = self.item_manager.list(page=page, type=item_type)
+
+                for _item in json['ret']['item']:
+                    try:
+                        if _item['item']['sid'] in search.keys():
+                            res = [_item['item']['id'], _item['item']['num'], _item['sale']]
+                            result.setdefault(_item['item']['sid'], []).append(res)
+                            search[int(_item['item']['sid'])] = True
+                    except KeyError:
+                        pass
+
+                page += 1
+                if page > json['ret']['max']:
+                    logger.info('Last page of item type {0}'.format(item_type))
+                    break
 
         return result
-
 
     def find_gold_for_city(self, city, gold, unbrick=False):
         """
