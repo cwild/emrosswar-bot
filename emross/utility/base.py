@@ -13,7 +13,11 @@ class BotInfo(object):
         super(BotInfo, self).__init__()
 
     def __getitem__(self, name):
-        return str(self.bot.userinfo.get('nick', '(UNKNOWN player)').encode('utf-8'))
+        try:
+            return str(self.bot.userinfo['nick'].encode('utf-8'))
+        except Exception as e:
+            logger.exception(e)
+            return ''
 
     def __iter__(self):
         return iter(['bot'])
