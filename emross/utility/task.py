@@ -12,8 +12,8 @@ class Task(EmrossBaseObject):
     """
     INTERVAL = 60
 
-    def __init__(self, bot, *args, **kwargs):
-        super(Task, self).__init__(bot, __name__, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(Task, self).__init__(*args, **kwargs)
 
         self._result = dict()
         self._last_cycle = 0

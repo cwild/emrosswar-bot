@@ -44,28 +44,27 @@ class ChestOpener(Task):
             chest_name = EmrossWar.ITEM[str(chest)].get('name')
 
             if convert_chests:
-                to_convert = (totals.get(chest, 0) - totals.get(key, 0)) / 10
+                to_convert = 10 * ((totals.get(chest, 0) - totals.get(key, 0)) / 11)
                 logger.debug(to_convert)
 
                 if to_convert < 1:
                     self.log.info('No need to convert any "{0}"'.format(chest_name))
-                    continue
+                else:
+                    try:
+                        q = [q for q in self.quest_manager.list()
+                            if str(q['id']) == quest].pop()
+                        self.log.info('Target quest: {0}'.format(q))
 
-                try:
-                    q = [q for q in self.quest_manager.list()
-                        if str(q['id']) == quest].pop()
-                    self.log.info('Target quest: {0}'.format(q))
+                        if q['status'] == 0:
+                            self.quest_manager.accept(q['id'])
+                    except IndexError:
+                        continue
 
-                    if q['status'] == 0:
+                    while to_convert > 0:
+                        to_convert -= 1
+                        tainted = True
+                        self.quest_manager.reward(q['id'])
                         self.quest_manager.accept(q['id'])
-                except IndexError:
-                    continue
-
-                while to_convert > 0:
-                    to_convert -= 1
-                    tainted = True
-                    self.quest_manager.reward(q['id'])
-                    self.quest_manager.accept(q['id'])
 
 
             if tainted:
@@ -81,8 +80,8 @@ class ChestOpener(Task):
             opened = 0
             while opened < num and (quantity == 0 or opened < quantity):
                 try:
-                    idx = [i for i in items.get(key) if i[1] > 0][0]
-                    i[1] -= 1
+                    idx = [i for i in items.get(key) if i[1] > 0].pop()
+                    idx[1] -= 1
                     opened += 1
                     json = self.bot.item_manager.use(city.id, idx[0])
                     if json['code'] != EmrossWar.SUCCESS:
