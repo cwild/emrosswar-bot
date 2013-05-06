@@ -33,8 +33,11 @@ class ChestOpener(Task):
             (Quest.SILVER_KEY, inventory.SILVER_CHEST[0], inventory.SILVER_KEY[0])
         ]
 
-        totals = dict([(id, sum([v[1] for v in vals]))
-            for id, vals in items.iteritems() if vals])
+        def _totals(items):
+            return dict([(id, sum([v[1] for v in vals]))
+                for id, vals in items.iteritems() if vals])
+
+        totals = _totals(items)
         self.log.debug(totals)
 
         tainted = False
@@ -69,6 +72,7 @@ class ChestOpener(Task):
 
             if tainted:
                 items.update(self.bot.find_inventory_items([chest, key]))
+                totals = _totals(items)
 
             num = min(totals.get(chest, 0), totals.get(key, 0))
             if num > 0:
