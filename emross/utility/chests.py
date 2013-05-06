@@ -42,6 +42,7 @@ class ChestOpener(Task):
 
         tainted = False
         for combo in comboes:
+            quest_unlocked = True
             quest, chest, key = combo
             num = min(totals.get(chest, 0), totals.get(key, 0))
             chest_name = EmrossWar.ITEM[str(chest)].get('name')
@@ -55,15 +56,15 @@ class ChestOpener(Task):
                 else:
                     try:
                         q = [q for q in self.quest_manager.list()
-                            if str(q['id']) == quest].pop()
+                            if q['id'] == quest].pop()
                         self.log.info('Target quest: {0}'.format(q))
 
                         if q['status'] == 0:
                             self.quest_manager.accept(q['id'])
                     except IndexError:
-                        continue
+                        quest_unlocked = False
 
-                    while to_convert > 0:
+                    while quest_unlocked and to_convert > 0:
                         to_convert -= 1
                         tainted = True
                         self.quest_manager.reward(q['id'])
