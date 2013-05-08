@@ -343,9 +343,10 @@ class EmrossWarBot:
         total_amount = lambda: sum([qty*price for id, qty, price in sellable_items])
 
         if total_amount() < gold and unbrick:
-            sellable_items.extend(self.find_inventory_items([
+            items = self.find_inventory_items([
                 inventory.GOLD_BRICK[0], inventory.GOLD_BULLION[0]
-            ]))
+            ])
+            [sellable_items.extend(v) for v in items.itervalues()]
 
         if total_amount() < gold:
             return False
