@@ -26,7 +26,7 @@ class ChestOpener(Task):
                 inventory.SILVER_CHEST[0],
                 inventory.SILVER_KEY[0],
             ])
-        logger.info(items)
+        self.log.info(items)
 
         comboes = [
             (Quest.BRONZE_KEY, inventory.BRONZE_CHEST[0], inventory.BRONZE_KEY[0]),
@@ -49,14 +49,14 @@ class ChestOpener(Task):
 
             if convert_chests:
                 to_convert = 10 * ((totals.get(chest, 0) - totals.get(key, 0)) / 11)
-                logger.debug(to_convert)
+                self.log.debug(to_convert)
 
                 if to_convert < 1:
                     self.log.info('No need to convert any "{0}"'.format(chest_name))
                 else:
                     try:
                         q = [q for q in self.quest_manager.list()
-                            if q['id'] == quest].pop()
+                            if str(q['id']) == quest].pop()
                         self.log.info('Target quest: {0}'.format(q))
 
                         if q['status'] == 0:
@@ -64,6 +64,7 @@ class ChestOpener(Task):
                     except IndexError:
                         quest_unlocked = False
 
+                    self.log.info('Convert {0}x"{1}"'.format(to_convert, chest_name))
                     while quest_unlocked and to_convert > 0:
                         to_convert -= 1
                         tainted = True
