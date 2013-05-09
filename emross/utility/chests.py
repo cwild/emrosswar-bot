@@ -48,7 +48,7 @@ class ChestOpener(Task):
             chest_name = EmrossWar.ITEM[str(chest)].get('name')
 
             if convert_chests:
-                to_convert = 10 * ((totals.get(chest, 0) - totals.get(key, 0)) / 11)
+                to_convert = (totals.get(chest, 0) - totals.get(key, 0)) / 11
                 self.log.debug(to_convert)
 
                 if to_convert < 1:
@@ -64,7 +64,13 @@ class ChestOpener(Task):
                     except IndexError:
                         quest_unlocked = False
 
-                    self.log.info('Convert {0}x"{1}"'.format(to_convert, chest_name))
+                    self.log.info('Convert {0}x"{1}" into {2}x"{3}"'.format(
+                        to_convert*10,
+                        chest_name,
+                        to_convert,
+                        EmrossWar.ITEM[str(key)].get('name'))
+                    )
+
                     while quest_unlocked and to_convert > 0:
                         to_convert -= 1
                         tainted = True
