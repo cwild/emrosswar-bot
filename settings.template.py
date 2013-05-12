@@ -121,8 +121,8 @@ from emross.alliance import AllyTech as AT, Donator
 build_path = (
     (
         (Donator, ([AT.VETERAN, AT.VALOR, AT.TENACITY, AT.INCENTIVE, AT.TOUGHNESS,
-                    AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG, AT.LOGISTICS],
-                    {'pvp_donate':False, 'force_hall_donation':False})
+                    AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG, AT.LOGISTICS],),
+                    {'pvp_donate':False, 'force_hall_donation':False}
         ),
         (pvp.Durability, (100,), {'stop_below': 4}),
         (Trainer, ([Cavalry(Soldier.SPY, 50)],) ),

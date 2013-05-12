@@ -87,7 +87,7 @@ class Donator(Task):
                         donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
                         amount=amount,
                         currency=EmrossWar.LANG.get('COIN', 'gold'),
-                        hall=hall_name, city=city)
+                        hall=hall_name, city=city.name)
                     )
                     self.donate_to_hall(gold=amount, city=city.id)
                 except TypeError:
