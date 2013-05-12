@@ -88,17 +88,6 @@ The default is all day. You can set multiple ranges here though. eg.
 farming_hours = [(-1, 25)]
 
 
-"""
-Alliance donations? Remove the below if you don't want donations enabled.
-You can reorder the donation preferences as you like
-"""
-
-from emross.alliance import Alliance as AT
-
-donation_tech_preference = [AT.VETERAN, AT.VALOR, AT.TENACITY, AT.INCENTIVE, AT.TOUGHNESS,
-    AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG]
-
-
 plugin_api = {
     'auth': 'username:password',
     'url': 'http://emross.cryformercy.com/client/plugins/api/'
@@ -127,8 +116,14 @@ from emross.military.trainer import Cavalry, Trainer
 
 from emross import pvp
 
+from emross.alliance import AllyTech as AT, Donator
+
 build_path = (
     (
+        (Donator, ([AT.VETERAN, AT.VALOR, AT.TENACITY, AT.INCENTIVE, AT.TOUGHNESS,
+                    AT.INSPIRATION, AT.BATTLECRY, AT.MILICADEMY, AT.BLOODFLAG, AT.LOGISTICS],
+                    {'pvp_donate':False, 'force_hall_donation':False})
+        ),
         (pvp.Durability, (100,), {'stop_below': 4}),
         (Trainer, ([Cavalry(Soldier.SPY, 50)],) ),
         (Trainer, (

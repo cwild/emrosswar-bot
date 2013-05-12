@@ -12,7 +12,7 @@ from lib import kronos
 from lib.session import Session
 
 
-from emross.alliance import Donator
+from emross.alliance import Alliance
 from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.city import City
@@ -50,21 +50,17 @@ class EmrossWarBot:
         self.npc_attack_limit = 3 if not self.pvp else 5
 
         self.last_update = 0
-        self.userinfo = None
+        self.userinfo = {}
         self.tasks = {}
         self.cities = []
+
+        self.alliance = Alliance(self)
         self.favourites = Favourites(self)
         self.item_manager = item.Item(self)
         self.shop = Shop(self)
         self.world = World(self)
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
-
-        self.donator = Donator(self)
-        try:
-            self.donator.hall_donation_forced = settings.hall_donation_forced
-        except AttributeError:
-            pass
 
         self.scheduler = s = kronos.ThreadedScheduler()
 

@@ -167,11 +167,6 @@ def run_bot(bot):
             bot.clean_war_reports()
 
             if not bot.pvp:
-                try:
-                    bot.donator.make_donations(settings.donation_tech_preference)
-                except AttributeError:
-                    pass
-
                 bot.clearout_inventory()
 
             logger.info('Total %s amongst all castles: %s' % (\
