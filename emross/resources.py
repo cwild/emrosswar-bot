@@ -94,6 +94,9 @@ class ResourceManager:
         elif total_gold == 0:
             logger.debug('No need to exchange any resources')
             return True
+        elif convert is False and \
+            self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
+            return True
 
         if convert:
             should_convert = True
