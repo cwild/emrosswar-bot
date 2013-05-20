@@ -1,10 +1,8 @@
 import math
 
-import logging
-logger = logging.getLogger(__name__)
-
 from emross.api import EmrossWar
 from emross.exceptions import EmrossWarException
+from emross.utility.base import EmrossBaseObject
 
 class Resource:
     FOOD = 'f'
@@ -19,11 +17,11 @@ class Resource:
         WOOD: 6
     }
 
-class ResourceManager:
+class ResourceManager(EmrossBaseObject):
     LOCAL_MARKET_URL = 'game/local_market_api.php'
 
     def __init__(self, bot, city):
-        self.bot = bot
+        super(ResourceManager, self).__init__(bot)
         self.city = city
         self._data = None
 
@@ -37,24 +35,24 @@ class ResourceManager:
         return self._data
 
     def conversion_rate(self, from_res, to_res):
-        return self.data.get('%s2%s' % (from_res, to_res), None)
+        return self.data.get('{0}2{1}'.format(from_res, to_res))
 
     def convert(self, from_res, to_res, amount=0):
-        cvr = '%s2%s' % (from_res, to_res)
+        cvr = '{0}2{1}'.format(from_res, to_res)
         conversion = {cvr: amount}
-        logger.debug('Convert %s %d' % (cvr, amount))
+        self.log.debug('Convert {0} {1}'.format(cvr, amount))
 
         if amount:
             self._convert(**conversion)
 
 
     def _convert(self, **kwargs):
-        logger.debug('Exchanging resources %s' % (kwargs))
-        json = self.bot.api.call(self.LOCAL_MARKET_URL, city = self.city.id, reso_put='giveput', **kwargs)
+        self.log.debug('Exchanging resources {0} at "{1}"'.format(kwargs, city.name))
+        json = self.bot.api.call(self.LOCAL_MARKET_URL, city=self.city.id, reso_put='giveput', **kwargs)
 
         if json['code'] == EmrossWar.SUCCESS:
             for res, amt in json['ret'].iteritems():
-                logger.debug('Setting %s resource to %d' % (res,amt))
+                self.log.debug('Setting {0} resource to {1} at "{2}"'.format(res,amt,city.name))
                 self.set_amount_of(res, amt)
 
         return json
@@ -69,13 +67,19 @@ class ResourceManager:
     def set_amount_of(self, resource, amount):
         self.city.data[Resource.OFFSETS[resource]] = amount
 
-    def meet_requirements(self, resource_levels, convert=True, unbrick=False, **kwargs):
+    def meet_requirements(self, resource_levels, convert=True, unbrick=False,
+                            include_minimum_food=True, **kwargs):
         """
         Try to match the desired resource levels at the current city. Optionally,
         we can check to see if we can sell stashed gold bricks to meet these levels
         """
         conversion = {}
         total_gold = 0
+
+        if include_minimum_food:
+            resource_levels[Resource.FOOD] = self.bot.minimum_food + \
+                                resource_levels.get(Resource.FOOD, 0)
+
         for res, amt in resource_levels.iteritems():
             if res != Resource.GOLD:
                 shortfall = amt - self.get_amount_of(res)
@@ -89,10 +93,10 @@ class ResourceManager:
 
         if self.get_amount_of(Resource.GOLD) < total_gold + resource_levels[Resource.GOLD] \
             and unbrick is False:
-            logger.debug('Not enough gold available for required resource levels.')
+            self.log.debug('Not enough gold available for required resource levels.')
             return False
         elif total_gold == 0:
-            logger.debug('No need to exchange any resources')
+            self.log.debug('No need to exchange any resources')
             return True
         elif convert is False and \
             self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
@@ -102,21 +106,21 @@ class ResourceManager:
             should_convert = True
 
             if unbrick:
-                gold_required = total_gold + resource_levels[Resource.GOLD] -\
+                gold_required = total_gold + resource_levels[Resource.GOLD] - \
                                 self.get_amount_of(Resource.GOLD)
 
                 if gold_required > 0:
-                    logger.info('We need to unbrick %d %s before converting' % \
-                        (gold_required, EmrossWar.LANG.get('COIN', 'gold')))
+                    self.log.info('We need to unbrick {0} {1} before converting'.format(\
+                        gold_required, EmrossWar.LANG.get('COIN', 'gold')))
 
                     should_convert = self.bot.find_gold_for_city(self.city,
                         gold_required,
                         unbrick=True)
 
             if should_convert:
-                logger.debug('Total gold cost of conversion is %d' % total_gold)
+                self.log.debug('Total gold cost of conversion is {0}'.format(total_gold))
                 json = self._convert(**conversion)
                 return json['code'] == EmrossWar.SUCCESS
 
-        logger.debug('Target resource requirements not met')
+        self.log.debug('Target resource requirements not met')
         return False
