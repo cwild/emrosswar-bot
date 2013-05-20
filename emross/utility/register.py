@@ -22,6 +22,7 @@ def register(username=None, password=None, referrer=None, server=None):
         code=uuid.uuid4(),
         key=None, handle_errors=False)
 
+    logger.info(json)
     """
     {'code': 11, 'ret': {'refercode': 'yourReferCode', 'referer': 'referedBy', 'server': 'http://sXX.emrosswar.com/'}}
     http://s37.emrosswar.com/register_api.php?jsonpcallback=jsonp1314042212580&_=1314042243901&txtUserName=test&txtPassword=Test&referer=&txtEmail=&code=c85276d5a72acf65eab074a6d10c67872bce4360&sign=51b3cebbf577f212069dc48739250d71
@@ -58,6 +59,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
-        register(args.username, args.password, referrer = args.referrer)
+        register(args.username, args.password, args.referrer, args.server)
     except EmrossWarApiException, e:
         logging.exception(e)
