@@ -29,7 +29,7 @@ class ResourceManager(EmrossBaseObject):
     def data(self):
         if self._data is None:
             """{"code":0,"ret":{"g2w":0.06,"g2f":0.13,"g2i":0.1,"w2g":17,"f2g":80,"i2g":11}}"""
-            json = self.bot.api.call(self.LOCAL_MARKET_URL, city = self.city.id)
+            json = self.bot.api.call(self.LOCAL_MARKET_URL, city=self.city.id)
             self._data = json['ret']
 
         return self._data
@@ -47,12 +47,12 @@ class ResourceManager(EmrossBaseObject):
 
 
     def _convert(self, **kwargs):
-        self.log.debug('Exchanging resources {0} at "{1}"'.format(kwargs, city.name))
+        self.log.debug('Exchanging resources {0} at "{1}"'.format(kwargs, self.city.name))
         json = self.bot.api.call(self.LOCAL_MARKET_URL, city=self.city.id, reso_put='giveput', **kwargs)
 
         if json['code'] == EmrossWar.SUCCESS:
             for res, amt in json['ret'].iteritems():
-                self.log.debug('Setting {0} resource to {1} at "{2}"'.format(res,amt,city.name))
+                self.log.debug('Setting {0} resource to {1} at "{2}"'.format(res, amt, self.city.name))
                 self.set_amount_of(res, amt)
 
         return json
@@ -114,8 +114,7 @@ class ResourceManager(EmrossBaseObject):
                         gold_required, EmrossWar.LANG.get('COIN', 'gold')))
 
                     should_convert = self.bot.find_gold_for_city(self.city,
-                        gold_required,
-                        unbrick=True)
+                                        gold_required, unbrick=True)
 
             if should_convert:
                 self.log.debug('Total gold cost of conversion is {0}'.format(total_gold))
