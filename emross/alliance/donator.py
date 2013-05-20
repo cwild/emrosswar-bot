@@ -2,6 +2,7 @@ import time
 
 from emross.alliance import Alliance
 from emross.api import EmrossWar
+from emross.resources import Resource
 from emross.utility.task import Task
 
 class AllianceTechStatus:
@@ -28,7 +29,7 @@ class Donator(Task):
             self.sleep(30)
             return True
 
-        if self.bot.pvp and pvp_donate:
+        if self.bot.pvp and pvp_donate is False:
             self.sleep(86400)
             return True
 
@@ -40,7 +41,6 @@ class Donator(Task):
         else:
             return True
 
-        city = self.bot.richest_city()
 
         if check_tech:
             # second index is techid but they all share the same timer, so just use 0
@@ -55,18 +55,9 @@ class Donator(Task):
                 try:
                     techid = self.choose_preferred_tech(tech_preference)
                     amount = self.get_tech_info(techid)[2]
-                    self.log.info('{donate} {amount} {currency} to {tech} from "{city}"'.format(
-                        donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
-                        amount=amount,
-                        currency=EmrossWar.LANG.get('COIN', 'gold'),
-                        tech=EmrossWar.LANG['ALLY_TECH'][str(techid)]['name'],
-                        city=city.name
-                        )
-                    )
 
-                    self.donate_to_tech(gold=amount, techid=techid, city=city.id)
-                    city.update()
                     city = self.bot.richest_city()
+                    self.donate_to_tech(gold=amount, techid=techid, city=city)
                 except (TypeError, ValueError):
                     pass
 
@@ -82,13 +73,9 @@ class Donator(Task):
                 try:
                     if force_hall_donation is False:
                         self.bot.alliance.info[1] / self.bot.alliance.info[2]
+
                     amount = self.bot.alliance.info[3]
-                    self.log.info('{donate} {amount} {currency} to {hall} from "{city}"'.format(
-                        donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
-                        amount=amount,
-                        currency=EmrossWar.LANG.get('COIN', 'gold'),
-                        hall=hall_name, city=city.name)
-                    )
+                    city = self.bot.richest_city()
                     self.donate_to_hall(gold=amount, city=city.id)
                 except TypeError:
                     self.log.info('{0} is already complete'.format(hall_name))
@@ -106,21 +93,29 @@ class Donator(Task):
             self.sleep(interval)
 
     def donate_to_hall(self, gold, city):
-        i = self.bot.alliance.info
-
-        if i[4] is not 0:
-            self.hall_timeout = time.time() + i[4]
+        if self.bot.alliance.info[4] is not 0:
+            self.hall_timeout = time.time() + self.bot.alliance.info[4]
             return
 
-        try:
-            json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='donate', num=gold, city=city)
-            if json['code'] == EmrossWar.SUCCESS:
-                self.hall_timeout = time.time() + json['ret'][4]
-                self.bot.alliance._info = json['ret']
-        except IndexError:
-            pass
-        except TypeError:
-            self.hall_timeout = None
+        if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
+
+            self.log.info('{donate} {amount} {currency} to {hall} from "{city}"'.format(
+                donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
+                amount=gold,
+                currency=EmrossWar.LANG.get('COIN', 'gold'),
+                hall=EmrossWar.TRANSLATE.get('f_ally')['31'],
+                city=city.name)
+            )
+
+            try:
+                json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='donate', num=gold, city=city)
+                if json['code'] == EmrossWar.SUCCESS:
+                    self.hall_timeout = time.time() + json['ret'][4]
+                    self.bot.alliance._info = json['ret']
+            except IndexError:
+                pass
+            except TypeError:
+                self.hall_timeout = None
 
 
     def get_tech_info(self, techid):
@@ -162,10 +157,20 @@ class Donator(Task):
         return tech
 
     def donate_to_tech(self, gold, techid, city):
-        try:
-            json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='tdonate',
-                                num=gold, techid=techid, city=city)
+        if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
 
-            self.tech_timeout = time.time() + json['ret'][1][4]
-        except Exception:
-            pass
+            self.log.info('{donate} {amount} {currency} to {tech} from "{city}"'.format(
+                donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
+                amount=gold,
+                currency=EmrossWar.LANG.get('COIN', 'gold'),
+                tech=EmrossWar.LANG['ALLY_TECH'][str(techid)]['name'],
+                city=city.name
+                )
+            )
+
+            json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='tdonate',
+                                num=gold, techid=techid, city=city.id)
+
+            if json['code'] == EmrossWar.SUCCESS:
+                city.update()
+                self.tech_timeout = time.time() + json['ret'][1][4]
