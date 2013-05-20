@@ -22,8 +22,15 @@ class BotInfo(object):
     def __iter__(self):
         return iter(['bot'])
 
+class EmrossMetaClass(type):
+    def __new__(cls, name, bases, dct):
+        dct['_logname'] = dct.get('__module__', name)
+        return super(EmrossMetaClass, cls).__new__(cls, name, bases, dct)
+
 class EmrossBaseObject(object):
-    def __init__(self, bot, name=__name__, *args, **kwargs):
+    __metaclass__ = EmrossMetaClass
+
+    def __init__(self, bot, *args, **kwargs):
         super(EmrossBaseObject, self).__init__()
         self.bot = bot
-        self.log = logging.LoggerAdapter(logging.getLogger(name), BotInfo(bot))
+        self.log = logging.LoggerAdapter(logging.getLogger(self._logname), BotInfo(bot))
