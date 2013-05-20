@@ -6,7 +6,7 @@ class Alliance(EmrossBaseObject):
     UNION_INFO = 'game/api_union_info.php'
 
     def __init__(self, bot):
-        super(Alliance, self).__init__(bot, __name__)
+        super(Alliance, self).__init__(bot)
         self._info = []
         self.id = None
 

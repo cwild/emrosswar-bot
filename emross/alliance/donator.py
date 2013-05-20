@@ -17,7 +17,7 @@ class Donator(Task):
     """
 
     def __init__(self, bot):
-        super(Donator, self).__init__(bot, __name__)
+        super(Donator, self).__init__(bot)
         self.hall_timeout = 0
         self.tech_timeout = 0
 

@@ -10,9 +10,6 @@ logger = logging.getLogger(__name__)
 class ChestOpener(Task):
     QUESTS = set([Quest.BRONZE_KEY, Quest.SILVER_KEY])
 
-    def __init__(self, bot):
-        super(ChestOpener, self).__init__(bot, __name__)
-
     def setup(self):
         self.quest_manager = QuestManager(self.bot)
 

@@ -10,9 +10,6 @@ logger = logging.getLogger(__name__)
 class QuestManager(EmrossBaseObject):
     URL = 'game/system_task_api.php'
 
-    def __init__(self, bot):
-        super(QuestManager, self).__init__(bot, __name__)
-
     def list(self):
         self.log.info('List quests')
         json = self.bot.api.call(self.URL, action='task_list')
