@@ -76,7 +76,7 @@ class Donator(Task):
 
                     amount = self.bot.alliance.info[3]
                     city = self.bot.richest_city()
-                    self.donate_to_hall(gold=amount, city=city.id)
+                    self.donate_to_hall(gold=amount, city=city)
                 except TypeError:
                     self.log.info('{0} is already complete'.format(hall_name))
                     self.hall_timeout = None
@@ -108,7 +108,7 @@ class Donator(Task):
             )
 
             try:
-                json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='donate', num=gold, city=city)
+                json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='donate', num=gold, city=city.id)
                 if json['code'] == EmrossWar.SUCCESS:
                     self.hall_timeout = time.time() + json['ret'][4]
                     self.bot.alliance._info = json['ret']
