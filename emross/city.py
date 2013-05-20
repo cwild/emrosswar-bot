@@ -14,15 +14,16 @@ from emross.military.camp import Soldier
 from emross.resources import Resource, ResourceManager
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
+from emross.utility.base import EmrossBaseObject
 from emross.utility.countdown import CountdownManager
 
 import settings
 
-class City:
+class City(EmrossBaseObject):
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
 
     def __init__(self, bot, id, name, x, y):
-        self.bot = bot
+        super(City, self).__init__(bot)
         self.id = id
         self.name = name.encode('utf-8')
         self.x = x
@@ -72,7 +73,7 @@ class City:
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
-        logger.info('Updating city "%s"' % self.name)
+        self.log.info('Updating city "{0}"'.format(self.name))
         json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
         self._data[:] = json['ret']['city']
 
@@ -81,21 +82,19 @@ class City:
         return self.resource_manager.get_amounts_of(Resource.GOLD)
 
 
-    def replenish_food(self, amount = None):
-        logger.info('Replenishing food')
+    def replenish_food(self, amount=None):
+        self.log.info('Replenishing food')
         if not amount:
             food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
             amount = food_limit - food
 
-            try:
-                amount = settings.minimum_food - food
+            if self.bot.minimum_food > 0:
+                amount = self.bot.minimum_food - food
                 if amount < 0:
-                    logger.debug('The current food levels exceed the minimum level specified')
+                    self.log.debug('The current food levels exceed the minimum level specified')
                     return
 
-                logger.info('Replenishing food reserves by %d to fulfill specified minimum of %d.' % (amount,settings.minimum_food))
-            except AttributeError:
-                pass
+                self.log.info('Replenishing food reserves by {0} to fulfill specified minimum of {1}.'.format(amount, self.bot.minimum_food))
 
         buy_gold = int(math.ceil(self.resource_manager.conversion_rate(Resource.GOLD, Resource.FOOD) * amount))
 

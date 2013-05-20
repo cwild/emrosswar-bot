@@ -23,6 +23,7 @@ class Player(object):
         custom_build = None,
         disable_global_build = False,
         disable_modules = [],
+        minimum_food=0,
         *args,
         **kwargs):
 
@@ -35,6 +36,7 @@ class Player(object):
         self.custom_build = custom_build
         self.disable_global_build = disable_global_build
         self.disable_modules = set(disable_modules)
+        self.minimum_food = minimum_food
         self._remote = None
 
     def __repr__(self):
