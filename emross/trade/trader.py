@@ -1,10 +1,9 @@
 from emross.api import EmrossWar
 from emross.exceptions import TradeException
+from emross.utility.base import EmrossBaseObject
 
-import logging
-logger = logging.getLogger(__name__)
 
-class Trade:
+class Trade(EmrossBaseObject):
     TRADE_URL = 'game/safe_goods_api.php'
     MARKET_URL = 'game/safe_market_api.php'
 
@@ -17,23 +16,17 @@ class Trade:
 
     TRADE_LIMIT_REACHED = 3605
 
-    def __init__(self, bot):
-        self.bot = bot
-
     def _list(self, type, city, url=TRADE_URL, page=1, *args, **kwargs):
         return self.bot.api.call(url, type=type, city=city.id, page=page, *args, **kwargs)
 
     def list_waiting(self, city, *args, **kwargs):
-        json = self._list('will', action=self.LIST_ITEM, city=city, *args, **kwargs)
-        return json
+        return self._list('will', action=self.LIST_ITEM, city=city, *args, **kwargs)
 
     def list_trading(self, city, *args, **kwargs):
-        json = self._list(None, action=self.LIST_ITEM, city=city, *args, **kwargs)
-        return json
+        return self._list(None, action=self.LIST_ITEM, city=city, *args, **kwargs)
 
     def list_market(self, city, *args, **kwargs):
-        json = self._list(type=1, city=city, url=self.MARKET_URL)
-        return json
+        return self._list(type=1, city=city, url=self.MARKET_URL)
 
     def list_all(self, city, funcs=[]):
         result = []
@@ -53,10 +46,10 @@ class Trade:
         json = self.bot.api.call(self.TRADE_URL, action=self.SELL_ITEM, city=city.id, id=id, safe_num=1, price=price)
 
         if json['code'] == self.TRADE_LIMIT_REACHED:
-            raise TradeException, 'Maximum number of trade items has been reached'
+            raise TradeException('Maximum number of trade items has been reached')
 
         if json['code'] != EmrossWar.SUCCESS:
-            logger.warning('Problem selling item %d at city %s for %d gold' % (id, city.name, price))
+            self.log.warning('Problem selling item {0} at city {1} for {2} gold'.format(id, city.name, price))
             raise TradeException
 
         return EmrossWar.SUCCESS
@@ -65,6 +58,5 @@ class Trade:
         """
         Purchase an item from trade.
         """
-        logger.info('Attempting to buy item %s from city "%s"' % (str(id), city.name))
-        json = self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)
-        return json
+        self.log.info('Attempting to buy item {0} from city "{1}"'.format(id, city.name))
+        return self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)

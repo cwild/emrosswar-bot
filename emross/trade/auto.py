@@ -56,7 +56,7 @@ class AutoTrade(Task):
         try:
             return _process(*args, **kwargs)
         except ValueError as e:
-            logger.debug(e)
+            self.log.debug(e)
             return None
 
 
@@ -64,32 +64,32 @@ class AutoTrade(Task):
         """Buy items specified by a remote api"""
 
         available = self.remote.list(method='GET', server=self.bot.api.game_server, team=int(team==True))
-        logger.info('The trade listing has %d available items.' % len(available['items']))
-        logger.debug('Available items: %s' % available['items'])
+        self.log.info('The trade listing has {0} available items.'.format(len(available['items'])))
+        self.log.debug('Available items: {0}'.format(available['items']))
 
         if len(available['items']) > 0:
             city = self.bot.richest_city()
 
             purchased, unavailable = [], []
             for item in available['items']:
-                gold = city.resource_manager.get_amount_of(Resource.GOLD)
-                if gold > int(item['price']):
+                if city.resource_manager.meet_requirements({Resource.GOLD: int(item['price'])}, convert=False):
                     json = self.trade.buy_item(city, item['id'], sleep=sleep)
 
                     if json['code'] == EmrossWar.SUCCESS:
+                        gold = city.resource_manager.get_amount_of(Resource.GOLD)
                         city.resource_manager.set_amount_of(Resource.GOLD, gold-int(item['price']))
                         purchased.append(item['id'])
                     elif json['code'] == EmrossWar.INSUFFICIENT_GOLD:
-                        logger.info('Not enough gold at city "%s" to purchase item %d' % (city.name, item['id']))
+                        self.log.info('Not enough gold at city "{0}" to purchase item {1}'.format(city.name, item['id']))
                         break
                     elif json['code'] == EmrossWar.ITEM_DOES_NOT_EXIST:
                         unavailable.append(item['id'])
 
             if purchased:
-                logger.debug('We managed to buy the following ids from trade: %s' % purchased)
+                self.log.debug('We managed to buy the following ids from trade: {0}'.format(purchased))
 
             if unavailable:
-                logger.debug('The following trade ids were not available for purchase: %s' % unavailable)
+                self.log.debug('The following trade ids were not available for purchase: {0}'.format(unavailable))
 
             to_delete = purchased + unavailable
             if to_delete:
@@ -111,10 +111,10 @@ class AutoTrade(Task):
 
         try:
             city = self.bot.cities[city_index]
-        except (IndexError, TypeError), e:
+        except (IndexError, TypeError) as e:
             city = self.bot.poorest_city()
 
-        logger.debug('Sell trade items from city "%s"' % city.name)
+        self.log.debug('Sell trade items from city "{0}"'.format(city.name))
 
         waiting = self.trade.list_all(city, funcs=[self.trade.list_waiting])
         trading = self.trade.list_all(city, funcs=[self.trade.list_trading])
@@ -125,16 +125,16 @@ class AutoTrade(Task):
         gold = city.resource_manager.get_amount_of(Resource.GOLD)
         if min_gold:
             can_sell = gold > min_gold
-            logger.debug('Sell items only if current gold at this city is less than the min gold')
+            self.log.debug('Sell items only if current gold at this city is less than the min gold')
 
         if max_gold:
             can_sell = gold < max_gold
-            logger.debug('Sell items only if current gold at this city is less than the max gold')
+            self.log.debug('Sell items only if current gold at this city is less than the max gold')
 
         if can_sell is False:
-            logger.info('Not selling. Current gold=%d, Min gold=%s, Max gold=%s' % (gold, str(min_gold), str(max_gold)))
+            self.log.info('Not selling. Current gold={0}, Min gold={1}, Max gold={2}'.format(gold, min_gold, max_gold))
         elif remaining > 0:
-            logger.debug('We have %d spare slots to trade items!' % remaining)
+            self.log.debug('We have {0} spare slots to trade items!'.format(remaining))
 
             for_sale = []
             for search_item in items:
@@ -149,26 +149,26 @@ class AutoTrade(Task):
             except ValueError:
                 sellable_items = 0
 
-            logger.debug('There are %d sellable items' % sellable_items)
+            self.log.debug('There are {0} sellable items'.format(sellable_items))
 
             shortfall = remaining - sellable_items
             if shortfall > 0:
-                logger.info('Buy %d items to sell' % shortfall)
+                self.log.info('Buy {0} items to sell'.format(shortfall))
                 item_id, item_price, item_attr = self.bot.shop.find_item(city, search_item)
                 gold = city.resource_manager.get_amount_of(Resource.GOLD)
 
                 for _ in xrange(shortfall):
                     if gold < item_price:
-                        logger.info('Not enough gold at city "%s" to buy %d from shop at cost %d' % (city.name, item_id, item_price))
+                        self.log.info('Not enough gold at city "{0}" to buy {1} from shop at cost {2}'.format(city.name, item_id, item_price))
                         break
 
                     try:
                         inventory_id = self.bot.shop.buy(city, search_item)
                         for_sale.append(inventory_id)
                     except (KeyError, TypeError):
-                        logger.debug('Encountered an error while purchasing from shop')
+                        self.log.debug('Encountered an error while purchasing from shop')
 
-            logger.debug('For Sale: %s' % for_sale)
+            self.log.debug('For Sale: {0}'.format(for_sale))
 
             total = price
             if vary > 0:
@@ -179,31 +179,31 @@ class AutoTrade(Task):
                 gold = city.resource_manager.get_amount_of(Resource.GOLD)
 
                 if gold < cost:
-                    logger.info('Not enough gold to cover the cost of posting an item')
+                    self.log.info('Not enough gold to cover the cost of posting an item')
                     self.sleep(600)
                     break
 
                 try:
                     inv_id = for_sale.pop()
-                    logger.info('Selling item %d for %d gold on trade' % (inv_id, total))
+                    self.log.info('Selling item {0} for {1} gold on trade'.format(inv_id, total))
                     self.trade.sell_item(city, inv_id, total)
                     self.sleep(900)
                 except IndexError:
-                    logger.debug('No more sellable items left to post')
+                    self.log.debug('No more sellable items left to post')
                     break
-                except TradeException, e:
-                    logger.info(e)
+                except TradeException as e:
+                    self.log.info(e)
                     self.sleep(900)
                     break
 
                 remaining -= 1
 
         else:
-            logger.info('We have no space to post any more items on trade')
+            self.log.info('We have no space to post any more items on trade')
             self.sleep(900)
 
 
-        logger.debug('Sync trade list to remote api, trading items %s' % trading)
+        self.log.debug('Sync trade list to remote api, trading items {0}'.format(trading))
         self.remote.sync(server=self.bot.api.game_server, user_id=self.bot.userinfo['id'], items=trading)
         self.sleep(300)
 
