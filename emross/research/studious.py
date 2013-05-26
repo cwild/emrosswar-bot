@@ -9,6 +9,8 @@ from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
 from tech import Tech
 
+from lib.cacheable import CacheableData
+
 logger = logging.getLogger(__name__)
 
 class Study(FilterableCityTask):
@@ -21,18 +23,16 @@ class Study(FilterableCityTask):
         (inventory.FAST_RESEARCH_III[0], 3600*8)
     ]
 
-    def tech_levels(self, city):
-        logger.info('Find tech levels for this city, %s' % city.name)
-        try:
-            if time.time() < self._data[0]:
-                logger.debug('Using cached data: %s' % self._data[1])
-                return self._data[1]
-            else:
-                raise ValueError
-        except (AttributeError, ValueError), e:
-            self._data = (time.time()+10, self.bot.api.call(self.STUDY_URL, city=city.id)['ret'])
+    def setup(self):
+        self._cities = {}
 
-        return self._data[1]
+    def tech_levels(self, city):
+        self.log.info('Find tech levels for city, "{0}"'.format(city.name))
+        return self._cities.setdefault(city, CacheableData(
+            update=self.bot.api.call,
+            method=self.STUDY_URL,
+            city=city.id
+        ))
 
     def tech_level(self, city, tech):
         tech, level, unlocked = self.tech_levels(city)[tech-1]
