@@ -79,21 +79,23 @@ class CostCalculator(object):
         return costs
 
 class FilterableCityTask(Task):
-    def __init__(self, *args, **kwargs):
-        super(FilterableCityTask, self).__init__(*args, **kwargs)
 
     def cities(self, city_names=None, city_index=None, **kwargs):
         cities = self.bot.cities
 
+        if len(cities) == 0:
+            logger.debug('No known cities available')
+            return []
+
         if self.bot.pvp:
             # There shall be only ONE!
             pass
-        elif city_index:
+        elif city_index is not None:
             try:
                 low, high = city_index
                 cities = cities[low:high]
             except TypeError:
-                cities = cities[city_index]
+                cities = [cities[city_index]]
         elif city_names:
             cities = [city for city in cities if city.name in city_names]
         return cities

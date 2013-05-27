@@ -1,27 +1,23 @@
-import logging
-
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
+from emross.utility.base import EmrossBaseObject
+from lib.cacheable import CacheableData
 
-logger = logging.getLogger(__name__)
-
-class HeroManager(object):
+class HeroManager(EmrossBaseObject, CacheableData):
     URL = 'game/gen_conscribe_api.php'
 
     def __init__(self, bot, city):
-        self.bot = bot
+        super(HeroManager, self).__init__(bot)
         self.city = city
-        self._heroes = None
+        self._heroes = {}
 
     @property
     def heroes(self):
-        if self._heroes is None:
-            self._heroes = {}
-            self.update()
+        _ = self.data
         return self._heroes
 
     def update(self):
-        logger.info('Update heroes at city "{0}"'.format(self.city.name))
+        self.log.info('Update heroes at city "{0}"'.format(self.city.name))
 
         json = self.bot.api.call(self.URL, city=self.city.id, action='gen_list')
 
@@ -38,14 +34,16 @@ class HeroManager(object):
             # Remove heroes which are not present
             old_heroes = set(self._heroes.keys())-heroes
             for hero in old_heroes:
-                del self.heroes[hero]
+                del self._heroes[hero]
+
+            return json
 
     def highest_stat_hero(self, stat=Hero.COMMAND):
         try:
             hero = self.ordered_by_stats(stats=(stat,))[0]
-            logger.debug(hero)
+            self.log.debug(hero)
             attr_name = Hero.ATTRIBUTE_NAMES.get(stat, 'UNKNOWN')
-            logger.info('{0} with {1} {2}'.format(hero, hero.data.get(stat), attr_name))
+            self.log.info('{0} with {1} {2}'.format(hero, hero.data.get(stat), attr_name))
             return hero
         except IndexError:
             pass
@@ -63,6 +61,7 @@ class HeroManager(object):
 
         for hero_id, hero in heroes.iteritems():
             if hero_id in exclude:
+                self.log.debug('Exclude hero {0}'.format(hero_id))
                 continue
 
             score = 0
@@ -71,6 +70,6 @@ class HeroManager(object):
             result.append((hero, score))
 
         result.sort(key = lambda hero: hero[1], reverse=True)
-        logger.debug(result)
+        self.log.debug(result)
 
         return result

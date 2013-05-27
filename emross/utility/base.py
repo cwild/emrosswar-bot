@@ -31,6 +31,6 @@ class EmrossBaseObject(object):
     __metaclass__ = EmrossMetaClass
 
     def __init__(self, bot, *args, **kwargs):
-        super(EmrossBaseObject, self).__init__()
+        super(EmrossBaseObject, self).__init__(*args, **kwargs)
         self.bot = bot
         self.log = logging.LoggerAdapter(logging.getLogger(self._logname), BotInfo(bot))

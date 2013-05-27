@@ -4,12 +4,15 @@ import time
 logger = logging.getLogger(__name__)
 
 class CacheableData(object):
-    def __init__(self, duration=120, update=None, *args, **kwargs):
+    def __init__(self, time_to_live=120, update=None, *args, **kwargs):
         super(CacheableData, self).__init__()
         self._expires = 0
         self._data = {}
-        self.duration = duration
-        self.update = update or self._update
+        self.time_to_live = time_to_live
+
+        if update:
+            self.update = update
+
         self.args = args
         self.kwargs = kwargs
 
@@ -18,7 +21,12 @@ class CacheableData(object):
 
     @property
     def data(self):
-        if time.time() > self._expires:
+        try:
+            should_update = self.should_update()
+        except Exception:
+            should_update = False
+
+        if time.time() > self._expires or should_update:
             self.data = self.update(*self.args, **self.kwargs)
         return self._data
 
@@ -30,9 +38,13 @@ class CacheableData(object):
             value = value.get('ret', value)
 
         self._data = value
-        self._expires = time.time() + self.duration
+        self._expires = time.time() + self.time_to_live
 
-    def _update(self, *args, **kwargs):
+    def should_update(self):
+        return False
+
+    def update(self, *args, **kwargs):
+        logger.warning('No update method provided for this data handler')
         return {}
 
 if __name__ == "__main__":

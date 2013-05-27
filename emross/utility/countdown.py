@@ -1,12 +1,11 @@
-import logging
 import time
 
 from emross.api import EmrossWar
+from emross.utility.base import EmrossBaseObject
 from emross.utility.task import TaskType
+from lib.cacheable import CacheableData
 
-logger = logging.getLogger(__name__)
-
-class CountdownManager(object):
+class CountdownManager(EmrossBaseObject, CacheableData):
     GET_COUNTDOWN_INFO = 'game/get_cdinfo_api.php'
     GET_COUNTDOWN_PRICE = 'game/api_getcdprice.php'
     COUNTDOWN_PRICE_INTERVAL = 300
@@ -16,25 +15,18 @@ class CountdownManager(object):
     }
 
     def __init__(self, bot, city):
-        self.bot = bot
+        super(CountdownManager, self).__init__(bot, time_to_live=60)
         self.city = city
-        self._data = None
-        self.last_update = 0
         self.last_cdprice_check = 0
 
-    @property
-    def data(self):
-        if self._data is None or (time.time() - self.last_update) > 60 \
-            or self.is_tainted(self._data['ret']['cdlist']):
-            self.update()
-
-        return self._data
+    def should_update(self):
+        return self.is_tainted(self._data['cdlist'])
 
     def update(self):
-        self._data = self.get_countdown_info()
-        self.last_update = time.time()
-        d = self._data['ret']['cdlist']
+        json = self.get_countdown_info()
+        d = json['ret']['cdlist']
         d[:] = self._normalise(d)
+        return json
 
     def _normalise(self, tasks):
         """
@@ -48,7 +40,7 @@ class CountdownManager(object):
     def is_tainted(self, tasks):
         tainted = len(tasks) != len([t for t in tasks if t['secs'] > time.time()])
         if tainted:
-            logger.debug('Tainted task list (time=%f): %s' % (time.time(), tasks))
+            self.log.debug('Tainted task list (time={0}): {1}'.format(time.time(), tasks))
         return tainted
 
     def get_countdown_info(self):
@@ -59,7 +51,7 @@ class CountdownManager(object):
         return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id)
 
     def get_tasks(self, task_type=None):
-        return [task for task in self.data['ret']['cdlist'] if task_type in (None, task['cdtype'])]
+        return [task for task in self.data['cdlist'] if task_type in (None, task['cdtype'])]
 
     def add_tasks(self, tasks):
         tasks = self._normalise(tasks)
@@ -78,16 +70,16 @@ class CountdownManager(object):
         else:
             self.last_cdprice_check = time.time()
 
-        logger.info('Decrease task time using items')
-        logger.debug(task)
+        self.log.info('Decrease task time using items')
+        self.log.debug(task)
 
         sorted_items = items[:]
         sorted_items.sort(key=lambda item: item[1], reverse=True)
-        logger.debug(sorted_items)
+        self.log.debug(sorted_items)
 
         remaining = int(task['secs'] - time.time())
 
-        logger.debug('Remaining time for task is {0} seconds'.format(remaining))
+        self.log.debug('Remaining time for task is {0} seconds'.format(remaining))
 
         json = self.bot.item_manager.find([item_id for item_id, time_offset in items])
 
@@ -109,7 +101,7 @@ class CountdownManager(object):
                 except KeyError:
                     pass
 
-            logger.info('Finished using items: {0} seconds remain'.format(remaining))
+            self.log.info('Finished using items: {0} seconds remain'.format(remaining))
             task['secs'] = remaining + time.time()
 
     def _reduce_with_item(self, tid, action, item_id):
