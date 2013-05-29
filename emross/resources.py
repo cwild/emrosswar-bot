@@ -91,15 +91,15 @@ class ResourceManager(EmrossBaseObject):
                     conversion['%s2%s' % (Resource.GOLD, res)] = gold_amount
 
 
-        if self.get_amount_of(Resource.GOLD) < total_gold + resource_levels[Resource.GOLD] \
-            and unbrick is False:
-            self.log.debug('Not enough gold available for required resource levels.')
-            return False
+        if self.get_amount_of(Resource.GOLD) < total_gold + resource_levels[Resource.GOLD]:
+            if unbrick is False:
+                self.log.debug('Not enough gold available for required resource levels.')
+                return False
         elif total_gold == 0:
             self.log.debug('No need to exchange any resources')
             return True
-        elif convert is False and \
-            self.get_amount_of(Resource.GOLD) > total_gold + resource_levels[Resource.GOLD]:
+        elif convert is False:
+            self.log.debug('We could have met the desired resources if we had chosen to convert')
             return True
 
         if convert:
