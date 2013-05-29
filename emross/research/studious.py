@@ -35,8 +35,11 @@ class Study(FilterableCityTask):
         ))
 
     def tech_level(self, city, tech):
-        tech, level, unlocked = self.tech_levels(city)[tech-1]
-        return level if unlocked == 1 else -1
+        try:
+            tech, level, unlocked = self.tech_levels(city)[tech-1]
+            return level if unlocked == 1 else -1
+        except IndexError:
+            return -1
 
     def upgrade(self, city, tech, owner=0):
         """

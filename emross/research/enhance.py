@@ -40,12 +40,15 @@ class AutoEnhance(Task):
 
         level_uni = construction.structure_level(city, Building.UNIVERSITY)
         if level_uni == 0:
+            self.log.debug('No university at this castle, unable to proceed')
             return True
 
         # Calculate the highest enhancement level possible at this university
         study = self.bot.builder.task(Study)
         enhance = int(study.tech_level(city, Tech.ENHANCEMENT) / 3)
-        max_level = (30+enhance) if level_uni==30 else level
+        max_level = level_uni
+        if level_uni == 30 and enhance > 0:
+            max_level += enhance
 
         self.log.info('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}'.format(
             EmrossWar.BUILDING[str(Building.UNIVERSITY)].get('name'),
