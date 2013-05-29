@@ -98,7 +98,7 @@ class AutoEnhance(Task):
                     success_rate, maximum_cost))
 
                 for item in items:
-                    if item['p'] <= maximum_cost and \
+                    if item['up'] < max_level and item['p'] <= maximum_cost and \
                     city.resource_manager.meet_requirements({Resource.GOLD: item['p']}, **kwargs):
                         json = self.bot.item_manager.upgrade(city, item['id'])
 
