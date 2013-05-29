@@ -117,6 +117,7 @@ from emross.military.trainer import Cavalry, Trainer
 from emross import pvp
 
 from emross.alliance import AllyTech as AT, Donator
+from emross.research.enhance import AutoEnhance
 
 build_path = (
     (
@@ -136,6 +137,9 @@ build_path = (
         )
     ),
     (
+        (AutoEnhance, ([(95, 10000000), (75, 6000000), (40, 2000000), (5, 20000)],), {
+            'minimum_enhance': 2
+        }),
         trade_options,
     ),
     (
