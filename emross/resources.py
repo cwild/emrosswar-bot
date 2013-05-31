@@ -103,7 +103,7 @@ class ResourceManager(EmrossBaseObject):
             return True
 
         if convert:
-            should_convert = True
+            should_convert = total_gold > 0
 
             if unbrick:
                 gold_required = total_gold + resource_levels[Resource.GOLD] - \
@@ -116,7 +116,7 @@ class ResourceManager(EmrossBaseObject):
                     should_convert = self.bot.find_gold_for_city(self.city,
                                         gold_required, unbrick=True)
 
-            if should_convert:
+            if should_convert and conversion:
                 self.log.debug('Total gold cost of conversion is {0}'.format(total_gold))
                 json = self._convert(**conversion)
                 return json['code'] == EmrossWar.SUCCESS
