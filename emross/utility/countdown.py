@@ -55,7 +55,7 @@ class CountdownManager(EmrossBaseObject, CacheableData):
 
     def add_tasks(self, tasks):
         tasks = self._normalise(tasks)
-        self._data['ret']['cdlist'].extend(tasks)
+        self._data['cdlist'].extend(tasks)
 
         """
         The Emross client does this when one of the events has completed.
