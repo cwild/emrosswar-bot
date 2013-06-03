@@ -129,6 +129,7 @@ class Barracks(object):
             return self._action_do(params, sleep=sleep_do, **kwargs)
         else:
             logger.info(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
+            return json
 
     def _action_confirm(self, params, **kwargs):
         """

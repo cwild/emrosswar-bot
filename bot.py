@@ -115,7 +115,12 @@ def run_bot(bot):
                             }
                             params.update(army)
 
-                            city.barracks.confirm_and_do(params, sleep_confirm=(5,8), sleep_do=(1,3))
+                            json = city.barracks.confirm_and_do(params, sleep_confirm=(5,8), sleep_do=(1,3))
+
+                            if json['code'] != EmrossWar.SUCCESS:
+                                city.heroes.append(hero)
+                                bot.favourites.get_favs(Favourites.DEVIL_ARMY)
+                                continue
 
                             try:
                                 roundtrip = params['travel_sec'] * 2
