@@ -92,7 +92,7 @@ class Study(FilterableCityTask):
             if use_hero:
                 hero = city.hero_manager.highest_stat_hero(Hero.WISDOM)
                 if not hero:
-                    self.logger.info('Unable to find any heroes suitable for use')
+                    self.log.info('Unable to find any heroes suitable for use')
                     continue
                 elif hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                     owner = hero.data.get('id', 0)
