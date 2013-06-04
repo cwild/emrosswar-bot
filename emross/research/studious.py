@@ -91,7 +91,10 @@ class Study(FilterableCityTask):
             owner = 0
             if use_hero:
                 hero = city.hero_manager.highest_stat_hero(Hero.WISDOM)
-                if hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
+                if not hero:
+                    self.logger.info('Unable to find any heroes suitable for use')
+                    continue
+                elif hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                     owner = hero.data.get('id', 0)
                     logger.info('{0} chosen to research {1} at {2}'.format(hero,
                         EmrossWar.TECHNOLOGY[str(tech)].get('name', '?'),
