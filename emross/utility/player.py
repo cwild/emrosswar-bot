@@ -152,8 +152,8 @@ class Player(object):
 
         # Sync the key with our external API
         if self.remote:
-            logger.debug('Push new key to remote API for account "%s"' % self.username)
-            self.remote.sync_account(self.username, key)
+            logger.debug('Push new key to remote API for account "{0}"'.format(self.username))
+            self.remote.sync_account(self.username, key, master=MASTER)
 
         bot.errors.task_done()
 
@@ -195,5 +195,5 @@ class AccountApi(RemoteApi):
     def check_account(self, username, **kwargs):
         return self.call('account/check', username=username, **kwargs)
 
-    def sync_account(self, username, key):
-        return self.call('account/sync', username=username, key=key)
+    def sync_account(self, username, key, **kwargs):
+        return self.call('account/sync', username=username, key=key, **kwargs)
