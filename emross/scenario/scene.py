@@ -28,6 +28,7 @@ class Scenario:
 
     SCENARIO_FINISHED = 9013
     SCENARIO_EXPIRED = 9014
+    SCENARIO_OCCUPIED_ALREADY = 9015
 
     def __init__(self, bot):
         self.bot = bot
