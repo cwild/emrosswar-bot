@@ -1,9 +1,5 @@
 from emross.utility.task import Task
 
-import logging
-logger = logging.getLogger(__name__)
-
-
 class AutoLottery(Task):
     INTERVAL = 5
     LOTTERY_API = 'game/lottery_api.php'
@@ -12,22 +8,22 @@ class AutoLottery(Task):
         if self.bot.userinfo and self.bot.userinfo['lottery']:
 
             while True:
-                logger.info('List the lottery items')
+                self.log.info('List the lottery items')
                 json = self._wheel('list')
 
-                logger.info('Spin the wheel')
+                self.log.info('Spin the wheel')
                 json = self._wheel('rotate')
                 remain = int(json['ret']['remain'])
 
                 if remain < 1:
+                    self.log.info('Out of spins')
                     break
 
-                logger.info('Remaining wheel spins: %d' % remain)
+                self.log.info('Remaining wheel spins: {0}'.format(remain))
 
             self.bot.userinfo['lottery'] = None
             self.sleep(3600)
 
 
     def _wheel(self, action):
-        json = self.bot.api.call(self.LOTTERY_API, action=action)
-        return json
+        return self.bot.api.call(self.LOTTERY_API, action=action)
