@@ -66,7 +66,7 @@ class ScenarioWalker(Task):
 
             if scenario != int(json['ret']['fb_label']):
                 self.log.info('Already on a different scenario with {0} seconds remaining.'.format(json['ret']['remaining_time']))
-                this.sleep(json['ret']['remaining_time'])
+                self.sleep(json['ret']['remaining_time'])
                 return resume
 
             if int(json['ret']['finish']) == 1:
