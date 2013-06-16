@@ -125,7 +125,7 @@ class Donator(Task):
 
     def choose_preferred_tech(self, tech_preference=[]):
 
-        techs = [i for i, tech in enumerate(self.bot.alliance.hall_tech)
+        techs = [i for i, tech in enumerate(self.bot.alliance.hall_tech, start=1)
                     if tech[0] == AllianceTechStatus.ACTIVATED and \
                     tech[1] < Alliance.MAX_TECH_LEVEL]
 
@@ -133,28 +133,14 @@ class Donator(Task):
             raise ValueError
 
         self.log.info('Choosing from the following: {0}'.format(
-            ', '.join([EmrossWar.LANG['ALLY_TECH'][str(t+1)]['name'] for t in techs]))
+            ', '.join([EmrossWar.LANG['ALLY_TECH'][str(t)]['name'] for t in techs]))
         )
 
-        try:
-            # Get all the tech IDs
-            ids = [1 + id[0] for id in techs]
-            tech = None
+        for t in tech_preference:
+            if t in techs:
+                return t
 
-            """
-            FIFO, start checking at the end of preferences and work towards the
-            beginning to choose the optimal choice
-            """
-            for t in reversed(tech_preference):
-                if t in ids:
-                    tech = t
-
-            # Simple check to ensure tech is an int
-            tech/tech
-        except (IndexError, TypeError):
-            return techs[0] + 1
-
-        return tech
+        return techs[0]+1
 
     def donate_to_tech(self, gold, techid, city):
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
