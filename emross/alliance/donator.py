@@ -136,11 +136,12 @@ class Donator(Task):
             ', '.join([EmrossWar.LANG['ALLY_TECH'][str(t)]['name'] for t in techs]))
         )
 
-        for t in tech_preference:
+        tech = None
+        for t in reversed(tech_preference):
             if t in techs:
-                return t
+                tech = t
 
-        return techs[0]+1
+        return tech or techs[0]+1
 
     def donate_to_tech(self, gold, techid, city):
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
