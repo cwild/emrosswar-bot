@@ -117,23 +117,14 @@ def run_bot(bot):
 
                             json = city.barracks.confirm_and_do(params, sleep_confirm=(5,8), sleep_do=(1,3))
 
-                            if json['code'] != EmrossWar.SUCCESS:
-                                city.heroes.append(hero)
-                                bot.favourites.get_favs(Favourites.DEVIL_ARMY)
-                                continue
-
-                            try:
-                                roundtrip = params['travel_sec'] * 2
-                                concurrent_attacks.append(time.time() + roundtrip)
-                            except KeyError as e:
-                                logger.exception(e)
-                                logger.debug(params)
-                                continue
+                            roundtrip = params.get('travel_sec', 0) * 2
+                            concurrent_attacks.append(time.time() + roundtrip)
 
                             """
                             Update cache as targets are only updated once per city rather than per hero
                             """
-                            target.attack += 1
+                            if json['code'] == EmrossWar.SUCCESS:
+                                target.attack += 1
 
                             try:
                                 if len(concurrent_attacks) == settings.concurrent_attack_limit:
