@@ -141,7 +141,7 @@ class Donator(Task):
             if t in techs:
                 tech = t
 
-        return tech or techs[0]+1
+        return tech or techs[0]
 
     def donate_to_tech(self, gold, techid, city):
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
