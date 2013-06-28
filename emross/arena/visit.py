@@ -1,6 +1,5 @@
 from copy import deepcopy
 import logging
-logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.utility.task import Task
@@ -17,7 +16,7 @@ class HeroVisit(Task):
 
     def process(self, *args, **kwargs):
 
-        logger.info('Run Hero visit routine')
+        self.log.info('Run Hero visit routine')
         json = self.bot.api.call(self.URL)
         if json['code'] != EmrossWar.SUCCESS:
             return True
@@ -25,8 +24,11 @@ class HeroVisit(Task):
         already_visited = self.split_heroes(json['ret']['visited_list'])
         can_visit_list = self.split_heroes(json['ret']['can_visit_list'])
 
-        logger.info('Heroes already visited: %s' % ', '.join([str(Hero(h)) for h in already_visited]))
-        logger.info('Heroes available to visit: %s' % ', '.join([str(Hero(h)) for h in can_visit_list]))
+        if already_visited:
+            self.log.info('Heroes already visited: {0}'.format(', '.join([str(Hero(h)) for h in already_visited])))
+        else:
+            self.log.info('No heroes have been visited yet')
+        self.log.info('Heroes available to visit: {0}'.format(', '.join([str(Hero(h)) for h in can_visit_list])))
 
         visited = self.calculate_components([(Hero(h).client['rank'], Hero(h).client['race']) for h in already_visited])
 
@@ -36,10 +38,10 @@ class HeroVisit(Task):
             target = self.calculate_components(arg)
 
             if self.compare_heroes(visited, target):
-                logger.info('Looks like we have a match!')
+                self.log.info('Looks like we have a match!')
                 price = self.reward_conversion(target)
                 if price:
-                    logger.info('Turn in our reward')
+                    self.log.info('Turn in our reward')
                     self.exchange_heroes(price)
                 break
 
@@ -89,8 +91,8 @@ class HeroVisit(Task):
         if current == target:
             return True
 
-        logger.debug('Current heroes %s' % current)
-        logger.debug('Target heroes %s' % target)
+        self.log.debug('Current heroes {0}'.format(current))
+        self.log.debug('Target heroes {0}'.format(target))
 
         # Don't modify the originals
         current = deepcopy(current)
@@ -115,23 +117,24 @@ class HeroVisit(Task):
 
 
             remain = sum([sum(v.values()) for k, v in target.iteritems()])
-            logger.debug('%d unaccounted for in current target' % remain)
+            self.log.debug('{0} unaccounted for in current target'.format(remain))
 
             return remain == 0
 
         except KeyError as e:
-            logger.exception(e)
+            self.log.exception(e)
             return False
 
     def visit_hero(self, position=0):
         """
         Position is between 1 and 5
         """
-        if position > 0:
+        if position not in range(1, 6):
             city = self.bot.cities[0]
             return self.bot.api.call(self.URL, action='visit', visit_gen=position, city=city.id)
         else:
-            logger.debug('Invalid position: %d' % position)
+            self.log.debug('Invalid position: {0}'.format(position))
+            return False
 
     def exchange_heroes(self, price):
         """
@@ -200,11 +203,11 @@ class HeroVisit(Task):
 
 
         if not combo:
-            logger.warning('Unable to calculate hero price')
+            self.log.warning('Unable to calculate hero price')
             return
 
         price = '%d_%s' % (count, combo)
-        logger.debug('Calculated price: %s' % price)
+        self.log.debug('Calculated price: {0}'.format(price))
 
         return price
 
@@ -217,7 +220,9 @@ class HeroVisit(Task):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
-    visit = HeroVisit(None)
+    from bot import bot
+    bot.update()
+    visit = HeroVisit(bot)
 
     current = {Hero.QUEEN: {2: 1}, Hero.JACK: {2: 3}}
     # any 1 Queen, any 3 Jack
