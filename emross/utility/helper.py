@@ -64,6 +64,7 @@ class EmrossWarBot:
         self.war_mail = AttackMailHandler(self)
 
         self.scheduler = s = kronos.ThreadedScheduler()
+        s.should_start = False
 
         self.core_tasks = []
         self.core_setup()
@@ -121,6 +122,10 @@ class EmrossWarBot:
             logger.debug(u'Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self.cities.append(city)
+
+        if not hasattr(self.scheduler, 'thread') and self.scheduler.should_start:
+            logger.info('Start the task scheduler')
+            self.scheduler.start()
 
         for gift in userinfo['gift']:
             self.get_gift(gift)

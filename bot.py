@@ -49,7 +49,7 @@ def run_bot(bot):
     logger.info('Starting bot')
     bot.session.start_time = time.time()
     logger.debug('Farming hours: %s' % settings.farming_hours)
-    bot.scheduler.start()
+    bot.scheduler.should_start = True
 
     """
     We can make calls directly should we wish to:
