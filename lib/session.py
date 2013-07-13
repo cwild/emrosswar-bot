@@ -26,14 +26,14 @@ class Session(object):
 
     def __getattr__(self, name):
         self.load()
-        return super(Session, self).__getattr__(name)
+        return super(Session, self).__getattribute__(name)
 
     def __setattr__(self, name, value):
         super(Session, self).__setattr__(name, value)
         self.__dict__['data'].add(name)
 
     def __delattr__(self, name):
-        super(Session, self).__detattr__(name)
+        super(Session, self).__delattr__(name)
         self.__dict__['data'].remove(name)
 
     def save(self):
