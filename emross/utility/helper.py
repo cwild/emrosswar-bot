@@ -26,6 +26,7 @@ from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.resources import Resource
 from emross.shop import Shop
 from emross.utility.builder import BuildManager
+from emross.utility import events
 from emross.world import World
 
 import settings
@@ -56,6 +57,7 @@ class EmrossWarBot:
         self.cities = []
 
         self.alliance = Alliance(self)
+        self.events = events.EventManager(self)
         self.favourites = Favourites(self)
         self.item_manager = item.Item(self)
         self.shop = Shop(self)
