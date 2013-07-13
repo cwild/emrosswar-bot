@@ -12,6 +12,7 @@ from lib import kronos
 from lib.session import Session
 
 
+from emross import OPERATORS
 from emross.alliance import Alliance
 from emross.api import EmrossWar
 from emross.chat import Chat
@@ -377,3 +378,14 @@ class EmrossWarBot:
             return settings.minimum_food
 
         return 0
+
+    @property
+    def operators(self):
+        ops = OPERATORS
+
+        try:
+            ops.extend(self.api.player.operators)
+        except Exception:
+            pass
+
+        return ops
