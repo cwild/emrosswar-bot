@@ -56,6 +56,8 @@ class Chat(Task):
             try:
                 self.lineid = msg['line_id']
                 text = msg.get('line_txt')
+                if msg.get('from_name') == self.bot.userinfo.get('nick'):
+                    continue
                 if text and msg.get('from_name') in self.bot.operators:
                     method, args, kwargs = MessageParser.parse_message(text, targets)
                     self.bot.events.notify(method, *args, **kwargs)
