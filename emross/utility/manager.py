@@ -36,6 +36,8 @@ class BotManager(object):
         if self._initialised:
             return
 
+        EmrossWarApi.init_pool(len(self.players)*3)
+
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
             bot = EmrossWarBot(api)
