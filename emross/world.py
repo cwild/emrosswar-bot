@@ -71,7 +71,7 @@ class World:
             nx = page['xleft']
             ny = page['yup']
         finally:
-            logger.debug('Map co-ordinates: %s' % str((x, y, nx, ny)))
+            logger.debug('Map co-ordinates: {0}'.format((x, y, nx, ny)))
 
         self.favs = self.bot.favourites.favs[Favourites.DEVIL_ARMY]
 
@@ -85,17 +85,17 @@ class World:
                 try:
                     for item in page['map']:
                         if item[2] in targets:
-                            if not spies:
+                            if spies < 1:
                                 for tries in xrange(2):
                                     city.barracks.get_soldiers()
                                     spies = city.barracks.soldiers[Soldier.SPY-1][1]
                                     logger.info('Found %d spies in the city %s' % (spies, city.name))
-                                    if not spies:
+                                    if spies < 1:
                                         if tries == 0:
                                             logger.info('Check the war room. Try to trigger spy count to update')
                                             city.barracks.war_room()
                                         else:
-                                            raise OutOfSpies, 'No spies available at the moment'
+                                            raise OutOfSpies('No spies available at the moment')
                                     else:
                                          break
 
@@ -105,8 +105,10 @@ class World:
                                 logger.info('Already a fav, skipping')
                                 continue
 
-                            logger.info('Scouting [%d, %d]' % (item[0], item[1]))
-                            self.scout(city, item[0], item[1])
+                            logger.info('Scouting [{0}, {1}]'.format(item[0], item[1]))
+                            if not self.scout(city, item[0], item[1]):
+                                raise OutOfSpies('Not enough spies')
+
                             spies -= 1
 
 
