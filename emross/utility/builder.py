@@ -1,24 +1,24 @@
-import logging
-logger = logging.getLogger(__name__)
-
 import threading
 import time
 
-class BuildManager(object):
+from emross.utility.base import EmrossBaseObject
+
+
+class BuildManager(EmrossBaseObject):
 
     def __init__(self, bot, *args, **kwargs):
-        self.bot = bot
         self.tasks = {}
         self.lock = threading.Lock()
-        super(BuildManager, self).__init__(*args, **kwargs)
+        super(BuildManager, self).__init__(bot, *args, **kwargs)
+        self.log.debug('Build manager init')
 
     def task(self, task_class):
         with self.lock:
             try:
                 handler = self.tasks[task_class]
-            except KeyError, e:
+            except KeyError:
                 handler = self.tasks[task_class] = task_class(self.bot)
-            except TypeError, e:
+            except TypeError as e:
                 logger.exception(e)
                 raise e
         return handler
@@ -44,9 +44,9 @@ class BuildManager(object):
                     kwargs = next(iter(parts[2:3]), {})
                     result = handler.run(cycle_start, i, *args, **kwargs)
                     results.append(result)
-                except (IndexError, KeyError, TypeError), e:
-                    logger.exception(e)
+                except Exception as e:
+                    self.log.exception(e)
 
             if False in results:
-                logger.debug('Not all parts of %s stage %d are complete' % (stagename, i+1))
+                self.log.debug('Not all parts of {0} stage {1} are complete'.format(stagename, i+1))
                 break
