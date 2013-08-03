@@ -51,6 +51,7 @@ class EmrossWarApi(object):
         pool = self.__class__.CONN_POOL
         if not pool:
             self.__class__.init_pool()
+            pool = self.__class__.CONN_POOL
         return pool
 
     def create_headers(self):
