@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Player(object):
     USER_CACHE = 'build/user.cache'
+    LOGIN_URL = 'game/login_api.php'
 
     def __init__(self,
         server,
@@ -92,7 +93,7 @@ class Player(object):
         server = json['ret']['server'][7:-1]
         user = json['ret']['user']
 
-        json = api.call('game/login_api.php', server=server, username=user, \
+        json = api.call(self.LOGIN_URL, server=server, username=user, \
                     password=self.password, key=None, handle_errors=False)
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException('Account password is incorrect')
