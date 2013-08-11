@@ -3,8 +3,9 @@ from emross.arena.hero import Hero
 from emross.utility.base import EmrossBaseObject
 from lib.cacheable import CacheableData
 
+from emross.arena import CONSCRIPT_URL
+
 class HeroManager(EmrossBaseObject, CacheableData):
-    URL = 'game/gen_conscribe_api.php'
 
     def __init__(self, bot, city):
         super(HeroManager, self).__init__(bot)
@@ -19,7 +20,7 @@ class HeroManager(EmrossBaseObject, CacheableData):
     def update(self):
         self.log.info('Update heroes at city "{0}"'.format(self.city.name))
 
-        json = self.bot.api.call(self.URL, city=self.city.id, action='gen_list')
+        json = self.bot.api.call(CONSCRIPT_URL, city=self.city.id, action='gen_list')
 
         if json['code'] == EmrossWar.SUCCESS:
             heroes = set()

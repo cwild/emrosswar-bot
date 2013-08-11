@@ -42,7 +42,11 @@ class Hero(object):
     GUARDING = 'fy'
     LEVEL = 'g'
     STATE = 's'
+    TARGET_EXPERIENCE = 'te'
+    TOTAL_LOSSES = 'tl'
+    TOTAL_WINS = 'tw'
     VIGOR = 'e'
+    WINS = 'w'
     WISDOM = 'i'
 
     ATTRIBUTE_NAMES = {
