@@ -25,9 +25,25 @@ class Control(Task):
         self.chat.send_message("I do not understand what you want me to do.")
 
     def action_help(self, for_method=None, *args, **kwargs):
-        method = getattr(self, 'action_{0}'.format(for_method))
-        if method and method.__doc__:
-            self.chat.send_message(method.__doc__.strip())
+        """
+        Provide basic usage info on the specified command.
+        """
+        message = None
+        method = getattr(self, 'action_{0}'.format(for_method), None)
+
+        if method:
+            if method.__doc__:
+                message = method.__doc__.strip()
+            else:
+                message = 'I have no idea about "{0}"!'.format(for_method)
+        else:
+            message = 'Choose from the following: {0}'.format(','.join([
+                    attrib.replace('action_', '') for attrib in dir(self)
+                    if attrib.startswith('action_')
+                ]))
+
+        if message:
+            self.chat.send_message(message)
 
     def action_enter(self, *args, **kwargs):
         """I will attempt to join the PvP world in the next {delay|30} seconds."""
@@ -47,8 +63,8 @@ class Control(Task):
 
                 self.chat.send_message('PvP world: {0}, player "{1}" at ({x},{y})'.format(\
                     server, json['ret']['user']['nick'],
-                    x=json['ret']['user']['city']['x'],
-                    y=json['ret']['user']['city']['y']))
+                    x=json['ret']['user']['city'][0]['x'],
+                    y=json['ret']['user']['city'][0]['y']))
 
         self.queue.put((pvp_check, (self.bot.api.player.username,), {}))
 
