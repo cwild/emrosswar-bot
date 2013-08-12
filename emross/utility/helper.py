@@ -202,8 +202,9 @@ class EmrossWarBot:
         except AttributeError:
             last_scan = 0
 
-        if time.time() < last_scan + (3 * 86400):
-            logger.info('The world was scanned less than 3 days ago')
+        hours = getattr(settings, 'scouting_interval', 72)
+        if time.time() < last_scan + hours*3600:
+            logger.info('The world was scanned less than {0} hours ago'.format(hours))
         else:
             try:
                 self.world.search(settings.scout_devil_army_types)
