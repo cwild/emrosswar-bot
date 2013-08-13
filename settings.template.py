@@ -14,11 +14,6 @@ multi_bot.append(Player(server='s2.emrosswar.com',key='key2...',pushid='abc'))
 multi_bot.append(Player(server='s3.emrosswar.com',key='key3...',user_agent='my custom agent'))
 
 
-
-get_heroes = 'game/gen_conscribe_api.php'
-hero_conscribe = 'game/gen_conscribe_api.php'
-
-
 """Id = 12553, name = crow tree
 --Id = 21111, name = localhost
 Id = 21261, name = 127001

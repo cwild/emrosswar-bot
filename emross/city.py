@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
+from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
 from emross.exceptions import (InsufficientHeroCommand,
@@ -199,7 +200,7 @@ class City(EmrossBaseObject):
             ]
         }
         """
-        json = self.bot.api.call(settings.get_heroes, city=self.id, action='gen_list', extra=extra)
+        json = self.bot.api.call(CONSCRIPT_URL, city=self.id, action='gen_list', extra=extra)
         self.heroes[:] = []
 
         heroes = json['ret']['hero']
@@ -249,7 +250,7 @@ class City(EmrossBaseObject):
             return
 
         logger.info('Check for heroes at the bar in "%s"' % self.name)
-        json = self.bot.api.call(settings.hero_conscribe, city=self.id)
+        json = self.bot.api.call(CONSCRIPT_URL, city=self.id)
 
 
         if 'refresh' in json['ret']:
@@ -257,7 +258,7 @@ class City(EmrossBaseObject):
             self.next_hero_recruit = time.time() + int(json['ret']['refresh'])
         else:
             logger.info('Try buying a drink')
-            json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='pub_process')
+            json = self.bot.api.call(CONSCRIPT_URL, city=self.id, action='pub_process')
 
             if json['code'] == EmrossWar.REACHED_HERO_LIMIT:
                 logger.info('Hero limit has been reached for this castle.')
@@ -273,7 +274,7 @@ class City(EmrossBaseObject):
 
             if 'hero' in json['ret'] and json['ret']['hero']['gid'] in settings.recruit_heroes:
                 logger.info('Found a hero we are looking for: %d' % json['ret']['hero']['gid'])
-                json = self.bot.api.call(settings.hero_conscribe, city=self.id, action='hire_process')
+                json = self.bot.api.call(CONSCRIPT_URL, city=self.id, action='hire_process')
 
                 if json['code'] == EmrossWar.SUCCESS:
                     logger.info('Hero recruited!')
