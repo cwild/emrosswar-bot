@@ -6,12 +6,13 @@ import time
 If logging hasn't already been configured, setup our own from logging.conf files
 """
 if len(logging.root.handlers) == 0:
+    from ConfigParser import NoSectionError
     import logging.config
+
     try:
         logging.config.fileConfig('build/logging.conf')
-    except Exception as e:
+    except NoSectionError:
         logging.config.fileConfig('logging.conf')
-        logging.exception(e)
 
 
 locale.setlocale(locale.LC_ALL, '')
