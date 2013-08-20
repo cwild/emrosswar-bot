@@ -47,6 +47,16 @@ class CacheableData(object):
         logger.warning('No update method provided for this data handler')
         return {}
 
+    def expire(self, clear=False):
+        """
+        Forces the data to be refreshed the next time it is accessed.
+        Optionally, clear the existing data as well (defaults to False).
+        """
+        logger.debug('Reset the cached data expiry time')
+        if clear:
+            self._data = {}
+        self._expires = 0
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
