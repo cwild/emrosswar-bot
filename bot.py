@@ -85,14 +85,13 @@ def run_bot(bot):
                         """
                         How many (decent) soldiers are in this city?
                         """
-                        logger.info('Getting soldiers')
                         city.barracks.get_soldiers()
 
                         logger.info('Getting available heroes')
                         city.get_available_heroes()
 
 
-                        if hasattr(settings, 'prefer_closer') and settings.prefer_closer:
+                        if getattr(settings, 'prefer_closer', False):
                             bot.favourites.sort_favs(city)
 
                         while True:
@@ -142,7 +141,7 @@ def run_bot(bot):
                     except AttributeError as e:
                         logger.exception(e)
 
-                    except InsufficientSoldiers, e:
+                    except InsufficientSoldiers as e:
                         logger.info('%s has insufficient troops to launch an attack.' % city.name)
                         continue
 
@@ -152,7 +151,6 @@ def run_bot(bot):
                 concurrent_attacks[:] = [e for e in concurrent_attacks if e > time.time()]
 
             except NoTargetsAvailable as e:
-                logger.exception(e)
                 logger.info('No targets available to attack.')
 
 

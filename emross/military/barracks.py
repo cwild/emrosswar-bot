@@ -1,10 +1,9 @@
 from emross.api import EmrossWar
 from emross.resources import Resource
+from emross.utility.base import EmrossBaseObject
 
-import logging
-logger = logging.getLogger(__name__)
 
-class Barracks(object):
+class Barracks(EmrossBaseObject):
     ACTION_CONFIRM_URL = 'game/armament_action_do_api.php'
     ACTION_DO_URL = 'game/armament_action_task_api.php'
     SOLDIER_EDUCATE_URL = 'game/soldier_educate_api.php'
@@ -24,10 +23,9 @@ class Barracks(object):
     DO_NOT_ENGAGED_IF_OUTNUMBERED = 3
 
     def __init__(self, bot, city):
-        self.bot = bot
+        super(Barracks, self).__init__(bot)
         self.city = city
         self._soldiers = None
-        super(Barracks, self).__init__()
 
     @property
     def soldiers(self):
@@ -45,6 +43,7 @@ class Barracks(object):
             [15, 126, True], [16, 0, True], [17, 7163, True], [18, 200, True]],
         'def': 2}}
         """
+        self.log.info('Update soldier listing at camp')
         json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
         soldiers = []
         try:
@@ -65,7 +64,7 @@ class Barracks(object):
         json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, action='soldier_educate', city=self.city.id, soldier=soldier, num=quantity, gen=hero)
 
         if json['code'] == EmrossWar.SUCCESS:
-            logger.info('Train %d troops of type %d at city "%s"' % (quantity, soldier, self.city.name))
+            self.log.info('Train {0} troops of type {1} at city "{2}"'.format(quantity, soldier, self.city.name))
 
         return json
 
@@ -128,7 +127,7 @@ class Barracks(object):
             params.update(json['ret'])
             return self._action_do(params, sleep=sleep_do, **kwargs)
         else:
-            logger.info(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
+            self.log.info(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
             return json
 
     def _action_confirm(self, params, **kwargs):
@@ -154,7 +153,7 @@ class Barracks(object):
             if params['cost_food'] > current_food:
                 self.city.replenish_food(params['cost_food']-current_food)
         except KeyError as e:
-            logger.exception(e)
+            self.log.exception(e)
 
         kwargs.update(params)
         json = self.bot.api.call(self.ACTION_DO_URL, city=self.city.id, **kwargs)
