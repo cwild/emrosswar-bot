@@ -415,11 +415,9 @@ class EmrossWarBot:
 
     @property
     def operators(self):
-        ops = OPERATORS
-
+        ops = OPERATORS[:]
         try:
             ops.extend(self.api.player.operators)
         except Exception:
             pass
-
         return ops
