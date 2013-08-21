@@ -1,4 +1,3 @@
-import locale
 import logging
 import time
 
@@ -14,8 +13,6 @@ if len(logging.root.handlers) == 0:
     except NoSectionError:
         logging.config.fileConfig('logging.conf')
 
-
-locale.setlocale(locale.LC_ALL, '')
 
 # Application settings, configurable
 import settings
@@ -164,12 +161,7 @@ def run_bot(bot):
             if not bot.pvp:
                 bot.clearout_inventory()
 
-            logger.info('Total %s amongst all castles: %s' % (\
-                EmrossWar.LANG.get('COIN', 'gold'),
-                locale.format('%d',
-                    sum([c.get_gold_count()[0] for c in bot.cities]), True
-                ))
-            )
+            logger.info(bot.total_wealth())
 
             logger.info('Cycle finished, waiting for 5 mins to go again')
             time.sleep(5*MINUTE)

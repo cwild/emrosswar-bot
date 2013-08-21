@@ -1,5 +1,6 @@
 from __future__ import division
 
+import locale
 import logging
 import math
 import re
@@ -31,6 +32,7 @@ from emross.world import World
 
 import settings
 
+locale.setlocale(locale.LC_ALL, '')
 logger = logging.getLogger(__name__)
 
 class EmrossWarBot:
@@ -105,6 +107,11 @@ class EmrossWarBot:
         self.core_tasks.append((Chat,))
         self.core_tasks.append((AutoLottery,))
         self.core_tasks.append((GiftCollector,))
+
+        def wealth(*args, **kwargs):
+            chat = self.builder.task(Chat)
+            chat.send_message(self.total_wealth(*args, **kwargs))
+        self.events.subscribe('wealth', wealth)
 
     def update(self):
         """
@@ -376,6 +383,25 @@ class EmrossWarBot:
                 return True
 
         return False
+
+    def total_wealth(self, bricked=None):
+        coin = EmrossWar.LANG.get('COIN', 'gold')
+        parts = []
+        parts.append('Total {0} amongst all castles: {1}'.format(coin, \
+                locale.format('%d',
+                    sum([c.get_gold_count()[0] for c in self.cities]), True
+                )))
+
+        if bricked:
+            bricks = [inventory.GOLD_BULLION[0], inventory.GOLD_BRICK[0]]
+            _items = self.find_inventory_items(bricks)
+
+            for brick in bricks:
+                if brick in _items:
+                    parts.append('{0}={1}'.format(EmrossWar.ITEM[str(brick)].get('name'),\
+                        sum([qty for qty, item_id, price in _items[brick]])))
+
+        return ', '.join(parts)
 
     @property
     def minimum_food(self):
