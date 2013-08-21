@@ -399,7 +399,7 @@ class EmrossWarBot:
             for brick in bricks:
                 if brick in _items:
                     parts.append('{0}={1}'.format(EmrossWar.ITEM[str(brick)].get('name'),\
-                        sum([qty for qty, item_id, price in _items[brick]])))
+                        sum([qty for item_id, qty, price in _items[brick]])))
 
         return ', '.join(parts)
 
