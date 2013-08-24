@@ -72,7 +72,6 @@ def run_bot(bot):
 
                 for city in bot.cities:
                     city.update()
-                    city.recruit_hero()
                     city.replenish_food()
 
                     if bot.is_attack_time() is False:

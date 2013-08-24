@@ -67,11 +67,6 @@ Inferno 9500
 enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
 
 
-
-# If this comes up then we should hire it
-enable_recruit = False
-recruit_heroes = [1, 2, 3, 4]
-
 prefer_closer = True
 
 """
