@@ -98,7 +98,12 @@ class Player(object):
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException('Account password is incorrect')
 
-        return json['ret']['key']
+        key = json['ret']['key']
+
+        if bot.pvp:
+            api.call(self.LOGIN_URL, sleep=False, key=key, user=user, action='synckey')
+
+        return key
 
     def update_api_key(self, bot, current_key, *args, **kwargs):
         """Try to find a new key for this bot to use. Search local cache,
