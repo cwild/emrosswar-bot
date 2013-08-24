@@ -1,9 +1,7 @@
-import logging
-logger = logging.getLogger(__name__)
-
 from emross.api import EmrossWar
+from emross.utility.base import EmrossBaseObject
 
-class Scenario:
+class Scenario(EmrossBaseObject):
     RUINED_CRYPT = 0
     FIERY_ABYSS = 1
     LAVA_PITS = 2
@@ -29,9 +27,6 @@ class Scenario:
     SCENARIO_FINISHED = 9013
     SCENARIO_EXPIRED = 9014
     SCENARIO_OCCUPIED_ALREADY = 9015
-
-    def __init__(self, bot):
-        self.bot = bot
 
     def attack(self, gen, pos):
         """
@@ -227,13 +222,13 @@ class Scenario:
         """
         try:
             json = self.bot.api.call(self.OUT_URL)
-            logger.info('Total EP: %d' % int(json['ret']['pvp']))
+            self.log.info('Total EP: {0}'.format(json['ret']['pvp']))
         except TypeError:
-            logger.info('Unable to obtain EP total')
-            logger.debug(json)
+            self.log.info('Unable to obtain EP total')
+            self.log.debug(json)
 
         json = self.list()
-        logger.info('Remaining scenario attempts: %d' % int(json['ret']['times']))
+        self.log.info('Remaining scenario attempts: {0}'.format(json['ret']['times']))
 
         if json['ret']['hasLottery']:
             self.lottery_wheel(action='list')
