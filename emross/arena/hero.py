@@ -1,13 +1,13 @@
 """
 Define the interactions between a hero and his world!
 """
-import logging
 
 from emross.api import EmrossWar
+from emross.arena import CONSCRIPT_GEAR_URL
+from emross.utility.base import EmrossBaseObject
 
-logger = logging.getLogger(__name__)
 
-class Hero(object):
+class Hero(EmrossBaseObject):
     TEN = 'e'
     JACK = 'd'
     QUEEN = 'c'
@@ -41,6 +41,7 @@ class Hero(object):
     EXPERIENCE = 'ex'
     GUARDING = 'fy'
     LEVEL = 'g'
+    LOYALTY = 'f'
     STATE = 's'
     TARGET_EXPERIENCE = 'te'
     TOTAL_LOSSES = 'tl'
