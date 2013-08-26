@@ -1,8 +1,4 @@
 import math
-import time
-
-import logging
-logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL
@@ -37,7 +33,6 @@ class City(EmrossBaseObject):
 
         self.resource_manager = ResourceManager(bot, city=self)
         self.countdown_manager = CountdownManager(bot, city=self)
-        self.next_hero_recruit = time.time()
 
 
     @property
