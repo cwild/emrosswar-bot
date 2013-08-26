@@ -108,6 +108,12 @@ class EmrossWarBot:
         self.core_tasks.append((AutoLottery,))
         self.core_tasks.append((GiftCollector,))
 
+        def uptime(*args, **kwargs):
+            chat = self.builder.task(Chat)
+            f = self.human_friendly_time(time.time() - self.session.start_time)
+            chat.send_message('uptime: {0}'.format(f))
+        self.events.subscribe('uptime', uptime)
+
         def wealth(*args, **kwargs):
             chat = self.builder.task(Chat)
             chat.send_message(self.total_wealth(*args, **kwargs))
@@ -421,3 +427,16 @@ class EmrossWarBot:
         except Exception:
             pass
         return ops
+
+    def human_friendly_time(self, seconds):
+        num, duration = 0, long(round(seconds))
+        runtime = []
+        for period, unit in [(60, 'minute'), (3600, 'hour'), (86400, 'day'), (86400*7, 'week')][::-1]:
+            num, duration = divmod(duration, period)
+            if num:
+                p = '{0}{1}'.format(unit, 's'*(num!=1))
+                runtime.append('{0} {1}'.format(num, p))
+
+        runtime.append('{0} second{1}'.format(duration, 's'*(duration!=0)))
+
+        return ', '.join(runtime)

@@ -60,7 +60,11 @@ class Session(object):
             with open(self.filename, 'rb') as fp:
                 data = pickle.load(fp)
                 for name, value in data.iteritems():
-                    self.__setattr__(name, value)
+                    if name not in self.__dict__:
+                        self.__setattr__(name, value)
+                    else:
+                        logger.debug("Don't overwrite existing data for: {0}".format(name))
+
             self.__dict__['loaded'] = True
         except Exception as e:
             logger.debug(e)
