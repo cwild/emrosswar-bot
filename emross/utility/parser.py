@@ -3,6 +3,26 @@ import re
 
 logger = logging.getLogger(__name__)
 
+try:
+    import shlex
+    _split = shlex.split
+except ImportError:
+    _split = lambda x: x.split()
+
+
+def _parse_args(arg_strs):
+    args, kwargs = [], {}
+
+    for s in _split(arg_strs):
+        if s.count('=') == 1:
+            key, value = s.split('=', 1)
+            kwargs[key] = value
+        else:
+            args.append(s)
+
+    return args, kwargs
+
+
 class MessageParsingError(Exception):
     pass
 
@@ -35,18 +55,20 @@ class MessageParser(object):
         else:
             raise MessageParsingError('No message parsed from here')
 
-        try:
-            arg_strs = arg_strs.pop().split()
-        except IndexError:
-            pass
 
-        args = []
-        kwargs = {}
-        for s in arg_strs:
-            if s.count('=') == 1:
-                key, value = s.split('=', 1)
-                kwargs[key] = value
-            else:
-                args.append(s)
+        try:
+            arg_strs = arg_strs.pop()
+        except (AttributeError, IndexError):
+            arg_strs = ''
+
+        args, kwargs = _parse_args(arg_strs)
 
         return method_name, args, kwargs
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    messages = ['item=ring\ of\ king 123 456', '!spam 1 2 spam=3']
+
+    for message in messages:
+        logger.info(_parse_args(message))

@@ -37,8 +37,11 @@ logger = logging.getLogger(__name__)
 
 class EmrossWarBot:
     PVP_MODE_RE = re.compile('^p\d+\.')
-
     USERINFO_URL = 'game/get_userinfo_api.php'
+
+    INVENTORY_COMMAND = 'inventory'
+    UPTIME_COMMAND = 'uptime'
+    WEALTH_COMMAND = 'wealth'
 
     def __init__(self, api):
         self.blocked = False
@@ -108,16 +111,40 @@ class EmrossWarBot:
         self.core_tasks.append((AutoLottery,))
         self.core_tasks.append((GiftCollector,))
 
+
+        def inventory(*args, **kwargs):
+            chat = self.builder.task(Chat)
+
+            search_items = []
+            for _search in args:
+                for _id, _item in EmrossWar.ITEM.iteritems():
+                    try:
+                        if re.search(_search, _item.get('name'), re.IGNORECASE):
+                            search_items.append(_id)
+                    except re.error:
+                        pass
+
+            found = self.find_inventory_items(search_items)
+            result = []
+            for item_id, values in found.iteritems():
+                name = EmrossWar.ITEM[str(item_id)].get('name')
+                vals = [qty for uniqid, qty, sellable in values]
+                result.append('{0}={1}'.format(name, sum(vals)))
+
+            chat.send_message(', '.join(result))
+
+        self.events.subscribe(self.INVENTORY_COMMAND, inventory)
+
         def uptime(*args, **kwargs):
             chat = self.builder.task(Chat)
             f = self.human_friendly_time(time.time() - self.session.start_time)
             chat.send_message('uptime: {0}'.format(f))
-        self.events.subscribe('uptime', uptime)
+        self.events.subscribe(self.UPTIME_COMMAND, uptime)
 
         def wealth(*args, **kwargs):
             chat = self.builder.task(Chat)
             chat.send_message(self.total_wealth(*args, **kwargs))
-        self.events.subscribe('wealth', wealth)
+        self.events.subscribe(self.WEALTH_COMMAND, wealth)
 
     def update(self):
         """
@@ -314,18 +341,25 @@ class EmrossWarBot:
         return self.find_inventory_items([item_id]).get(item_id)
 
     def find_inventory_items(self, items):
-        result = {}
-
         it = item.ItemType
-        item_types = [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]
-        search_items = dict()
+
+        # item type and the tab it is listed under
+        item_types = {
+            1: it.WEAPON,
+            2: it.ARMOR,
+            3: it.MOUNT,
+            4: it.BOOK,
+            5: it.BOOK,
+            6: it.RING
+        }
+        search_items, result = dict(), dict()
 
         for id in items:
             try:
                 i = EmrossWar.ITEM[str(id)]
                 logger.debug('Searching for item {0}: "{1}"'.format(id, i.get('name')))
-                item_type = it.ITEM if i['type'] not in item_types else i['type']
-                search_items.setdefault(item_type, {})[id] = False
+                item_type = item_types.get(i['type'], it.ITEM)
+                search_items.setdefault(item_type, {})[int(id)] = False
             except KeyError:
                 pass
 

@@ -23,6 +23,7 @@ class ChatEvent:
 
 class Chat(Task):
     INTERVAL = 5
+    MAX_MESSAGE_LENGTH = 96
     URL = 'game/api_chat2.php'
 
     def setup(self):
@@ -97,7 +98,12 @@ class Chat(Task):
                 target, can_send = guild_id, True
 
         if can_send:
-            self.bot.api.call(self.URL, txt=message, targettype=channel, targetid=target)
+            """
+            Max message length is 96!
+            """
+            for letters in map(None, *(iter(message),) * self.MAX_MESSAGE_LENGTH):
+                chunk = ''.join([l for l in letters if l is not None])
+                self.bot.api.call(self.URL, txt=chunk, targettype=channel, targetid=target)
 
     def spam(self, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
