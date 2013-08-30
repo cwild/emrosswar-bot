@@ -471,6 +471,6 @@ class EmrossWarBot:
                 p = '{0}{1}'.format(unit, 's'*(num!=1))
                 runtime.append('{0} {1}'.format(num, p))
 
-        runtime.append('{0} second{1}'.format(duration, 's'*(duration!=0)))
+        runtime.append('{0} second{1}'.format(duration, 's'*(duration!=1)))
 
         return ', '.join(runtime)

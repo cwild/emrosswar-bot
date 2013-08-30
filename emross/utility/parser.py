@@ -1,6 +1,8 @@
 import logging
 import re
 
+from lib.ordered_dict import OrderedDict
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -11,7 +13,7 @@ except ImportError:
 
 
 def _parse_args(arg_strs):
-    args, kwargs = [], {}
+    args, kwargs = [], OrderedDict()
 
     for s in _split(arg_strs):
         if s.count('=') == 1:
