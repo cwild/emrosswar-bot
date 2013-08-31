@@ -104,7 +104,7 @@ class City(EmrossBaseObject):
 
 
 
-    def create_army(self, threshold, deduct=True, heroes=[], mixed=False):
+    def create_army(self, threshold, heroes=[], mixed=False):
         """
         Return a dict of the various soldiers to include in this army.
         `threshold` can be a dict-like object or a list
@@ -128,6 +128,7 @@ class City(EmrossBaseObject):
             If there are enough of a given soldier to send
             then add them to the army
             """
+            utilised = army.get(soldier, 0)
             try:
                 if qty is not Soldier.REMAINING and max_carry < qty:
                     if mixed:
@@ -139,25 +140,16 @@ class City(EmrossBaseObject):
                 use_remaining = False
 
                 if qty is Soldier.REMAINING:
-                    qty = min([soldiers[1], remaining_hero_command])
+                    qty = min([soldiers[1]-utilised, remaining_hero_command])
                     use_remaining = qty>0
 
                     if use_remaining is False:
                         # We are not able to take any more of this troop
                         continue
 
-                if use_remaining or soldiers[1] >= qty:
-                    try:
-                        army['soldier_num%d' % soldier] += qty
-                    except KeyError:
-                        army['soldier_num%d' % soldier] = qty
-
+                if use_remaining or soldiers[1]-utilised >= qty:
+                    army[soldier] = utilised + qty
                     remaining_hero_command -= qty
-                    """
-                    Update soldier cache
-                    """
-                    if deduct:
-                        soldiers[1] -= qty
 
                     if not mixed:
                         break
@@ -175,7 +167,7 @@ class City(EmrossBaseObject):
         if not army:
             raise InsufficientSoldiers('No soldiers were added to the army')
 
-        return army
+        return dict([('soldier_num{0}'.format(k), v) for k, v in army.iteritems()])
 
 
     def get_available_heroes(self, extra=1, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=True):

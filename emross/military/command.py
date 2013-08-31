@@ -24,7 +24,7 @@ class CommandCenter(Task):
         """
         pass
 
-    def loot(self, x, y, *args, **kwargs):
+    def loot(self, x, y, times=1, *args, **kwargs):
         nx, ny = self.bot.world.map_size()
 
         try:
@@ -59,7 +59,12 @@ class CommandCenter(Task):
         Can we find the desired army at any of our castles?
         """
         accomplished = False
+        launched = 0
+        times = int(times)
         for city in self.bot.cities:
+            if launched == times:
+                break
+
             try:
                 city.barracks.camp_info()
                 troops = []
@@ -69,31 +74,34 @@ class CommandCenter(Task):
                     if remaining:
                         troops.append((soldier, Soldier.REMAINING))
 
+                # Currently we use heroes with the lowest possible troop capacity
                 city.get_available_heroes(stats=[Hero.COMMAND])
-                army = city.create_army(troops, mixed=(len(troops)>0))
-                self.log.debug(army)
 
-                city.heroes.reverse()
-                hero = city.choose_hero(sum(army.values()))
-                if not hero:
-                    self.log.debug('Cannot find a hero to command this army')
-                    continue
+                for i in xrange(times-launched):
+                    army = city.create_army(troops, mixed=(len(troops)>0))
+                    self.log.debug(army)
 
-                json = self._send_attack(x, y, city, hero, **army)
-                if json['code'] == EmrossWar.SUCCESS:
-                    cd = json['ret']['cd'][0]
-                    tm = self.bot.human_friendly_time(cd['secs'])
-                    self.chat.send_message('Loot: {0}. Impact: {1}'.format(cd['ext'], tm))
-                    accomplished = True
-                    break
+                    hero = city.choose_hero(sum(army.values()))
+                    if not hero:
+                        self.log.debug('Cannot find a hero to command this army')
+                        break
+
+                    json = self._send_attack(x, y, city, hero, **army)
+                    if json['code'] == EmrossWar.SUCCESS:
+                        accomplished = True
+                        launched += 1
+
+                        cd = json['ret']['cd'][0]
+                        tm = self.bot.human_friendly_time(cd['secs'])
+                        self.chat.send_message('Loot({0}): {1}. Impact: {2}'.format(launched, cd['ext'], tm))
+                    else:
+                        break
 
             except (InsufficientHeroCommand, InsufficientSoldiers, NoHeroesAvailable) as e:
                 self.log.debug(e)
 
         if not accomplished:
-            self.chat.send_message('Sorry, I am not able to meet the loot requirements.')
-        else:
-            self.chat.send_message('On the way commander!')
+            self.chat.send_message('Sorry, I was not able to meet the loot requirements.')
 
 
     def _send_attack(self, x, y, city, hero, attack_type=Barracks.LOOT, **kwargs):

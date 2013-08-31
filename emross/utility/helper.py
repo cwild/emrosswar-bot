@@ -196,7 +196,7 @@ class EmrossWarBot:
         try:
             for rating, threshold in settings.soldier_threshold:
                 try:
-                    army = city.create_army(threshold, False)
+                    army = city.create_army(threshold)
                 except (InsufficientSoldiers, NoHeroesAvailable):
                     army, target = None, None
                     continue
