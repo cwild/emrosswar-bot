@@ -10,7 +10,7 @@ api.bot = None
 
 logger = logging.getLogger(__name__)
 
-def register(username=None, password=None, referrer=None, server=None):
+def register(username=None, password=None, referrer=None, server=None, captcha=None):
     """
     user=creative&action=reg&referer=rm9y5w&code=875628a8-ccf7-11e0-9fbd-00216b4d955c
     """
@@ -29,13 +29,22 @@ def register(username=None, password=None, referrer=None, server=None):
     """
 
     try:
-        api._call('register_api.php',
+        json = api._call('register_api.php',
             server=json['ret']['server'][7:-1],
             txtUserName=json['ret']['refercode'],
             txtPassword=password,
             referer=json['ret']['referer'],
             txtEmail='',
+            picture=captcha,
             key=False, handle_errors=False)
+
+        logger.info(json)
+
+        if json['code'] == 20000:
+            logger.error('You need to solve a captcha. Try again by passing the code with --captcha/-c')
+            import webbrowser
+            webbrowser.open(json['ret']['url'])
+
     except TypeError as e:
         logging.exception(e)
         logger.warning('There was an error during registration.')
@@ -55,10 +64,11 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--password', help='Account password', default=None, required=True)
     parser.add_argument('-r', '--referrer', help='Account refer code', default=None)
     parser.add_argument('-s', '--server', help='Game "MASTER" server', default=None)
+    parser.add_argument('-c', '--captcha', help='captcha', default=None)
 
     args = parser.parse_args()
 
     try:
-        register(args.username, args.password, args.referrer, args.server)
+        register(args.username, args.password, args.referrer, args.server, args.captcha)
     except EmrossWarApiException, e:
         logging.exception(e)
