@@ -67,7 +67,7 @@ class Player(object):
             logger.exception(e)
             return None
 
-    def account_login(self, bot, error_exception=BotException, *args, **kwargs):
+    def account_login(self, bot, *args, **kwargs):
         """Account login to acquire a new API key"""
 
 
@@ -80,8 +80,11 @@ class Player(object):
         """
         api = bot.api
 
-        if None in (self.username, self.password):
-            raise error_exception('Account username/password must both be set to relog with %s' % api.player)
+        if not self.username:
+            raise BotException('Account username must be set to relog with {0}'.format(api.player))
+
+        if not self.password:
+            raise EmrossWarApiException('No password set to relog with {}, try again soon'.format(api.player))
 
 
         json = api.call('info.php', server=MASTER, user=self.username,
@@ -118,12 +121,12 @@ class Player(object):
                 del cache[self.username]
                 self.save_user_cache(cache)
             else:
-                logger.info('Found another key to use from "%s"' % self.USER_CACHE)
+                logger.info('Found another key to use from "{0}"'.format(self.USER_CACHE))
                 self.key = key
                 bot.errors.task_done()
                 return
         except IOError:
-            logger.debug('Unable to load "%s"' % self.USER_CACHE)
+            logger.debug('Unable to load "{0}"'.format(self.USER_CACHE))
         except KeyError:
             logger.debug('No cached key for this account')
 
@@ -140,7 +143,11 @@ class Player(object):
         try:
             key = self.account_login(bot, *args, **kwargs)
         except Exception as e:
-            logger.info('Error encountered trying to acquire new key via login, try current key to check if it really is stale')
+            logger.info('Error encountered trying to acquire new key via login')
+            if not self.key:
+                raise e
+
+            logger.info('Try current key to check if it really is stale')
             try:
                 # Low level api._call to prevent using emross.handlers
                 json = bot.api._call(bot.USERINFO_URL, handle_errors=False)
@@ -173,7 +180,13 @@ class Player(object):
 
         if self.remote:
             data = self.remote.check_account(self.username, **kwargs)
-            return data.get('key', None)
+            key = data.get('key', None)
+            game_world = data.get('server')
+
+            if bot.pvp and game_world:
+                bot.api.call(self.LOGIN_URL, server=game_world, sleep=False, key=key, user=data.get('user'), action='synckey')
+
+            return key
 
     def load_user_cache(self):
         keys = {}

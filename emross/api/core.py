@@ -145,15 +145,16 @@ class EmrossWarApi(object):
                         return result
 
             raise exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
-        else:
-            self.error_timer = 0
-            self.errors[:] = []
 
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
 
         json = simplejson.loads(jsonp)
         logger.debug(json)
+
+        if int(json.get('code'), 0) == 0:
+            self.error_timer = 0
+        self.errors[:] = []
 
         if sleep is False:
             # No delay from our end

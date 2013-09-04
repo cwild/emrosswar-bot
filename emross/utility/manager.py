@@ -10,7 +10,6 @@ from emross.api import EmrossWarApi
 from emross.exceptions import BotException
 from emross.utility.helper import EmrossWarBot
 
-import settings
 
 class BotManager(object):
     WORKER_ERROR_WAIT = 15
@@ -51,7 +50,7 @@ class BotManager(object):
 
         workers = []
         for bot in self.bots:
-            logger.info('Starting new bot thread for %s' % bot.api.player)
+            logger.info('Starting new bot thread for {0}'.format(bot.api.player))
             worker = threading.Thread(target=func, args=(bot,))
             worker.bot = bot
             worker.daemon = True
@@ -80,15 +79,16 @@ class BotManager(object):
 
                             func, args, kwargs = error
                             if func in handled:
-                                logger.debug('This error type has already been handled (%s)' % func)
+                                logger.debug('This error type has already been handled ({0})'.format(func))
                                 worker.bot.errors.task_done()
                                 continue
 
                             try:
                                 func(*args, **kwargs)
                             except BotException as e:
-                                bot.runnable = False
+                                worker.bot.runnable = False
                                 workers.remove(worker)
+                                self.bots.remove(worker.bot)
                                 logger.exception(e)
                                 worker.bot.errors.task_done()
                                 logger.critical('Removed this bot instance from workers, marked for shutdown')
@@ -99,7 +99,7 @@ class BotManager(object):
                     except Exception as e:
                         logger.error(e)
                         t = self._handle_worker_errors(worker, error)
-                        logger.debug('Error currently processing in %s' % t)
+                        logger.debug('Error currently processing in {0}'.format(t))
 
                     time.sleep(2)
 
@@ -114,6 +114,7 @@ class BotManager(object):
             worker.daemon = True
             worker.start()
 
+            import settings
             sandbox = {'manager': self, 'settings': settings, 'bot':self.bot}
             code.interact(banner='EmrossWar Bot Management console', local=sandbox)
             raise KeyboardInterrupt
@@ -129,7 +130,7 @@ class BotManager(object):
         worker.bot.api.error_timer = delay
 
         def _handler():
-            logger.debug('Bot blocked for %d seconds.' % delay)
+            logger.debug('Bot blocked for {0} seconds.'.format(delay))
             worker.bot.blocked = True
             worker.bot.errors.put(error)
             time.sleep(delay)
