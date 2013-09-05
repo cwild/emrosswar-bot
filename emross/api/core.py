@@ -152,7 +152,7 @@ class EmrossWarApi(object):
         json = simplejson.loads(jsonp)
         logger.debug(json)
 
-        if int(json.get('code'), 0) == 0:
+        if int(json.get('code', 0)) == 0:
             self.error_timer = 0
         self.errors[:] = []
 
