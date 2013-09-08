@@ -143,7 +143,7 @@ class EmrossWarBot:
             exp_start, exp_end, protection_end = json['ret']
 
             lvl = '{0}({1}%)'.format(self.userinfo.get('level', 0),
-                round(100*(exp_start/exp_end), precision)
+                round(100*(exp_start/exp_end), int(precision))
             )
             parts = [
                 ('level', lvl),
