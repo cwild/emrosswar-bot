@@ -40,6 +40,7 @@ class EmrossWarBot:
     USERINFO_URL = 'game/get_userinfo_api.php'
 
     INVENTORY_COMMAND = 'inventory'
+    STATUS_COMMAND = 'status'
     UPTIME_COMMAND = 'uptime'
     WEALTH_COMMAND = 'wealth'
 
@@ -134,6 +135,34 @@ class EmrossWarBot:
             chat.send_message(', '.join(result))
 
         self.events.subscribe(self.INVENTORY_COMMAND, inventory)
+
+        def status(precision=3, *args, **kwargs):
+            chat = self.builder.task(Chat)
+
+            json = self.api.call(self.USERINFO_URL, action='exp')
+            exp_start, exp_end, protection_end = json['ret']
+
+            lvl = '{0}({1}%)'.format(self.userinfo.get('level', 0),
+                round(100*(exp_start/exp_end), precision)
+            )
+            parts = [
+                ('level', lvl),
+                ('gems', self.userinfo.get('money', 0)),
+                ('pvp', self.userinfo.get('pvp', 0))
+            ]
+
+            conquer = self.userinfo.get('conq', [0, 0, None, 5])
+            conqueror_id, conq_end, conq_name, _ = conquer
+
+            if conqueror_id:
+                parts.append(('conquered by', conq_name))
+                f = self.human_friendly_time(conq_end - time.time())
+                parts.append(('conquer ends', f))
+
+            chat.send_message('{0}: {data}'.format(self.STATUS_COMMAND,
+                data = ', '.join(['{0}={1}'.format(k,v) for k, v in parts])
+            ))
+        self.events.subscribe(self.STATUS_COMMAND, status)
 
         def uptime(*args, **kwargs):
             chat = self.builder.task(Chat)
