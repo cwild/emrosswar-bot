@@ -3,7 +3,7 @@ from emross.arena.hero import Hero
 from emross.utility.base import EmrossBaseObject
 from lib.cacheable import CacheableData
 
-from emross.arena import CONSCRIPT_URL
+from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 
 class HeroManager(EmrossBaseObject, CacheableData):
 
@@ -74,3 +74,16 @@ class HeroManager(EmrossBaseObject, CacheableData):
         self.log.debug(result)
 
         return result
+
+    def revive_hero(self, hero):
+        """
+        Given a hero, try reviving it from the dead!
+        """
+        self.log.debug('Try to revive {0} at "{1}"'.format(hero, self.city.name))
+        json = self.bot.api.call(CONSCRIPT_GEAR_URL, id=hero.data['id'], action='relive', city=self.city.id)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            self.log.info('Revived {0} at "{1}"'.format(hero, self.city.name))
+            hero.data[Hero.STATE] = Hero.AVAILABLE
+
+        return json

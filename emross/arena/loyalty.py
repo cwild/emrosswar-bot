@@ -6,6 +6,8 @@ from emross.utility.task import FilterableCityTask
 
 LOYALTY = EmrossWar.TRANSLATE['f_city_hero'].get('15', 'Loyalty:')[:-1]
 
+REVIVAL_COST = 1000
+
 class AutoLoyalty(FilterableCityTask):
     INTERVAL = 3600*6
     LOYALTY_COST = 1000
@@ -15,7 +17,7 @@ class AutoLoyalty(FilterableCityTask):
     DAILY_HERO_REWARD_LIMIT = 1611
 
 
-    def process(self, below=100, *args, **kwargs):
+    def process(self, below=100, revive=True, *args, **kwargs):
         """
         Try to raise our heroes loyalty to the max!
         """
@@ -23,6 +25,15 @@ class AutoLoyalty(FilterableCityTask):
         cities = self.cities(**kwargs)
         for city in cities:
             for hero in city.hero_manager.heroes.itervalues():
+                if hero.data.get(Hero.STATE) == Hero.DEAD:
+                    if not revive:
+                        self.log.debug('Skip {0} because it is dead'.format(hero))
+                        continue
+
+                    cost = REVIVAL_COST * hero.data.get(Hero.LEVEL)
+                    if city.resource_manager.meet_requirements({Resource.GOLD: cost}, **kwargs):
+                        city.hero_manager.revive_hero(hero)
+
                 loyalty = int(hero.data.get(Hero.LOYALTY, 0))
                 self.log.info('{0} has {1} {2}.'.format(hero, loyalty, LOYALTY))
 
