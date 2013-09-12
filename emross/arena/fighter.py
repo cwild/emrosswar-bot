@@ -15,16 +15,20 @@ class OpponentFinder(EmrossBaseObject):
     def __init__(self, bot):
         super(OpponentFinder, self).__init__(bot)
         self.opponents = defaultdict(dict)
+        self.opponent_victors = set()
 
     def find_arena_opponent(self, hero, level=1, searches=3):
         for i in range(searches):
-            if level+1 not in self.opponents:
+            if len(self.opponents.get(level+1, {}).keys()) < 1:
                 heroes = self.get_arena_opponents(level)
 
                 try:
                     for opponent in heroes:
                         lvl = int(opponent[Hero.LEVEL])
                         oppid = opponent['id']
+                        if oppid in self.opponent_victors:
+                            self.log.debug('Skip {} as it has beaten us already'.format(opponent))
+                            continue
                         self.opponents[lvl][oppid] = opponent
                 except KeyError:
                     pass
@@ -37,7 +41,7 @@ class OpponentFinder(EmrossBaseObject):
                 try:
                     last_resort.append(self.opponents[lvl].values()[0])
                 except IndexError:
-                    pass
+                    continue
                 opponent = self.select_preferred_opponent(hero, self.opponents[lvl])
 
                 if opponent:
@@ -81,6 +85,16 @@ class OpponentFinder(EmrossBaseObject):
                     opp = opponent
 
         return opp
+
+    def remove_opponent(self, opponent):
+        """
+        If an opponent beats us, we don't want to face it again this round
+        """
+        lvl = int(opponent[Hero.LEVEL])
+        oppid = opponent['id']
+        del self.opponents[lvl][oppid]
+        self.opponent_victors.add(oppid)
+        self.log.info(u'Removed hero "{0}" from "{1}"'.format(Hero(opponent), opponent['u']))
 
 class ArenaFighter(FilterableCityTask):
     INTERVAL = 1800
@@ -145,6 +159,7 @@ class ArenaFighter(FilterableCityTask):
 
                         if losses == loss_limit:
                             self.log.info('Loss limit reached, stopping fighting with {0}'.format(hero))
+                            opponents.remove_opponent(opponent)
                             break
                     elif losses > 0:
                         losses -= 1
