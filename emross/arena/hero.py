@@ -3,8 +3,42 @@ Define the interactions between a hero and his world!
 """
 
 from emross.api import EmrossWar
-from emross.arena import CONSCRIPT_GEAR_URL
 from emross.utility.base import EmrossBaseObject
+
+
+class Gear:
+    WEAPON = 1
+    ARMOR = 2
+    MOUNT = 3
+    WISDOM_BOOK = 4
+    DEFENSE_BOOK = 5
+    RING = 6
+
+    WEAPON_SLOT = 1
+    ARMOR_SLOT = 2
+    MOUNT_SLOT = 3
+    BOOK_SLOT = 4
+    RING_SLOT = 5
+
+    TYPE_SLOTS = {
+        ARMOR: ARMOR_SLOT,
+        DEFENSE_BOOK: BOOK_SLOT,
+        MOUNT: MOUNT_SLOT,
+        RING: RING_SLOT,
+        WEAPON: WEAPON_SLOT,
+        WISDOM_BOOK: BOOK_SLOT,
+    }
+
+    """
+    [23, 0, 0, 41, 0, 0]
+    [SPEED, TROOP_DEFENSE, TROOP_CARRY, ATTACK, WISDOM, DEFENSE]
+    """
+    SPEED = 0
+    TROOP_DEFENSE = 1
+    TROOP_CARRY = 2
+    ATTACK = 3
+    WISDOM = 4
+    DEFENSE = 5
 
 
 class Hero(EmrossBaseObject):
@@ -67,15 +101,23 @@ class Hero(EmrossBaseObject):
     WAR = 4
     WORKING = 5
 
-    def __init__(self, data = {}):
+    def __init__(self, data={}, gear={}):
         self.data = data
+        self._gear = gear
 
     def update(self, data):
-        self.data = data
+        self.data.update(data)
 
     @property
     def client(self):
         return EmrossWar.HERO[str(self.data.get('gid'))]
+
+    @property
+    def gear(self):
+        try:
+            return self._gear.data
+        except AttributeError:
+            return self._gear
 
     def stat(self, attribute):
         return self.data.get(attribute, None)

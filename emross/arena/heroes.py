@@ -1,9 +1,10 @@
-from emross.api import EmrossWar
-from emross.arena.hero import Hero
-from emross.utility.base import EmrossBaseObject
 from lib.cacheable import CacheableData
 
+from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
+from emross.arena.hero import Gear, Hero
+from emross.utility.base import EmrossBaseObject
+
 
 class HeroManager(EmrossBaseObject, CacheableData):
 
@@ -17,6 +18,46 @@ class HeroManager(EmrossBaseObject, CacheableData):
         _ = self.data
         return self._heroes
 
+    def _hero_gear_handler(self, hero_id):
+        def _update(*args, **kwargs):
+            json = self.bot.api.call(*args, **kwargs)
+            gear = {}
+
+            if json['code'] == EmrossWar.SUCCESS:
+                for _item in json['ret']['heroitem']:
+                    item = EmrossWar.ITEM[_item['item']['sid']]
+                    gear[Gear.TYPE_SLOTS[int(item['type'])]] = _item
+
+            return gear
+
+
+        return CacheableData(update=_update, method=CONSCRIPT_GEAR_URL, \
+                action='list_gen_item', id=hero_id, city=self.city.id)
+
+    def equip_hero_slot_item(self, hero, slot=2, item_id=-1):
+        """
+        Equip
+        Slots
+        """
+        json = self.bot.api.call(CONSCRIPT_GEAR_URL,
+            action='item_equip',
+            id=hero.data['id'],
+            i_id=item_id,
+            slot=slot,
+            city=self.city.id)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            hero.update(json['ret']['hero'])
+
+        return json
+
+    def list_hero_slot_items(self, hero, slot=2):
+        return self.bot.api.call(CONSCRIPT_GEAR_URL,
+            action='list_item',
+            id=hero.data['id'],
+            slot=slot,
+            city=self.city.id)
+
     def update(self):
         self.log.info('Update heroes at city "{0}"'.format(self.city.name))
 
@@ -24,13 +65,14 @@ class HeroManager(EmrossBaseObject, CacheableData):
 
         if json['code'] == EmrossWar.SUCCESS:
             heroes = set()
-            for hero in json['ret']['hero']:
-                hero_id = hero['id']
+            for hero_data in json['ret']['hero']:
+                hero_id = hero_data['id']
                 heroes.add(hero_id)
                 try:
-                    self._heroes[hero_id].update(hero)
+                    self._heroes[hero_id].update(hero_data)
                 except KeyError:
-                    self._heroes[hero_id] = Hero(hero)
+                    self._heroes[hero_id] = Hero(hero_data, \
+                        gear=self._hero_gear_handler(hero_id))
 
             # Remove heroes which are not present
             old_heroes = set(self._heroes.keys())-heroes

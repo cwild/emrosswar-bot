@@ -33,7 +33,8 @@ class CacheableData(object):
     @data.setter
     def data(self, value):
         if isinstance(value, dict):
-            if value.get('code') != 0:
+            # Default to 0 so we can pass our own dict straight through
+            if value.get('code', 0) != 0:
                 return
             value = value.get('ret', value)
 
