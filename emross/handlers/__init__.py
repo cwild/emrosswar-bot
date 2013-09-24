@@ -1,9 +1,12 @@
-from client_errors import InvalidKeyHandler, PvPEliminationHandler, VisitTooOftenHandler
+from client_errors import (CoolDownHandler, InvalidKeyHandler,
+    PvPEliminationHandler, VisitTooOftenHandler
+)
 from http_errors import ServiceUnavailableHandler
 
 handlers = {
-    2: InvalidKeyHandler,
-    7415: PvPEliminationHandler
+    2: client_errors.InvalidKeyHandler,
+    7415: PvPEliminationHandler,
+    8903: CoolDownHandler
 }
 
 HTTP_handlers = {

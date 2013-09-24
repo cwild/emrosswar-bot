@@ -1,8 +1,17 @@
 import handler
 import logging
-logger = logging.getLogger(__name__)
+import time
 
 from emross.exceptions import EmrossWarApiException
+
+logger = logging.getLogger(__name__)
+
+class CoolDownHandler(handler.EmrossHandler):
+    DELAY = 10
+
+    def process(self, json):
+        logger.debug('Wait {0} seconds for cooldown'.format(self.DELAY))
+        time.sleep(self.DELAY)
 
 class InvalidKeyHandler(handler.EmrossHandler):
     def process(self, json=None):
