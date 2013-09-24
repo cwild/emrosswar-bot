@@ -17,7 +17,7 @@ class AutoLoyalty(FilterableCityTask):
     DAILY_HERO_REWARD_LIMIT = 1611
 
 
-    def process(self, below=100, revive=True, *args, **kwargs):
+    def process(self, below=100, revive=True, sleep=(10,12), *args, **kwargs):
         """
         Try to raise our heroes loyalty to the max!
         """
@@ -46,7 +46,7 @@ class AutoLoyalty(FilterableCityTask):
 
                                 json = self.bot.api.call(CONSCRIPT_GEAR_URL, \
                                     id=hero.data['id'], action='give', \
-                                    city=city.id, golds=self.LOYALTY_COST)
+                                    city=city.id, golds=self.LOYALTY_COST, sleep=sleep)
 
                                 if json['code'] == EmrossWar.SUCCESS:
                                     hero.data[Hero.LOYALTY] = int(json['ret']['fealty'])
