@@ -1,5 +1,6 @@
 import unittest
 
+from emross.city import City
 from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
 
@@ -9,8 +10,9 @@ class TestScenario(unittest.TestCase):
         from bot import bot
 
         bot.cities = []
+        city = City(None, 0, 'TEST_CITY', 0, 0)
 
-        self.hero_manager1 = HeroManager(bot, 0)
+        self.hero_manager1 = HeroManager(bot, city)
         self.hero_manager1._heroes = {
             13668:Hero({"id":13668,"gid":70,"p":56,"i":24,"c1":23,"f":50,"g":12,"c2":906,"fy":0,"s":0,"e":16,"w":3,"tw":3,"tl":0,"ex":141056,"te":257100,"np":0,"ni":0,"nc1":0,"nc2":150,"ns":0,"ncd":0,"pr":36000}),
             12608:Hero({"id":12608,"gid":59,"p":36,"i":70,"c1":40,"f":50,"g":14,"c2":859,"fy":0,"s":0,"e":16,"w":1,"tw":12,"tl":2,"ex":405312,"te":1244364,"np":0,"ni":0,"nc1":0,"nc2":0,"ns":0,"ncd":0,"pr":42000}),
@@ -21,7 +23,7 @@ class TestScenario(unittest.TestCase):
             13616:Hero({"id":13616,"gid":72,"p":78,"i":17,"c1":23,"f":50,"g":12,"c2":933,"fy":0,"s":0,"e":16,"w":4,"tw":5,"tl":1,"ex":56470,"te":257100,"np":0,"ni":0,"nc1":0,"nc2":150,"ns":0,"ncd":0,"pr":36000})
         }
 
-        self.hero_manager2 = HeroManager(bot, 0)
+        self.hero_manager2 = HeroManager(bot, city)
         self.hero_manager2._heroes = {
             111:Hero({"id":111,"gid":70,"p":56,"i":24,"c1":23,"f":50,"g":12,"c2":906,"fy":0,"s":0,"e":16,"w":3,"tw":3,"tl":0,"ex":141056,"te":257100,"np":0,"ni":0,"nc1":0,"nc2":150,"ns":0,"ncd":0,"pr":36000}),
             222:Hero({"id":222,"gid":59,"p":36,"i":70,"c1":40,"f":50,"g":14,"c2":859,"fy":0,"s":0,"e":16,"w":1,"tw":12,"tl":2,"ex":405312,"te":1244364,"np":0,"ni":0,"nc1":0,"nc2":0,"ns":0,"ncd":0,"pr":42000}),
