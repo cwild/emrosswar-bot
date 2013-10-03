@@ -9,8 +9,6 @@ from emross.exceptions import (InsufficientHeroCommand,
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 from emross.resources import Resource, ResourceManager
-from emross.structures.buildings import Building
-from emross.structures.construction import Construct
 from emross.utility.base import EmrossBaseObject
 from emross.utility.countdown import CountdownManager
 

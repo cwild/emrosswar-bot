@@ -477,10 +477,7 @@ class EmrossWarBot:
         if self.api.player and self.api.player.minimum_food > 0:
             return self.api.player.minimum_food
 
-        if hasattr(settings, 'minimum_food'):
-            return settings.minimum_food
-
-        return 0
+        return getattr(settings, 'minimum_food', 0)
 
     @property
     def operators(self):

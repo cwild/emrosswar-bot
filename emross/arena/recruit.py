@@ -19,7 +19,7 @@ class HeroRecruit(FilterableCityTask):
         delays = []
         for city in cities:
             if st.structure_level(city, Building.ARENA) < 1:
-                self.log.info('There is no arena at {1}'.format(city.name))
+                self.log.info('There is no arena at {0}'.format(city.name))
                 continue
 
             self.log.info('Check for heroes at the bar in "{0}"'.format(city.name))
