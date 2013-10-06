@@ -37,7 +37,7 @@ class CommandCenter(Task):
 
         if level:
             current_lvl = self.bot.userinfo.get('level', 1)
-            exact_lvl, min_lvl, max_lvl = True, 0, 999
+            exact_lvl, min_lvl, max_lvl = None, 0, 999
             try:
                 if '-' in level:
                     parts = map(int, level.split('-', 1))
@@ -48,9 +48,10 @@ class CommandCenter(Task):
             except (IndexError, ValueError):
                 pass
 
-            if not exact_lvl:
-                self.log.debug('Does not match exact level. Current={0}, specified={1}'.format(current_lvl, level))
-                return
+            if exact_lvl is not None:
+                if not exact_lvl:
+                    self.log.debug('Does not match exact level. Current={0}, specified={1}'.format(current_lvl, level))
+                    return
             elif not min_lvl <= current_lvl <= max_lvl:
                 self.log.debug('Not within specified level range, stop processing')
                 return
