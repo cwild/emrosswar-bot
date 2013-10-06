@@ -24,7 +24,7 @@ class CommandCenter(Task):
         """
         pass
 
-    def loot(self, x, y, times=1, *args, **kwargs):
+    def loot(self, x, y, level=None, times=1, *args, **kwargs):
         nx, ny = self.bot.world.map_size()
 
         try:
@@ -34,6 +34,23 @@ class CommandCenter(Task):
         except ValueError:
             self.chat.send_message('Are you sure about those co-ordinates?')
             return
+
+        if level:
+            current_lvl = self.bot.userinfo.get(level, 1)
+            exact_lvl, min_lvl, max_lvl = True, 0, 999
+            try:
+                if '-' in level:
+                    parts = map(int, level.split('-', 1))
+                    min_lvl = parts.pop(0)
+                    max_lvl = parts.pop(0)
+                else:
+                    exact_lvl = int(level) == current_lvl
+            except (IndexError, ValueError):
+                pass
+
+            if not exact_lvl or not min_lvl <= current_lvl <= max_lvl:
+                self.log.debug('Not within specified level range, stop processing')
+                return
 
         try:
             SOLDIER_DATA = getattr(EmrossWar, 'SOLDIER_{0}'.format(self.bot.userinfo['nationid']))
