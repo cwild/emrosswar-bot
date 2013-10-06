@@ -1,10 +1,6 @@
 import functools
-import logging
 
 from emross.utility.base import EmrossBaseObject
-
-logger = logging.getLogger(__name__)
-
 
 def subscriber(method=None, **outer):
     """
@@ -39,12 +35,13 @@ class EventManager(EmrossBaseObject):
         """
         Raise the given "event" with all of its subscribers
         """
+        self.log.debug('Process event "{0}" with {1} and {2}'.format(event, args, kwargs))
 
         for action in self.events.get(event, []):
             try:
                 action(*args, **kwargs)
             except Exception as e:
-                logger.exception(e)
+                self.log.exception(e)
 
     def unsubscribe(self, event, action):
         try:
