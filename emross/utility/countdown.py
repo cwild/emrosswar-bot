@@ -62,7 +62,7 @@ class CountdownManager(EmrossBaseObject, CacheableData):
         This is important as you cannot initiate any task if you have not synced with the server.
         """
         self.update()
-        self.city.update()
+        self.city.expire()
 
     def use_items_for_task(self, task, items):
         if (time.time() - self.last_cdprice_check) < self.COUNTDOWN_PRICE_INTERVAL:

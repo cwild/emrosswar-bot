@@ -71,7 +71,8 @@ def run_bot(bot):
                 concurrent_attacks = []
 
                 for city in bot.cities:
-                    city.update()
+                    # force city to update
+                    city.expire()
                     city.replenish_food()
 
                     if bot.is_attack_time() is False:

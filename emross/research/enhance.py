@@ -114,7 +114,7 @@ class AutoEnhance(Task):
                                 self.log.info('The attempted enhance of "{0}"({1}) has FAILED.'.format(\
                                     name, item['up']))
 
-                            city.update()
+                            city.expire()
                             done = True
                             break
 

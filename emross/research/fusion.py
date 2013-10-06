@@ -83,7 +83,7 @@ class AutoFusion(Task):
                 city = self.bot.richest_city()
                 if city.resource_manager.meet_requirements({Resource.GOLD: self.FUSION_COST}, **kwargs):
                     if self.fuse_items(city, item1, item2, item3):
-                        city.update()
+                        city.expire()
                 else:
                     finished = True
                     break

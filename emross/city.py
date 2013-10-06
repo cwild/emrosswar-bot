@@ -12,33 +12,26 @@ from emross.resources import Resource, ResourceManager
 from emross.utility.base import EmrossBaseObject
 from emross.utility.countdown import CountdownManager
 
+from lib.cacheable import CacheableData
+
 import settings
 
-class City(EmrossBaseObject):
+class City(EmrossBaseObject, CacheableData):
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
 
     def __init__(self, bot, id, name, x, y):
-        super(City, self).__init__(bot)
+        super(City, self).__init__(bot, time_to_live=60)
         self.id = id
         self.name = name.encode('utf-8')
         self.x = x
         self.y = y
-        self._data = []
 
-        self.barracks = Barracks(self.bot, self)
+        self.barracks = Barracks(bot, self)
         self.hero_manager = HeroManager(bot, self)
         self.heroes = []
 
         self.resource_manager = ResourceManager(bot, city=self)
         self.countdown_manager = CountdownManager(bot, city=self)
-
-
-    @property
-    def data(self):
-        if not self._data:
-            self.update()
-        return self._data
-
 
     def update(self):
         """Get castle info"""
@@ -68,8 +61,13 @@ class City(EmrossBaseObject):
         """
 
         self.log.info('Updating city "{0}"'.format(self.name))
-        json = self.bot.api.call(self.GET_CITY_INFO, city = self.id)
-        self._data[:] = json['ret']['city']
+        json = self.bot.api.call(self.GET_CITY_INFO, city=self.id)
+
+        self.bot.userinfo['level'] = json['ret']['grade']
+        self.bot.userinfo['money'] = json['ret']['money']
+        self.bot.userinfo['pvp'] = json['ret']['pvp']
+
+        return json['ret']['city']
 
 
     def get_gold_count(self):

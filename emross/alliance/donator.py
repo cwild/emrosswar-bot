@@ -159,5 +159,5 @@ class Donator(Task):
                                 num=gold, techid=techid, city=city.id)
 
             if json['code'] == EmrossWar.SUCCESS:
-                city.update()
+                city.expire()
                 self.tech_timeout = time.time() + json['ret'][1][4]
