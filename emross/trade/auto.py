@@ -1,5 +1,8 @@
 from __future__ import division
 
+import math
+import random
+
 from emross.api import EmrossWar
 from emross.exceptions import TradeException
 from emross.item import inventory
@@ -8,13 +11,8 @@ from emross.utility.task import Task
 from emross.utility.remote_api import RemoteApi
 from trader import Trade
 
-import math
-import random
 
 import settings
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 class RemoteTrade(RemoteApi):
@@ -60,7 +58,7 @@ class AutoTrade(Task):
             return None
 
 
-    def buyer_process(self, interval=900, team=False, sleep=(4,5)):
+    def buyer_process(self, interval=900, team=False, sleep=(4,5), delay=(0,15), *args, **kwargs):
         """Buy items specified by a remote api"""
 
         available = self.remote.list(method='GET', server=self.bot.api.game_server, team=int(team==True))
@@ -95,7 +93,12 @@ class AutoTrade(Task):
             if to_delete:
                 self.remote.delete(to_delete)
 
-        self.sleep(interval)
+        try:
+            _delay = random.randint(*delay)
+        except TypeError:
+            _delay = random.randint(0, 15)
+
+        self.sleep(interval + _delay)
 
 
     def seller_process(self,
