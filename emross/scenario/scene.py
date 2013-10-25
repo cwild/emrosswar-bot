@@ -1,4 +1,5 @@
 from emross.api import EmrossWar
+from emross.exceptions import InsufficientSoldiers
 from emross.utility.base import EmrossBaseObject
 
 class Scenario(EmrossBaseObject):
@@ -208,6 +209,14 @@ class Scenario(EmrossBaseObject):
                     troops[troop] = [0 for i in range(len(armies))]
 
                 troops[troop][pos] = qty
+
+        for troop, vals in troops.iteritems():
+            soldier, total = int(troop), sum(vals)
+            avail = city.barracks.soldiers[soldier-1][1]
+
+            if avail < total:
+                raise InsufficientSoldiers('"{0}" does not have enough of soldier {1} (needed={2}, available={3})'.format(\
+                        city.name, soldier, total, avail))
 
 
         soldiers = dict(("soldier_num{0}".format(key), "|".join([str(v) for v in val])) for key, val in troops.iteritems())

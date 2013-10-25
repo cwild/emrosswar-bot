@@ -156,7 +156,9 @@ class City(EmrossBaseObject, CacheableData):
                 pass
 
         if army and mixed:
-            total = sum([v for v in army.itervalues()])
+            self.log.debug('Total army size {0}'.format(army))
+
+            total = sum(army.values())
             if total > max_carry:
                 raise InsufficientHeroCommand('This hero cannot command this many troops')
 
