@@ -46,7 +46,7 @@ class AutoEnhance(Task):
         # Calculate the highest enhancement level possible at this university
         study = self.bot.builder.task(Study)
         enhance = int(study.tech_level(city, Tech.ENHANCEMENT) / 3)
-        max_level = level_uni + enhance
+        max_level = level_uni + max(0, enhance)
 
         self.log.info('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}'.format(
             EmrossWar.BUILDING[str(Building.UNIVERSITY)].get('name'),
