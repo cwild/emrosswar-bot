@@ -17,8 +17,16 @@ class QuestManager(EmrossBaseObject):
         if json['code'] == EmrossWar.SUCCESS:
             quests = json['ret']['quest']
             for quest in quests:
+                try:
+                    if 'title' in quest:
+                        name = quest['title']
+                    else:
+                        name = EmrossWar.QUEST[str(quest['id'])]['name']
+                except KeyError:
+                    name = 'Unknown quest'
+
                 self.log.debug('Quest: "{quest}", Accepted: {accepted}, Done: {done}'.format(
-                    quest=EmrossWar.QUEST[str(quest['id'])].get('name', 'Unknown quest'),
+                    quest=name,
                     accepted='yes' if int(quest['status']) else 'no',
                     done='yes' if int(quest['done']) else 'no'
                     )
