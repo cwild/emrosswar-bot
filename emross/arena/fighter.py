@@ -27,7 +27,7 @@ class OpponentFinder(EmrossBaseObject):
                         lvl = int(opponent[Hero.LEVEL])
                         oppid = opponent['id']
                         if oppid in self.opponent_victors:
-                            self.log.debug('Skip {} as it has beaten us already'.format(opponent))
+                            self.log.debug('Skip {0} as it has beaten us already'.format(opponent))
                             continue
                         self.opponents[lvl][oppid] = opponent
                 except KeyError:
@@ -95,6 +95,7 @@ class OpponentFinder(EmrossBaseObject):
         del self.opponents[lvl][oppid]
         self.opponent_victors.add(oppid)
         self.log.info(u'Removed hero "{0}" from "{1}"'.format(Hero(opponent), opponent['u']))
+
 
 class ArenaFighter(FilterableCityTask):
     INTERVAL = 1800
