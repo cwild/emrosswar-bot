@@ -1,18 +1,17 @@
 import time
-import logging
-logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
 from emross.favourites import Favourites
-from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
+from emross.utility.task import Task
 
-class World:
+class World(Task):
     MAP_URL = 'game/api_world_map.php'
+    PLAYER_NODE = -1
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot, *args, **kwargs):
+        super(World, self).__init__(bot, *args, **kwargs)
         self._map_size = None
 
     def scout(self, city, x, y):
@@ -45,21 +44,21 @@ class World:
                 pass
 
         if choice:
-            logger.info('Sending spies from %s' % choice.name)
+            self.log.info('Sending spies from {0}'.format(choice.name))
             return choice
 
-        logger.info('Unable to locate any available spies, sleeping for 5 mins.')
+        self.log.info('Unable to locate any available spies, sleeping for 5 mins.')
         time.sleep(300)
 
 
-    def search(self, targets = []):
+    def search(self, targets=[]):
         if not targets:
-            logger.info('No targets to scout')
+            self.log.info('No targets to scout')
             return
 
         city = self.get_city_with_spies()
         if not city:
-            logger.info('No cities found with spies.')
+            self.log.info('No cities found with spies.')
             return
 
         try:
@@ -71,7 +70,7 @@ class World:
             nx = page['xleft']
             ny = page['yup']
         finally:
-            logger.debug('Map co-ordinates: {0}'.format((x, y, nx, ny)))
+            self.log.debug('Map co-ordinates: {0}'.format((x, y, nx, ny)))
 
         self.favs = self.bot.favourites.favs[Favourites.DEVIL_ARMY]
 
@@ -89,10 +88,10 @@ class World:
                                 for tries in xrange(2):
                                     city.barracks.get_soldiers()
                                     spies = city.barracks.soldiers[Soldier.SPY-1][1]
-                                    logger.info('Found %d spies in the city %s' % (spies, city.name))
+                                    self.log.info('Found {0} spies in the city {}'.format(spies, city.name))
                                     if spies < 1:
                                         if tries == 0:
-                                            logger.info('Check the war room. Try to trigger spy count to update')
+                                            self.log.info('Check the war room. Try to trigger spy count to update')
                                             city.barracks.war_room()
                                         else:
                                             raise OutOfSpies('No spies available at the moment')
@@ -102,10 +101,10 @@ class World:
 
                             favs = [f for f in self.favs if f.x == item[1] and f.y == item[0]]
                             if favs:
-                                logger.info('Already a fav, skipping')
+                                self.log.info('Already a fav, skipping')
                                 continue
 
-                            logger.info('Scouting [{0}, {1}]'.format(item[0], item[1]))
+                            self.log.info('Scouting [{0}, {1}]'.format(item[0], item[1]))
                             if not self.scout(city, item[0], item[1]):
                                 raise OutOfSpies('Not enough spies')
 
@@ -120,8 +119,8 @@ class World:
                         break
 
                 except WorldException:
-                    logger.info('Sleeping for 5 mins')
-                    time.sleep(600)
+                    self.log.info('Sleeping for 5 mins')
+                    time.sleep(300)
 
 
             if page['ydown'] > y:
@@ -133,18 +132,26 @@ class World:
                 except AttributeError:
                     pass
 
-                logger.info('Finished scouting map')
+                self.log.info('Finished scouting map')
                 break
 
             x = 0
 
     def get_page(self, x, y):
-        logger.info('Get page x=%d y=%d' % (x,y))
+        self.log.info('Get page x={0} y={1}'.format(x,y))
         json = self.bot.api.call(self.MAP_URL, x=x, y=y)
 
         return json['ret']
 
-    def map_size(self, x = 1, y = 1):
+    def get_point(self, x, y):
+        nodes = self.get_page(x, y)
+        search_node = map(int, [x,y])
+
+        for node in nodes['map']:
+            if node[:2] == search_node:
+                return node
+
+    def map_size(self, x=1, y=1):
         if self._map_size:
             return self._map_size
 
@@ -156,8 +163,10 @@ class World:
 
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(level=logging.DEBUG)
+
     from bot import bot
 
     x, y = 1, 1
-    logger.info('The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y)))
+    logging.info('The boundaries of this world map are (%d, %d), (%d, %d).' % ((x, y)+bot.world.map_size(x, y)))

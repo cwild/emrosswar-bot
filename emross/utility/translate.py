@@ -8,6 +8,7 @@ from lib.goslate import goslate
 from emross.api import EmrossWar
 from emross.utility.controllable import Controllable
 from emross.utility.task import Task
+from emross.world import World
 
 TRANSLATOR = goslate.Goslate()
 
@@ -27,27 +28,46 @@ class AutoTranslate(Task, Controllable):
 
         self.bot.events.subscribe('chat_message', self.translate)
 
-    def action_add(self, player=None, lang='en'):
+    def action_add(self, player=None, lang='en', *args, **kwargs):
         """
         Add a player who we wish to autotranslate for.
         """
         if player:
             self.translate_for[player] = lang
 
+        x, y = kwargs.get('x'), kwargs.get('y')
+        if x and y:
+            name = self.player_at(x, y)
+
+            if name:
+                self.translate_for[name] = lang
+                self.chat.send_message(EmrossWar.safe_text(
+                    u'Translating "{0}" to "{1}"!'.format(name, lang)
+                ))
+
     def action_list(self):
         """
         List the players to translate for.
         """
-        self.chat.send_message(', '.join(
-            ['{0}({1})'.format(k,v) for k, v in self.translate_for.iteritems()]
-        ))
+        self.chat.send_message(EmrossWar.safe_text(', '.join(
+            [u'{0}({1})'.format(k,v) for k, v in self.translate_for.iteritems()]
+        )))
 
-    def action_remove(self, player=None):
+    def action_remove(self, player=None, *args, **kwargs):
         """
         Add a player who we wish to autotranslate for.
         """
         try:
-            del self.translate_for[player]
+            if player:
+                del self.translate_for[player]
+            else:
+                x, y = kwargs.get('x'), kwargs.get('y')
+                if x and y:
+                    name = self.player_at(x, y)
+                    del self.translate_for[name]
+                    self.chat.send_message(EmrossWar.safe_text(
+                        u'Stopped translating for "{0}".'.format(name)
+                    ))
         except KeyError:
             pass
 
@@ -68,6 +88,13 @@ class AutoTranslate(Task, Controllable):
         """
         self._mute_period = time.time()
 
+    def player_at(self, x, y):
+        world = self.bot.builder.task(World)
+        node = world.get_point(x, y)
+
+        if node and node[2] == World.PLAYER_NODE:
+            return node[3][1]
+
     def translate(self, player, text, *args, **kwargs):
 
         target_lang = self.translate_for.get(player)
@@ -79,7 +106,9 @@ class AutoTranslate(Task, Controllable):
             converted = EmrossWar.safe_text(converted)
             self.log.debug(converted)
 
-            self.chat.send_message(converted, prefix=u'{0} said: '.format(player))
+            self.chat.send_message(converted,
+                prefix=EmrossWar.safe_text(u'{0} said: '.format(player))
+            )
 
     def process(self, players=[], *args, **kwargs):
 
