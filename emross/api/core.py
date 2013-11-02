@@ -201,6 +201,14 @@ class EmrossWar(object):
 
     PVP_ELIMINATED = 7415
 
+    @staticmethod
+    def safe_text(s):
+        if isinstance(s, unicode):
+            return s.encode('utf-8')
+        elif isinstance(s, str):
+            # Must be encoded in UTF-8
+            return s.decode('utf-8')
+        return s
 
 if __name__ == "__main__":
     import emross

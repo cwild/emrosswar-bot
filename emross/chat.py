@@ -62,10 +62,12 @@ class Chat(Task):
                 if text and msg.get('from_name') in self.bot.operators:
                     method, args, kwargs = MessageParser.parse_message(text, targets)
                     self.bot.events.notify(method, *args, **kwargs)
+                elif msg.get('from_name'):
+                    self.bot.events.notify('chat_message', msg.get('from_name'), text)
             except SkipMessage:
                 pass
             except MessageParsingError:
-                pass
+                self.bot.events.notify('chat_message', msg.get('from_name'), text)
             except Exception as e:
                 self.log.exception(e)
 
@@ -89,7 +91,7 @@ class Chat(Task):
     def ping(self, *args, **kwargs):
         self.send_message('pong')
 
-    def send_message(self, message, channel=Channel.ALLIANCE, **kwargs):
+    def send_message(self, message, channel=Channel.ALLIANCE, prefix='', **kwargs):
         can_send = False
 
         if channel == Channel.ALLIANCE:
@@ -101,9 +103,10 @@ class Chat(Task):
             """
             Max message length is 96!
             """
-            for letters in map(None, *(iter(message),) * self.MAX_MESSAGE_LENGTH):
+            size = self.MAX_MESSAGE_LENGTH - len(prefix)
+            for letters in map(None, *(iter(message),) * size):
                 chunk = ''.join([l for l in letters if l is not None])
-                self.bot.api.call(self.URL, txt=chunk, targettype=channel, targetid=target)
+                self.bot.api.call(self.URL, txt=prefix+chunk, targettype=channel, targetid=target)
 
     def spam(self, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
