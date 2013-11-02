@@ -34,9 +34,7 @@ except AttributeError:
     raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
 
 
-SECOND = 1
-MINUTE = 60 * SECOND
-HOUR   = 60 * MINUTE
+MINUTE = 60
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +45,6 @@ def run_bot(bot):
     logger.info('Starting bot')
     bot.session.start_time = time.time()
     logger.debug('Farming hours: {0}'.format(getattr(settings, 'farming_hours', None)))
-    bot.scheduler.should_start = True
 
     """
     We can make calls directly should we wish to:
@@ -57,7 +54,6 @@ def run_bot(bot):
 
     while bot.runnable:
         try:
-            bot.update()
 
             try:
                 bot.favourites.get_favs(Favourites.DEVIL_ARMY)
@@ -173,7 +169,7 @@ def run_bot(bot):
         except Exception as e:
             logger.exception(e)
             logger.info('Exception, sleeping for an hour')
-            time.sleep(1*HOUR)
+            time.sleep(60*MINUTE)
 
     bot.disconnect()
 
@@ -228,7 +224,7 @@ else:
 
         do_nothing = lambda bot: bot
 
-        t = threading.Thread(target=manager.run, args=(do_nothing,))
+        t = threading.Thread(target=manager.run, args=(do_nothing,False))
         t.daemon = True
         t.start()
 

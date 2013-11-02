@@ -45,7 +45,7 @@ class BotManager(object):
 
         self._initialised = True
 
-    def run(self, func):
+    def run(self, func, scheduler=True):
         self.initialise_bots()
 
         workers = []
@@ -56,6 +56,8 @@ class BotManager(object):
             worker.daemon = True
             worker.start()
             workers.append(worker)
+            if scheduler:
+                bot.scheduler.start()
 
 
         def _inner_run():

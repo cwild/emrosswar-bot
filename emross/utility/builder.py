@@ -10,7 +10,6 @@ class BuildManager(EmrossBaseObject):
         self.tasks = {}
         self.lock = threading.RLock()
         super(BuildManager, self).__init__(bot, *args, **kwargs)
-        self.log.debug('Build manager init')
 
     def task(self, task_class):
         with self.lock:

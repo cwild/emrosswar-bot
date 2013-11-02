@@ -10,6 +10,7 @@ import sys
 sys.path.extend(['lib/urllib3/'])
 
 from lib import kronos
+from lib.cacheable import CacheableData
 from lib.session import Session
 
 
@@ -35,7 +36,7 @@ import settings
 locale.setlocale(locale.LC_ALL, '')
 logger = logging.getLogger(__name__)
 
-class EmrossWarBot:
+class EmrossWarBot(CacheableData):
     PVP_MODE_RE = re.compile('^p\d+\.')
     USERINFO_URL = 'game/get_userinfo_api.php'
 
@@ -44,7 +45,8 @@ class EmrossWarBot:
     UPTIME_COMMAND = 'uptime'
     WEALTH_COMMAND = 'wealth'
 
-    def __init__(self, api):
+    def __init__(self, api, *args, **kwargs):
+        super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
         self.blocked = False
         self.runnable = True
 
@@ -57,8 +59,6 @@ class EmrossWarBot:
         self.pvp = self.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
 
-        self.last_update = 0
-        self.userinfo = {}
         self.tasks = {}
         self.cities = []
 
@@ -72,7 +72,6 @@ class EmrossWarBot:
         self.war_mail = AttackMailHandler(self)
 
         self.scheduler = s = kronos.ThreadedScheduler()
-        s.should_start = False
 
         self.core_tasks = []
         self.core_setup()
@@ -103,6 +102,10 @@ class EmrossWarBot:
     def disconnect(self):
         logger.info('Stop the task scheduler for this bot')
         self.scheduler.stop()
+
+    @property
+    def userinfo(self):
+        return self.data
 
     def core_setup(self):
         """
@@ -182,8 +185,7 @@ class EmrossWarBot:
         logger.info('Updating player info')
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
-        self.userinfo = userinfo = json['ret']['user']
-        self.last_update = time.time()
+        userinfo = json['ret']['user']
 
         skip = set([city.id for city in self.cities])
         skip.update(settings.ignore_cities)
@@ -194,13 +196,10 @@ class EmrossWarBot:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self.cities.append(city)
 
-        if not hasattr(self.scheduler, 'thread') and self.scheduler.should_start:
-            logger.info('Start the task scheduler')
-            self.scheduler.start()
-
         for gift in userinfo['gift']:
             self.get_gift(gift)
 
+        return userinfo
 
     def get_gift(self, gift):
         gid = int(gift['id'])
