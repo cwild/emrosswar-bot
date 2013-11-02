@@ -74,9 +74,7 @@ else:
         manager.players.append(player)
         manager.initialise_bots()
 
-        do_nothing = lambda bot: bot
-
-        t = threading.Thread(target=manager.run, args=(do_nothing,False))
+        t = threading.Thread(target=manager.run, args=(None,False))
         t.daemon = True
         t.start()
 

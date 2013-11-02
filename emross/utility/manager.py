@@ -46,7 +46,7 @@ class BotManager(object):
 
         self._initialised = True
 
-    def run(self, func, scheduler=True):
+    def run(self, func=None, scheduler=True):
         self.initialise_bots()
 
         workers = []
