@@ -41,14 +41,15 @@ class Task(EmrossBaseObject):
     def process(self, *args, **kwargs):
         logger.warning('You need to implement a `process` method for this Task.')
 
-    def setup(self):
-        pass
-
     def calculate_delay(self):
         return self.INTERVAL
 
+    def setup(self):
+        pass
+
     def sleep(self, seconds=INTERVAL):
         self._next_run = time.time() + seconds
+
 
 class TaskType:
     DEGRADE = 0
