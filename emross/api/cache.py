@@ -28,7 +28,7 @@ class EmrossContent(object):
     FILE_HASHES = None
 
     @classmethod
-    def load(cls, filename, decoder=json_decoder, force=False):
+    def load(cls, filename, decoder=json_decoder, force=False, fatal=False, **kwargs):
         if cls.FILE_HASHES is None:
             cls.FILE_HASHES = {}
             _init_cache()
@@ -51,7 +51,7 @@ class EmrossContent(object):
             elif force or filename not in cls.FILE_HASHES or \
                 cls.check_hash(localfile) != cls.FILE_HASHES.get(filename):
                 # We need to download the file
-                r = cls.get_file(filename)
+                r = cls.get_file(filename, **kwargs)
                 if r.status == 200:
                     content = r.data
 
@@ -59,6 +59,8 @@ class EmrossContent(object):
                         fp.writelines(content)
                 else:
                     logger.critical('Unable to load file %s' % filename)
+                    if fatal:
+                        raise Exception('Unable to obtain critical data file')
 
             # Load the localfile from disk
             if not content:
@@ -74,9 +76,9 @@ class EmrossContent(object):
             return decoder(content) if decoder else content
 
     @classmethod
-    def get_file(cls, filename):
+    def get_file(cls, filename, **kwargs):
         logger.debug('Download file "%s"' % filename)
-        return cls.pool.request('GET', os.path.join(DATA_URL % MASTER, filename), headers={'User-Agent': USER_AGENT})
+        return cls.pool.request('GET', os.path.join(DATA_URL % MASTER, filename), headers={'User-Agent': USER_AGENT}, **kwargs)
 
     @classmethod
     def check_hash(cls, filename):
@@ -153,4 +155,4 @@ def _init_cache():
         force = True
 
     EmrossContent.FILE_HASHES = dict((v, k) for k, v in [(part.split(',')) \
-        for part in EmrossContent.load('md5.dat', None, force).split(';') if len(part) > 0])
+        for part in EmrossContent.load('md5.dat', None, force, redirect=False, fatal=True).split(';') if len(part) > 0])
