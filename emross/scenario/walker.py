@@ -50,7 +50,7 @@ class ScenarioWalker(Task, Controllable):
 
                 self.chat.send_message('"{0}" leads {1}.'.format(hero, troops))
         else:
-            self.chat.send_message('Scenario status: remaining={0}, highest={1}, lottery={3}'.format(\
+            self.chat.send_message('Scenario status: remaining={0}, highest={1}, lottery={2}'.format(\
                 info['ret']['times'], int(info['ret'].get('highest_fb',0))+1, \
                 info['ret'].get('hasLottery',False))
             )
