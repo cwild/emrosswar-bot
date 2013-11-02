@@ -1,6 +1,3 @@
-import time
-
-from emross.utility import events
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
 from emross.utility.task import Task
@@ -32,18 +29,23 @@ class Chat(Task):
         except AttributeError:
             self.lineid = -1
 
+        self.parsers = (
+            ('evt', self.parse_events),
+            ('msg', self.parse_messages),
+        )
+
         self.bot.events.subscribe('ping', self.ping)
         self.bot.events.subscribe('spam', self.spam)
 
     def process(self):
         json = self.bot.api.call(self.URL, lineid=self.lineid)
 
-        try:
-            self.parse_events(json['ret']['evt'])
-            self.parse_messages(json['ret']['msg'])
-        except (AttributeError, IndexError) as e:
-            self.log.exception(e)
-
+        for section, parser in self.parsers:
+            try:
+                if section in json['ret']:
+                    parser(json['ret'][section])
+            except (AttributeError, IndexError) as e:
+                self.log.exception(e)
 
     def parse_messages(self, messages):
         """
