@@ -19,7 +19,6 @@ def run_bot(bot):
     Steps necessary for the bot to "play" the game
     """
     logger.info('Starting bot')
-    bot.session.start_time = time.time()
     logger.debug('Farming hours: {0}'.format(getattr(settings, 'farming_hours', None)))
 
     while bot.runnable:

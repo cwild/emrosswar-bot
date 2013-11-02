@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 from emross.api import EmrossWarApi
 from emross.exceptions import BotException
+from emross.utility.base import EmrossBaseObject
 from emross.utility.helper import EmrossWarBot
 
 
@@ -50,11 +51,18 @@ class BotManager(object):
 
         workers = []
         for bot in self.bots:
-            logger.info('Starting new bot thread for {0}'.format(bot.api.player))
-            worker = threading.Thread(target=func, args=(bot,))
-            worker.bot = bot
-            worker.daemon = True
-            worker.start()
+            bot.session.start_time = time.time()
+
+            if func:
+                logger.info('Starting new bot thread for {0}'.format(bot.api.player))
+                worker = threading.Thread(target=func, args=(bot,))
+                worker.bot = bot
+                worker.daemon = True
+                worker.start()
+            else:
+                logger.info('No need to use a main thread for this worker!')
+                worker = EmrossBaseObject(bot)
+
             workers.append(worker)
             if scheduler:
                 bot.scheduler.start()
