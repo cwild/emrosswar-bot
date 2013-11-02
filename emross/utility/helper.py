@@ -59,15 +59,17 @@ class EmrossWarBot(CacheableData):
         self.pvp = self.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
 
+        self.builder = BuildManager(self)
         self.tasks = {}
         self.cities = []
 
-        self.alliance = Alliance(self)
-        self.events = events.EventManager(self)
-        self.favourites = Favourites(self)
-        self.item_manager = item.Item(self)
-        self.shop = Shop(self)
-        self.world = World(self)
+        self.alliance = self.builder.task(Alliance)
+        self.events = self.builder.task(events.EventManager)
+        self.favourites = self.builder.task(Favourites)
+        self.item_manager = self.builder.task(item.Item)
+        self.shop = self.builder.task(Shop)
+        self.world = self.builder.task(World)
+
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
 
@@ -76,24 +78,24 @@ class EmrossWarBot(CacheableData):
         self.core_tasks = []
         self.core_setup()
 
-        self.builder = BuildManager(self)
         self.tasks['core_tasks'] = s.add_interval_task(self.builder.process, "core task handler", 1, 1, kronos.method.sequential, [(self.core_tasks,), 'core'], None)
 
         if api.player:
-            if api.player.disable_global_build == False:
-                try:
-                    self.tasks['build_path'] = s.add_interval_task(
-                        self.builder.process,
-                        "build path handler", 3, 1, kronos.method.sequential,
-                        [settings.build_path, 'build'], None)
-                except AttributeError:
-                    pass
+            if getattr(settings, 'build_path', False) and \
+                api.player.disable_global_build == False:
+
+                self.tasks['build_path'] = s.add_interval_task(
+                    self.builder.process,
+                    "build path handler", 3, 1, kronos.method.sequential,
+                    [settings.build_path, 'build'], None
+                )
 
             if api.player.custom_build:
                 self.tasks['custom'] = s.add_interval_task(
                     self.builder.process,
                     "custom build path handler", 1, 1, kronos.method.sequential,
-                    [api.player.custom_build, 'custom'], None)
+                    [api.player.custom_build, 'custom'], None
+                )
 
     def __del__(self):
         logger.debug('Clean up bot instance')
@@ -102,6 +104,13 @@ class EmrossWarBot(CacheableData):
     def disconnect(self):
         logger.info('Stop the task scheduler for this bot')
         self.scheduler.stop()
+
+    def shutdown(self):
+        self.session.end_time = time.time()
+        try:
+            self.session.save()
+        except IOError:
+            logger.warning('Error saving session')
 
     @property
     def userinfo(self):
