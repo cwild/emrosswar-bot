@@ -14,18 +14,46 @@ from emross.arena.hero import Hero
 from emross.exceptions import InsufficientHeroCommand, InsufficientSoldiers
 from emross.military.camp import Soldier
 from emross.scenario.scene import Scenario
+from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
 logger = logging.getLogger(__name__)
 
 
-class ScenarioWalker(Task):
+class ScenarioWalker(Task, Controllable):
     INTERVAL = 10
     AUTO_HERO = -1
+    COMMAND = 'scenario'
 
     def setup(self):
         self.html_parser = HTMLParser()
-        self.scenario = None
+        self.scenario = Scenario(self.bot)
+
+    def action_status(self, **kwargs):
+        """How are scenes looking?"""
+
+        info = self.scenario.list()
+
+        if 'fb_label' in info['ret']:
+            self.chat.send_message('Scenario={0}, time left={1}'.format(\
+                EmrossWar.SCENARIO_TEXT.map_name(info['ret']['fb_label']), \
+                self.bot.human_friendly_time(info['ret']['remaining_time'])
+            ))
+
+            SOLDIER_DATA = getattr(EmrossWar, 'SOLDIER_{0}'.format(self.bot.userinfo['nationid']))
+
+            for army in info['ret'].get('army_data', {}).itervalues():
+                hero = EmrossWar.HERO[str(army['hero'])]['name']
+                troops = ','.join(['{0}x{1}'.format(qty, \
+                                SOLDIER_DATA[soldier]['name'])
+                                for soldier, qty in army['soldier'].iteritems()])
+
+                self.chat.send_message('"{0}" leads {1}.'.format(hero, troops))
+        else:
+            self.chat.send_message('Scenario status: remaining={0}, highest={1}, lottery={3}'.format(\
+                info['ret']['times'], int(info['ret'].get('highest_fb',0))+1, \
+                info['ret'].get('hasLottery',False))
+            )
 
     def process(self, scenario, armies, times=[], resume=True,
         initial_delay=0.5, mode=Scenario.NORMAL_MODE,
@@ -48,15 +76,12 @@ class ScenarioWalker(Task):
             self.sleep(60)
             return True
 
-        if self.scenario is None:
-            self.scenario = Scenario(self.bot)
-
         json = self.scenario.list()
 
         if json['code'] != EmrossWar.SUCCESS:
             return resume
 
-        if 'hasLottery' in json['ret'] and json['ret']['hasLottery']:
+        if json['ret'].get('hasLottery', False):
             self.scenario.finish()
             self.scenario = Scenario(self.bot)
             return resume
@@ -71,7 +96,7 @@ class ScenarioWalker(Task):
 
             if int(json['ret']['finish']) == 1:
                 self.scenario.finish()
-                self.scenario = None
+                self.scenario = Scenario(self.bot)
                 return resume
 
             if not hasattr(self.scenario, 'armies'):
@@ -301,13 +326,13 @@ class ScenarioWalker(Task):
             if info['code'] == Scenario.SCENARIO_FINISHED:
                 self.log.info('Scenario finished!')
                 self.scenario.finish()
-                self.scenario = None
+                self.scenario = Scenario(self.bot)
                 return
 
             if info['code'] == Scenario.SCENARIO_EXPIRED:
                 self.log.info('Scenario time limit has expired')
                 self.scenario.finish()
-                self.scenario = None
+                self.scenario = Scenario(self.bot)
                 return
 
             if info['code'] == Scenario.SCENARIO_OCCUPIED_ALREADY:
