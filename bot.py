@@ -38,10 +38,11 @@ if __name__ == "__main__":
         )
     parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)
     parser.add_argument('-c', '--console', help='Interactive console', action='store_true', default=False)
+    parser.add_argument('-p', '--poolsize', help='Number of threads to use in the pool', type=int, default=None)
     args = parser.parse_args()
 
 
-    manager = BotManager(console=args.console)
+    manager = BotManager(console=args.console, processes=args.poolsize)
 
     try:
         if not args.multi:
@@ -58,6 +59,8 @@ if __name__ == "__main__":
         manager.run(run_bot)
 
     except KeyboardInterrupt:
+        logger.critical('Caught KeyboardInterrupt, begin shutdown')
+
         for bot in manager.bots:
             bot.shutdown()
 
@@ -66,17 +69,14 @@ if __name__ == "__main__":
 else:
     import threading
     def test_bot():
-        manager = BotManager()
         try:
             player = settings.multi_bot[0]
         except AttributeError:
             player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
-        manager.players.append(player)
-        manager.initialise_bots()
 
-        t = threading.Thread(target=manager.run, args=(None,False))
-        t.daemon = True
-        t.start()
+        manager = BotManager()
+        manager.players.append(player)
+        manager.run(workhorse=False)
 
         return next(iter(manager.bots), None)
     bot = test_bot()

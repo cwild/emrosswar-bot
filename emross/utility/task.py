@@ -1,5 +1,6 @@
 import logging
 import math
+import threading
 import time
 
 from emross.utility.base import EmrossBaseObject
@@ -15,6 +16,7 @@ class Task(EmrossBaseObject):
     def __init__(self, *args, **kwargs):
         super(Task, self).__init__(*args, **kwargs)
 
+        self.lock = threading.Lock()
         self._result = dict()
         self._last_cycle = 0
         self._next_run = 0
@@ -28,13 +30,14 @@ class Task(EmrossBaseObject):
         or as the result of processing this cycle. Necessary incase a blocking
         task has fired previously and is not rescheduled to run yet.
         """
-        if self._last_cycle == cycle_start or cycle_start > self._next_run:
-            self._last_cycle = cycle_start
-            self._result[stage] = self.process(*args, **kwargs)
+        with self.lock:
+            if self._last_cycle == cycle_start or cycle_start > self._next_run:
+                self._last_cycle = cycle_start
+                self._result[stage] = self.process(*args, **kwargs)
 
-            if self._next_run < cycle_start:
-                delay = self.calculate_delay()
-                self.sleep(delay)
+                if self._next_run < cycle_start:
+                    delay = self.calculate_delay()
+                    self.sleep(delay)
 
         return self._result.get(stage, None)
 

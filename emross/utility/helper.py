@@ -73,29 +73,17 @@ class EmrossWarBot(CacheableData):
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
 
-        self.scheduler = s = kronos.ThreadedScheduler()
-
-        self.core_tasks = []
-        self.core_setup()
-
-        self.tasks['core_tasks'] = s.add_interval_task(self.builder.process, "core task handler", 1, 1, kronos.method.sequential, [(self.core_tasks,), 'core'], None)
+        self.tasks['core'] = self.core_setup()
 
         if api.player:
-            if getattr(settings, 'build_path', False) and \
+            if hasattr(settings, 'build_path') and \
                 api.player.disable_global_build == False:
 
-                self.tasks['build_path'] = s.add_interval_task(
-                    self.builder.process,
-                    "build path handler", 3, 1, kronos.method.sequential,
-                    [settings.build_path, 'build'], None
-                )
+                self.tasks['build_path'] = settings.build_path
 
             if api.player.custom_build:
-                self.tasks['custom'] = s.add_interval_task(
-                    self.builder.process,
-                    "custom build path handler", 1, 1, kronos.method.sequential,
-                    [api.player.custom_build, 'custom'], None
-                )
+                self.tasks['custom'] = api.player.custom_build
+
 
     def __del__(self):
         logger.debug('Clean up bot instance')
@@ -120,10 +108,13 @@ class EmrossWarBot(CacheableData):
         """
         Setup our core tasks. These run in a separate thread.
         """
-        self.core_tasks.append((Chat,))
-        self.core_tasks.append((AutoLottery,))
-        self.core_tasks.append((GiftCollector,))
-
+        return (
+            (
+                (Chat,),
+                (AutoLottery,),
+                (GiftCollector,)
+            ),
+        )
 
         def inventory(*args, **kwargs):
             chat = self.builder.task(Chat)
