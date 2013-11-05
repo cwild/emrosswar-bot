@@ -88,7 +88,7 @@ class World(Task):
                                 for tries in xrange(2):
                                     city.barracks.get_soldiers()
                                     spies = city.barracks.soldiers[Soldier.SPY-1][1]
-                                    self.log.info('Found {0} spies in the city {}'.format(spies, city.name))
+                                    self.log.info('Found {0} spies in the city "{1}"'.format(spies, EmrossWar.safe_text(city.name)))
                                     if spies < 1:
                                         if tries == 0:
                                             self.log.info('Check the war room. Try to trigger spy count to update')
