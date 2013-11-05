@@ -15,6 +15,12 @@ from emross.utility.helper import EmrossWarBot
 
 
 DEFAULT_POOL_SIZE = 10
+
+# The delay between each completed cycle of our bot handlers
+ERROR_TICK = 1
+WORKER_TICK = 0.1
+
+# When an error is encountered, it is handled in a separate thread
 WORKER_ERROR_WAIT = 15
 WORKER_ERROR_MAX_WAIT = 3600
 
@@ -32,7 +38,7 @@ def _bot_runner(pool, bots, **kwargs):
                 logger.exception(e)
                 continue
 
-        time.sleep(0.1)
+        time.sleep(WORKER_TICK)
 
 def _error_checker(workers, bots):
     """
@@ -75,6 +81,7 @@ def _error_checker(workers, bots):
                 t = _handle_worker_errors(worker, error)
                 logger.debug('Error currently processing in {0}'.format(t))
 
+            time.sleep(ERROR_TICK)
 
 
 def _handle_worker_errors(worker, error, *args, **kwargs):
