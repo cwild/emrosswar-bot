@@ -90,7 +90,6 @@ class EmrossWarApi(object):
 
     def _call(self, method, server=None,
         sleep=(),
-        _lock=True,
         handle_errors=True,
         **kargs):
         """Call API and return result"""
@@ -114,13 +113,12 @@ class EmrossWarApi(object):
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
 
         try:
-            url = 'http://%s/%s' % (server, method)
-            if _lock:
-                with self.lock:
-                    r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
-            else:
-                r = self.pool.request('GET', url, fields=params, headers=self.create_headers())
-        except exceptions.HTTPError as e :
+            r = self.pool.request(
+                    'GET',
+                    'http://{0}/{1}'.format(server, method),
+                    fields=params, headers=self.create_headers()
+                )
+        except exceptions.HTTPError as e:
             logger.exception(e)
 
             class DummyResponse(object):

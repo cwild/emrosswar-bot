@@ -7,9 +7,10 @@ from emross.utility.base import EmrossBaseObject
 class BuildManager(EmrossBaseObject):
 
     def __init__(self, bot, *args, **kwargs):
+        super(BuildManager, self).__init__(bot, *args, **kwargs)
         self.tasks = {}
         self.lock = threading.RLock()
-        super(BuildManager, self).__init__(bot, *args, **kwargs)
+        self.running_build_stages = set()
 
     def task(self, task_class):
         with self.lock:
@@ -27,10 +28,17 @@ class BuildManager(EmrossBaseObject):
         Process the build path and pass things to their respective handlers
         for further processing.
         """
+        with self.lock:
+            if stagename in self.running_build_stages:
+                # This particular stagename is being run somewhere else
+                return
+            else:
+                self.running_build_stages.add(stagename)
+
         results = []
         cycle_start = time.time()
 
-        for i, stage in enumerate(tasks):
+        for i, stage in enumerate(tasks, start=1):
 
             results[:] = []
             for parts in stage:
@@ -47,5 +55,8 @@ class BuildManager(EmrossBaseObject):
                     self.log.exception(e)
 
             if False in results:
-                self.log.debug('Not all parts of {0} stage {1} are complete'.format(stagename, i+1))
+                self.log.debug('Not all parts of {0} stage {1} are complete'.format(stagename, i))
                 break
+
+        # Free this stage for other threads
+        self.running_build_stages.remove(stagename)

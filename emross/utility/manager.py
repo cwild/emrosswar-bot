@@ -33,6 +33,8 @@ def _bot_runner(pool, bots, **kwargs):
         for bot in bots:
             try:
                 for task, jobs in bot.tasks.iteritems():
+                    if task in bot.builder.running_build_stages:
+                        continue
                     pool.apply_async(_do_work, (bot, jobs, task))
             except Exception as e:
                 logger.exception(e)
