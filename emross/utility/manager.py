@@ -32,6 +32,8 @@ def _bot_runner(pool, bots, **kwargs):
                 logger.exception(e)
                 continue
 
+        time.sleep(0.1)
+
 def _error_checker(workers, bots):
     """
     Continuously check each bot for errors and handle them sequentially.
@@ -103,7 +105,6 @@ class BotManager(object):
         self.players = []
         self.bots = []
         self.console = console
-        self._initialised = False
         self.kwargs = kwargs
 
     def bot(self, nickname=None, *args, **kwargs):
@@ -114,21 +115,11 @@ class BotManager(object):
             if nick.startswith(nickname) or nick.endswith(nickname):
                 return bot
 
-        return None
-
     def initialise_bots(self):
-        if self._initialised:
-            return
-
-        EmrossWarApi.init_pool(len(self.players)*3)
-
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
             bot = EmrossWarBot(api)
-
             self.bots.append(bot)
-
-        self._initialised = True
 
     def run(self, func=None, workhorse=True):
         self.initialise_bots()

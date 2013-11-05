@@ -67,7 +67,6 @@ if __name__ == "__main__":
     logger.info('Exiting')
 
 else:
-    import threading
     def test_bot():
         try:
             player = settings.multi_bot[0]
