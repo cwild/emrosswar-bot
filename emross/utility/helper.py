@@ -73,7 +73,14 @@ class EmrossWarBot(CacheableData):
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
 
-        self.tasks['core'] = self.core_setup()
+        self.core_setup()
+        self.tasks['core'] = (
+            (
+                (Chat,),
+                (AutoLottery,),
+                (GiftCollector,)
+            ),
+        )
 
         if api.player:
             if hasattr(settings, 'build_path') and \
@@ -106,15 +113,8 @@ class EmrossWarBot(CacheableData):
 
     def core_setup(self):
         """
-        Setup our core tasks. These run in a separate thread.
+        Some utility functions
         """
-        return (
-            (
-                (Chat,),
-                (AutoLottery,),
-                (GiftCollector,)
-            ),
-        )
 
         def inventory(*args, **kwargs):
             chat = self.builder.task(Chat)
