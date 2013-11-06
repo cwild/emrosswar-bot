@@ -47,6 +47,8 @@ class EmrossWarBot(CacheableData):
 
     def __init__(self, api, *args, **kwargs):
         super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
+        self._initialised = False
+        self._closing = False
         self.blocked = False
         self.runnable = True
 
@@ -101,6 +103,7 @@ class EmrossWarBot(CacheableData):
         self.scheduler.stop()
 
     def shutdown(self):
+        self._closing = True
         self.session.end_time = time.time()
         try:
             self.session.save()
@@ -109,6 +112,8 @@ class EmrossWarBot(CacheableData):
 
     @property
     def userinfo(self):
+        if not self._initialised and self._closing:
+            raise BotException('userinfo unavailable and marked for shutdown')
         return self.data
 
     def core_setup(self):
@@ -186,6 +191,7 @@ class EmrossWarBot(CacheableData):
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         userinfo = json['ret']['user']
+        self._initialised = True
 
         skip = set([city.id for city in self.cities])
         skip.update(settings.ignore_cities)
