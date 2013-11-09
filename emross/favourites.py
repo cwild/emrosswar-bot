@@ -3,10 +3,11 @@ import math
 
 from emross.api import EmrossWar
 from emross.mobs import NPC
+from emross.utility.base import EmrossBaseObject
 
 logger = logging.getLogger(__name__)
 
-class Favourites(object):
+class Favourites(EmrossBaseObject):
     FAV_URL = 'game/api_fav.php'
     LORD = 1
     DEVIL_ARMY = 2
@@ -17,7 +18,7 @@ class Favourites(object):
     }
 
     def __init__(self, bot):
-        self.bot = bot
+        super(Favourites, self).__init__(bot)
         self.favs = {}
 
     def add(self, wid, cat):
@@ -25,7 +26,7 @@ class Favourites(object):
 
     def clear_favs(self, cat=DEVIL_ARMY):
         for f in self.favs[cat]:
-            logger.info('Deleting fav %d' % f.id)
+            self.log.info('Deleting fav {0}'.format(f.id))
             self.bot.api.call(self.FAV_URL, act='delfavnpc', fid=f.id)
 
     def get_favs(self, cat=DEVIL_ARMY):
@@ -34,7 +35,7 @@ class Favourites(object):
 
         self.favs[cat] = []
         for data in favs:
-            fav = self.TYPES[cat](data)
+            fav = self.TYPES[cat](data, self.bot)
             self.favs[cat].append(fav)
 
     def sort_favs(self, city, cat=DEVIL_ARMY):
