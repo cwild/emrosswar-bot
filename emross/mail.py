@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 class MailException: pass
 class NoMailInInbox(MailException): pass
 
+HERO_SEARCH_TEXT = 'Hero'
 WAR_RESULT_INFO = 'game/war_result_info_api.php'
 WAR_RESULT_LIST = 'game/war_result_list_api.php'
 
@@ -141,12 +142,23 @@ class ScoutMailHandler(MailHandler):
 
 
 class MailParser:
-    def __init__(self, troops=()):
+    def __init__(self, troops=(), heroes=()):
         self.troops = troops
+
+        self.reHeroes = []
+        for hero in heroes:
+            self.reHeroes.append(re.compile(r'<b>\[{0}\]<\\/b><br\\/>({1})'.format(HERO_SEARCH_TEXT, hero)))
+
         self.reTroops = []
         for troop, count in troops:
             self.reTroops.append(re.compile('%s\((\d+)\)' % troop))
 
+
+    def find_hero(self, message):
+        for reg in self.reHeroes:
+            t = reg.search(message)
+            if t:
+                return t.group(1)
 
     def find_troops(self, message):
         troops = []
