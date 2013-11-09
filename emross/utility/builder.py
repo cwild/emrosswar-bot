@@ -9,11 +9,12 @@ class BuildManager(EmrossBaseObject):
     def __init__(self, bot, *args, **kwargs):
         super(BuildManager, self).__init__(bot, *args, **kwargs)
         self.tasks = {}
-        self.lock = threading.RLock()
+        self.lock = threading.Lock()
+        self.rlock = threading.RLock()
         self.running_build_stages = set()
 
     def task(self, task_class):
-        with self.lock:
+        with self.rlock:
             try:
                 handler = self.tasks[task_class]
             except KeyError:

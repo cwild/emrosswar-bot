@@ -31,6 +31,8 @@ def _do_work(bot, *args, **kwargs):
 def _bot_runner(pool, bots, **kwargs):
     while len(bots):
         for bot in bots:
+            if bot.blocked:
+                continue
             try:
                 for task, jobs in bot.tasks.iteritems():
                     if task in bot.builder.running_build_stages:
@@ -83,7 +85,8 @@ def _error_checker(workers, bots):
                 t = _handle_worker_errors(worker, error)
                 logger.debug('Error currently processing in {0}'.format(t))
 
-            time.sleep(ERROR_TICK)
+        # After checking every bot, take a quick breath!
+        time.sleep(ERROR_TICK)
 
 
 def _handle_worker_errors(worker, error, *args, **kwargs):
