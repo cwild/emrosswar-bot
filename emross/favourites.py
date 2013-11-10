@@ -1,14 +1,16 @@
 import logging
 import math
 
+# Needs to be defined ahead of NPC import
+FAVOURITES_URL = 'game/api_fav.php'
+
 from emross.api import EmrossWar
-from emross.mobs import NPC
+from emross.mobs.npc import NPC
 from emross.utility.base import EmrossBaseObject
 
 logger = logging.getLogger(__name__)
 
 class Favourites(EmrossBaseObject):
-    FAV_URL = 'game/api_fav.php'
     LORD = 1
     DEVIL_ARMY = 2
     COLONY = 3
@@ -22,15 +24,15 @@ class Favourites(EmrossBaseObject):
         self.favs = {}
 
     def add(self, wid, cat):
-        return self.bot.api.call(self.FAV_URL, act='addreport', wid=wid, cat=cat)
+        return self.bot.api.call(FAVOURITES_URL, act='addreport', wid=wid, cat=cat)
 
     def clear_favs(self, cat=DEVIL_ARMY):
         for f in self.favs[cat]:
             self.log.info('Deleting fav {0}'.format(f.id))
-            self.bot.api.call(self.FAV_URL, act='delfavnpc', fid=f.id)
+            self.bot.api.call(FAVOURITES_URL, act='delfavnpc', fid=f.id)
 
     def get_favs(self, cat=DEVIL_ARMY):
-        json = self.bot.api.call(self.FAV_URL, act='getfavnpc', cat=cat)
+        json = self.bot.api.call(FAVOURITES_URL, act='getfavnpc', cat=cat)
         favs = json['ret']['favs']
 
         self.favs[cat] = []
@@ -53,4 +55,3 @@ if __name__ == '__main__':
 
     fm = Favourites(bot)
     fm.get_favs()
-
