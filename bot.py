@@ -55,8 +55,7 @@ if __name__ == "__main__":
                 logger.critical('You must specify multiple bots in your settings file.')
                 exit()
 
-        from emross.farming.basic import run_bot
-        manager.run(run_bot)
+        manager.run()
 
     except KeyboardInterrupt:
         logger.critical('Caught KeyboardInterrupt, begin shutdown')

@@ -22,7 +22,7 @@ class City(EmrossBaseObject, CacheableData):
     def __init__(self, bot, id, name, x, y):
         super(City, self).__init__(bot, time_to_live=60)
         self.id = id
-        self.name = name.encode('utf-8')
+        self.name = EmrossWar.safe_text(name)
         self.x = x
         self.y = y
 
@@ -105,8 +105,8 @@ class City(EmrossBaseObject, CacheableData):
         Return a dict of the various soldiers to include in this army.
         `threshold` can be a dict-like object or a list
         """
-        heroes = heroes or self.heroes
-        if len(heroes) == 0:
+        heroes = heroes or self.hero_manager.heroes.values()
+        if not heroes:
             raise NoHeroesAvailable('Cannot find any available heroes at "{0}"'.format(self.name))
 
         army = {}
@@ -163,7 +163,7 @@ class City(EmrossBaseObject, CacheableData):
                 raise InsufficientHeroCommand('This hero cannot command this many troops')
 
         if not army:
-            raise InsufficientSoldiers('No soldiers were added to the army')
+            raise InsufficientSoldiers('No soldiers were added to the army at "{0}"'.format(self.name))
 
         return dict([('soldier_num{0}'.format(k), v) for k, v in army.iteritems()])
 
@@ -201,24 +201,21 @@ class City(EmrossBaseObject, CacheableData):
             self.heroes.append(Hero(data))
 
 
-    def choose_hero(self, capacity = None):
+    def choose_hero(self, capacity=None):
         """
         Which hero should we use?
         """
+        heroes = [h for h in self.hero_manager.ordered_by_stats([Hero.COMMAND]) if
+                h.stat(Hero.STATE) == Hero.AVAILABLE and h.stat(Hero.VIGOR) > 0]
 
-        hero = None
+        if not heroes:
+            raise NoHeroesAvailable
 
-        try:
-            if capacity:
-                for h in self.heroes:
-                    if h.data.get(Hero.COMMAND) >= capacity:
-                        hero = h
-                        break
+        if not capacity:
+            return heroes[0]
 
-                self.heroes.remove(hero)
-            else:
-                hero = self.heroes.pop(0)
-        except ValueError:
-            pass
+        for hero in heroes[::-1]:
+            if hero.stat(Hero.COMMAND) >= capacity:
+                return hero
 
-        return hero
+        raise InsufficientHeroCommand

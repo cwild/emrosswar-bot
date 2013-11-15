@@ -43,11 +43,6 @@ def run_bot(bot):
                         continue
 
                     try:
-                        """
-                        How many (decent) soldiers are in this city?
-                        """
-                        city.barracks.get_soldiers()
-
                         logger.info('Getting available heroes')
                         city.get_available_heroes()
 

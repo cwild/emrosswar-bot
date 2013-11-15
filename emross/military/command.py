@@ -87,7 +87,7 @@ class CommandCenter(Task):
                 break
 
             try:
-                city.barracks.camp_info()
+                city.barracks.expire()
                 troops = []
                 for soldier, vals in desired.iteritems():
                     qty, remaining = vals
