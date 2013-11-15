@@ -35,7 +35,7 @@ class World(Task):
         """Choose a city with spies"""
         choice = None
         for city in self.bot.cities:
-            city.barracks.get_soldiers()
+            city.barracks.expire()
             try:
                 if city.barracks.soldiers[Soldier.SPY-1][1]:
                     if not choice or city.barracks.soldiers[Soldier.SPY-1][1] > choice.barracks.soldiers[Soldier.SPY-1][1]:
@@ -86,7 +86,7 @@ class World(Task):
                         if item[2] in targets:
                             if spies < 1:
                                 for tries in xrange(2):
-                                    city.barracks.get_soldiers()
+                                    city.barracks.expire()
                                     spies = city.barracks.soldiers[Soldier.SPY-1][1]
                                     self.log.info('Found {0} spies in the city "{1}"'.format(spies, EmrossWar.safe_text(city.name)))
                                     if spies < 1:

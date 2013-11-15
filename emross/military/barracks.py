@@ -1,9 +1,11 @@
+from lib.cacheable import CacheableData
+
 from emross.api import EmrossWar
 from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 
 
-class Barracks(EmrossBaseObject):
+class Barracks(EmrossBaseObject, CacheableData):
     ACTION_CONFIRM_URL = 'game/armament_action_do_api.php'
     ACTION_DO_URL = 'game/armament_action_task_api.php'
     SOLDIER_EDUCATE_URL = 'game/soldier_educate_api.php'
@@ -25,15 +27,12 @@ class Barracks(EmrossBaseObject):
     def __init__(self, bot, city):
         super(Barracks, self).__init__(bot)
         self.city = city
-        self._soldiers = None
 
     @property
     def soldiers(self):
-        if self._soldiers is None:
-            self.camp_info()
-        return self._soldiers
+        return self.data.get('soldiers', [])
 
-    def camp_info(self):
+    def update(self):
         """
         {'code': 0, 'ret': {'head': 17922, 'f': -372749, 'space': 1877, 'next': [0, 0],
         'soldiers': [
@@ -43,18 +42,8 @@ class Barracks(EmrossBaseObject):
             [15, 126, True], [16, 0, True], [17, 7163, True], [18, 200, True]],
         'def': 2}}
         """
-        self.log.info('Update soldier listing at camp')
-        json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
-        soldiers = []
-        try:
-            soldiers = json['ret']['soldiers']
-            self._soldiers[:] = soldiers
-        except TypeError:
-            self._soldiers = soldiers
-
-        return json
-
-    get_soldiers = camp_info
+        self.log.info('Update soldier listing for the camp at "{0}"'.format(self.city.name))
+        return self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
 
     def train_troops(self, soldier, quantity, hero=0):
         """
@@ -93,13 +82,11 @@ class Barracks(EmrossBaseObject):
             [6035227, 5, 7, 150, '17/47', [15], [600], 172]],
         13]}
         """
-        json = self.bot.api.call(self.ACTION_CONFIRM_URL, act='warinfo', city=self.city.id)
-        return json
+        return self.bot.api.call(self.ACTION_CONFIRM_URL, act='warinfo', city=self.city.id)
 
     def total_troops(self):
         troop_tally = {}
 
-        info = self.camp_info()
         for soldier, qty, unlocked in self.soldiers:
             troop_tally[soldier] = qty
 
@@ -111,7 +98,7 @@ class Barracks(EmrossBaseObject):
                 except KeyError:
                     troop_tally[soldier] = qty
 
-        return troop_tally, info
+        return troop_tally
 
     def can_train(self, troop):
         try:
@@ -180,8 +167,6 @@ class Barracks(EmrossBaseObject):
 if __name__ == "__main__":
     from emross.military.camp import Soldier
     from bot import bot
-    bot.update()
 
     for city in bot.cities:
-        city.barracks.camp_info()
         print city.barracks.can_train(Soldier.ASSASSIN)

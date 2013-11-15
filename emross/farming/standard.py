@@ -1,6 +1,7 @@
 import time
 
 from emross.api import EmrossWar
+from emross.arena.hero import Hero
 from emross.exceptions import (EmrossWarApiException,
     InsufficientSoldiers,
     NoHeroesAvailable,
@@ -22,16 +23,11 @@ class BasicFarmer(BaseFarmer):
         except IndexError:
             return
 
-        # temporarily use this until we migrate to new hero manager
-        city.get_available_heroes()
-
         army = city.create_army(threshold)
         hero = city.choose_hero(sum(army.values()))
 
-        if not hero:
-            raise NoHeroesAvailable('No available heroes to command this army')
-
-        self.log.info('Sending attack {0}/{1}'.format(target.y, target.x))
+        self.log.info('Sending attack: [{0}/{1}] {2} from "{3}"'.format(\
+            target.y, target.x, hero, city.name))
 
         # send troops to attack
         params = {
@@ -50,6 +46,7 @@ class BasicFarmer(BaseFarmer):
 
         if json['code'] == EmrossWar.SUCCESS:
             target.attack += 1
+            hero.data[Hero.STATE] = Hero.WAR
 
 
     def sort_favourites(self, favs=[]):

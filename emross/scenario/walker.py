@@ -178,7 +178,7 @@ class ScenarioWalker(Task, Controllable):
                         self.log.debug(generals)
 
                 if city is not None:
-                    city.barracks.camp_info()
+                    city.barracks.expire()
                     heroes = dict([(h.data.get('gid'), h) for h in city.hero_manager.heroes.itervalues()])
 
                     for general in generals:
