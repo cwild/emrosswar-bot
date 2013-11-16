@@ -2,7 +2,7 @@ import handler
 import logging
 import time
 
-from emross.exceptions import EmrossWarApiException
+from emross import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -31,4 +31,8 @@ class PvPEliminationHandler(handler.EmrossHandler):
 
 class VisitTooOftenHandler(handler.EmrossHandler):
     def process(self, json):
-        raise EmrossWarApiException('We have been rate limited. Come back later.')
+        raise exceptions.EmrossWarApiException('We have been rate limited. Come back later.')
+
+class DevilArmyGone(handler.EmrossHandler):
+    def process(self, json):
+        raise exceptions.TargetException('Targeted NPC is gone!')
