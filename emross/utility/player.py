@@ -103,8 +103,7 @@ class Player(object):
 
         key = json['ret']['key']
 
-        if bot.pvp:
-            self._sync_pvp_key(bot, server, key, user)
+        self._sync_pvp_key(bot, key, user, server=server)
 
         return key
 
@@ -131,11 +130,12 @@ class Player(object):
             logger.debug('No cached key for this account')
 
         # Check external API for a remotely cached key
-        key = self.check_external_api(bot, invalid_key=current_key)
+        key, server = self.check_external_api(bot, invalid_key=current_key)
         if key and key != current_key:
             logger.info('We have another key to try from the remote API.')
             self.key = key
             self.update_user_cache(self.username, key)
+            self._sync_pvp_key(bot, key, user=self.username, server=server)
             bot.errors.task_done()
             return
 
@@ -180,13 +180,7 @@ class Player(object):
 
         if self.remote:
             data = self.remote.check_account(self.username, **kwargs)
-            key = data.get('key', None)
-            game_world = data.get('server')
-
-            if bot.pvp and game_world:
-                self._sync_pvp_key(bot, game_world[7:-1], key, user=data.get('user'))
-
-            return key
+            return data.get('key'), data.get('server', '')[7:-1]
 
     def load_user_cache(self):
         keys = {}
@@ -210,9 +204,12 @@ class Player(object):
         cache[username] = key
         self.save_user_cache(cache)
 
-    def _sync_pvp_key(self, bot, game_world, key, user=None,  **kwargs):
-        json = bot.api.call(self.LOGIN_URL, server=game_world, sleep=False,
-                            key=key, user=user, action='synckey')
+    def _sync_pvp_key(self, bot, key, user=None, **kwargs):
+        if not bot.pvp:
+            return
+
+        json = bot.api._call(self.LOGIN_URL, sleep=False, handle_errors=False,
+                            key=key, user=user, action='synckey', **kwargs)
 
         """
         Character not known in normal PvP world
@@ -221,11 +218,12 @@ class Player(object):
         been chosen already; otherwise, receive code 4005 and quit out!
         """
         if json['code'] == 12:
-            json = bot.api.call('game/api_ww.php', server=game_world,
-                sleep=False,
+            json = bot.api._call('game/api_ww.php',
+                sleep=False, handle_errors=False,
                 key=key,
                 action='switch',
-                hero_id=0
+                hero_id=0,
+                **kwargs
             )
             if json['code'] == 4005:
                 raise BotException('Manual hero selection required for World War!')
