@@ -104,7 +104,7 @@ class Player(object):
         key = json['ret']['key']
 
         if bot.pvp:
-            api.call(self.LOGIN_URL, sleep=False, key=key, user=user, action='synckey')
+            self._sync_pvp_key(bot, server, key, user)
 
         return key
 
@@ -184,7 +184,7 @@ class Player(object):
             game_world = data.get('server')
 
             if bot.pvp and game_world:
-                bot.api.call(self.LOGIN_URL, server=game_world, sleep=False, key=key, user=data.get('user'), action='synckey')
+                self._sync_pvp_key(bot, game_world[7:-1], key, user=data.get('user'))
 
             return key
 
@@ -209,6 +209,26 @@ class Player(object):
         cache = self.load_user_cache()
         cache[username] = key
         self.save_user_cache(cache)
+
+    def _sync_pvp_key(self, bot, game_world, key, user=None,  **kwargs):
+        json = bot.api.call(self.LOGIN_URL, server=game_world, sleep=False,
+                            key=key, user=user, action='synckey')
+
+        """
+        Character not known in normal PvP world
+        Try to sync with the World War server.
+        Provide hero_id as 0. This is acceptable if a hero has manually
+        been chosen already; otherwise, receive code 4005 and quit out!
+        """
+        if json['code'] == 12:
+            json = bot.api.call('game/api_ww.php', server=game_world,
+                sleep=False,
+                key=key,
+                action='switch',
+                hero_id=0
+            )
+            if json['code'] == 4005:
+                raise BotException('Manual hero selection required for World War!')
 
 class AccountApi(RemoteApi):
     """Interact with an external API to get and synchronise """
