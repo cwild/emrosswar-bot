@@ -29,12 +29,6 @@ class BuildManager(EmrossBaseObject):
         Process the build path and pass things to their respective handlers
         for further processing.
         """
-        with self.lock:
-            if stagename in self.running_build_stages:
-                # This particular stagename is being run somewhere else
-                return
-            else:
-                self.running_build_stages.add(stagename)
 
         results = []
         cycle_start = time.time()
