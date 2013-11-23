@@ -77,7 +77,7 @@ class BaseFarmer(FilterableCityTask):
                 """
                 visited_cities = set()
                 while True:
-                    if target.attack == self.bot.npc_attack_limit:
+                    if getattr(target, 'attack', 0) == self.bot.npc_attack_limit:
                         break
 
                     if self.current_city in visited_cities:
