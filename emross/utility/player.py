@@ -180,7 +180,7 @@ class Player(object):
 
         if self.remote:
             data = self.remote.check_account(self.username, **kwargs)
-            return data.get('key'), data.get('server', '')[7:-1]
+            return data.get('key'), (data.get('server') or '')[7:-1]
 
     def load_user_cache(self):
         keys = {}
