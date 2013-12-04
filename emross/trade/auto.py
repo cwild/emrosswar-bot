@@ -61,9 +61,12 @@ class AutoTrade(Task):
     def buyer_process(self, interval=900, team=False, sleep=(4,5), delay=(0,15), *args, **kwargs):
         """Buy items specified by a remote api"""
 
-        available = self.remote.list(method='GET', server=self.bot.api.game_server, team=int(team==True))
+        available = self.remote.list(method='GET',
+                        server=self.bot.api.game_server,
+                        team=int(team==True),
+                        account=self.bot.userinfo.get('id')
+                    )
         self.log.info('The trade listing has {0} available items.'.format(len(available['items'])))
-        self.log.debug('Available items: {0}'.format(available['items']))
 
         if len(available['items']) > 0:
             city = self.bot.richest_city()
