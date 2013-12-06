@@ -1,6 +1,6 @@
 import time
 
-from emross.alliance import Alliance
+from emross.alliance import Alliance, ALLIANCE_INFO_URL
 from emross.api import EmrossWar
 from emross.resources import Resource
 from emross.utility.task import Task
@@ -108,7 +108,7 @@ class Donator(Task):
             )
 
             try:
-                json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='donate', num=gold, city=city.id)
+                json = self.bot.api.call(ALLIANCE_INFO_URL, op='donate', num=gold, city=city.id)
                 if json['code'] == EmrossWar.SUCCESS:
                     self.hall_timeout = time.time() + json['ret'][4]
                     self.bot.alliance._info = json['ret']
@@ -119,7 +119,7 @@ class Donator(Task):
 
 
     def get_tech_info(self, techid):
-        json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='techinfo', techid=techid)
+        json = self.bot.api.call(ALLIANCE_INFO_URL, op='techinfo', techid=techid)
         return json['ret']
 
 
@@ -155,7 +155,7 @@ class Donator(Task):
                 )
             )
 
-            json = self.bot.api.call(self.bot.alliance.UNION_INFO, op='tdonate',
+            json = self.bot.api.call(ALLIANCE_INFO_URL, op='tdonate',
                                 num=gold, techid=techid, city=city.id)
 
             if json['code'] == EmrossWar.SUCCESS:

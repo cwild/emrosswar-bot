@@ -1,9 +1,9 @@
 from emross.api import EmrossWar
+from emross.alliance import ALLIANCE_INFO_URL
 from emross.utility.base import EmrossBaseObject
 
 class Alliance(EmrossBaseObject):
     MAX_TECH_LEVEL = 5
-    UNION_INFO = 'game/api_union_info.php'
 
     def __init__(self, bot):
         super(Alliance, self).__init__(bot)
@@ -50,7 +50,7 @@ class Alliance(EmrossBaseObject):
         self.log.info('is a member of "{0}"'.format(ally))
 
         self.log.debug('Update alliance hall info')
-        json = self.bot.api.call(self.UNION_INFO, op='info')
+        json = self.bot.api.call(ALLIANCE_INFO_URL, op='info')
 
         if json['code'] == EmrossWar.SUCCESS:
             self._info = json['ret']
