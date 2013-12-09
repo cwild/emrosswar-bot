@@ -334,7 +334,7 @@ class EmrossWarBot(CacheableData):
         except MailException:
             pass
 
-    def clearout_inventory(self, city=None):
+    def clearout_inventory(self, city=None, use_items=False, sell_items=False, **kwargs):
         logger.info('Clear the item inventories')
 
         it = item.ItemType
@@ -342,9 +342,9 @@ class EmrossWarBot(CacheableData):
             page = 1
             sale_list = []
 
-            logger.info('Find items of type %d' % itype)
+            logger.info('Find items of type {0}'.format(itype))
             while True:
-                json = self.item_manager.list(page = page, type = itype)
+                json = self.item_manager.list(page=page, type=itype)
 
                 for _item in json['ret']['item']:
                     try:
@@ -356,21 +356,38 @@ class EmrossWarBot(CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.info('Last page of item type %d' % itype)
+                    logger.info('Last page of item type {0}'.format(itype))
                     break
 
             if sale_list:
-                logger.info('Sell %d item/s of type %d' % (len(sale_list), itype))
+                logger.info('Sell {0} item/s of type {1}'.format(len(sale_list), itype))
                 city = city or self.poorest_city()
 
                 for item_id in sale_list:
                     try:
-                        json = self.item_manager.sell(city = city.id, id = item_id)
+                        json = self.item_manager.sell(city=city.id, id=item_id)
                         city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                     except (KeyError, TypeError):
                         pass
 
                 sale_list[:] = []
+
+
+        for can_process, _items, func in [
+            (use_items, inventory.USABLE_ITEMS, self.item_manager.use),
+            (sell_items, inventory.SELLABLE_ITEMS, self.item_manager.sell)
+            ]:
+
+            if not can_process:
+                continue
+
+            result = self.find_inventory_items(_items)
+
+            for sid, found_items in result.iteritems():
+                for item_id, num, val in found_items:
+                    city = city or self.poorest_city()
+                    func(city=city.id, id=item_id, num=num)
+
 
     def find_inventory_item(self, search_item):
         item_id, item_type, item_rank = search_item

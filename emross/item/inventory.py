@@ -1,3 +1,6 @@
+SELLABLE_ITEMS = []
+USABLE_ITEMS = []
+
 """
 ITEM = (ITEM_ID, TYPE, RANK)
 """

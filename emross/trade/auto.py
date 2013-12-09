@@ -189,7 +189,7 @@ class AutoTrade(Task):
                     break
                 elif gold < cost:
                     if min_gold:
-                        self.bot.clearout_inventory(city)
+                        self.bot.clearout_inventory(city, use_items=True, sell_items=True)
                         city.expire()
                         gold = city.resource_manager.get_amount_of(Resource.GOLD)
                         total = min(total, gold*Trade.SELLING_FEE)
