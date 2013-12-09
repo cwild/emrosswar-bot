@@ -163,7 +163,8 @@ class BotManager(object):
         error_thread.daemon = True
         error_thread.start()
 
-        pool = ThreadPool(self.kwargs.get('processes', DEFAULT_POOL_SIZE))
+        processes = self.kwargs.get('processes') or DEFAULT_POOL_SIZE
+        self.pool = pool = ThreadPool(processes)
 
         if self.console:
             worker = threading.Thread(target=_bot_runner, args=(pool, self.bots),
