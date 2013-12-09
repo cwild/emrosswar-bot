@@ -31,11 +31,14 @@ class EventManager(EmrossBaseObject):
     def subscribe(self, event, action):
         self.events.setdefault(event, []).append(action)
 
-    def notify(self, event, *args, **kwargs):
+    def notify(self, event, data={}, *args, **kwargs):
         """
         Raise the given "event" with all of its subscribers
         """
-        self.log.debug('Process event "{0}" with {1} and {2}'.format(event, args, kwargs))
+        self.log.debug('Process event "{0}" with {1} and {2} (meta-data={meta})'.format(event,
+            args, kwargs, meta=data))
+
+        kwargs.update({'meta-data': data})
 
         for action in self.events.get(event, []):
             try:

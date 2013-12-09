@@ -130,7 +130,7 @@ class AutoTrade(Task):
 
         gold = city.resource_manager.get_amount_of(Resource.GOLD)
         if min_gold:
-            can_sell = gold > min_gold
+            can_sell = gold < min_gold
             self.log.debug('Sell items only if current gold at this city is less than the min gold')
 
         if max_gold:
@@ -184,10 +184,19 @@ class AutoTrade(Task):
             while remaining > 0:
                 gold = city.resource_manager.get_amount_of(Resource.GOLD)
 
-                if gold < cost:
-                    self.log.info('Not enough gold to cover the cost of posting an item')
-                    self.sleep(600)
+                if gold == 0:
+                    self.log.info('No gold available to post an item')
                     break
+                elif gold < cost:
+                    if min_gold:
+                        self.bot.clearout_inventory(city)
+                        city.expire()
+                        gold = city.resource_manager.get_amount_of(Resource.GOLD)
+                        total = min(total, gold*Trade.SELLING_FEE)
+                    else:
+                        self.log.info('Not enough gold to cover the cost of posting an item')
+                        self.sleep(600)
+                        break
 
                 try:
                     inv_id = for_sale.pop()

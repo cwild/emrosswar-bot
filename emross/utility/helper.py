@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 class EmrossWarBot(CacheableData):
     PVP_MODE_RE = re.compile('^p\d+\.')
     USERINFO_URL = 'game/get_userinfo_api.php'
+    OTHER_USERINFO_URL = 'game/api_get_userinfo2.php'
 
     INVENTORY_COMMAND = 'inventory'
     STATUS_COMMAND = 'status'
@@ -65,8 +66,9 @@ class EmrossWarBot(CacheableData):
         self.tasks = {}
         self.cities = []
 
-        self.alliance = self.builder.task(Alliance)
         self.events = self.builder.task(events.EventManager)
+
+        self.alliance = self.builder.task(Alliance)
         self.favourites = self.builder.task(Favourites)
         self.item_manager = self.builder.task(item.Item)
         self.shop = self.builder.task(Shop)
@@ -332,7 +334,7 @@ class EmrossWarBot(CacheableData):
         except MailException:
             pass
 
-    def clearout_inventory(self):
+    def clearout_inventory(self, city=None):
         logger.info('Clear the item inventories')
 
         it = item.ItemType
@@ -359,7 +361,7 @@ class EmrossWarBot(CacheableData):
 
             if sale_list:
                 logger.info('Sell %d item/s of type %d' % (len(sale_list), itype))
-                city = self.poorest_city()
+                city = city or self.poorest_city()
 
                 for item_id in sale_list:
                     try:
@@ -458,7 +460,7 @@ class EmrossWarBot(CacheableData):
 
         return False
 
-    def total_wealth(self, bricked=None):
+    def total_wealth(self, bricked=None, **kwargs):
         coin = EmrossWar.LANG.get('COIN', 'gold')
         parts = []
         parts.append('Total {0} amongst all castles: {1}'.format(coin, \
@@ -505,3 +507,7 @@ class EmrossWarBot(CacheableData):
         runtime.append('{0} second{1}'.format(duration, 's'*(duration!=1)))
 
         return ', '.join(runtime)
+
+    def other_player_info(self, id=None, **kwargs):
+        if id:
+            return self.api.call(self.OTHER_USERINFO_URL, id=id, **kwargs)

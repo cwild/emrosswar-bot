@@ -1,3 +1,5 @@
+import time
+
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
 from emross.utility.task import Task
@@ -24,11 +26,6 @@ class Chat(Task):
     URL = 'game/api_chat2.php'
 
     def setup(self):
-        try:
-            self.lineid = self.bot.session.chat_id
-        except AttributeError:
-            self.lineid = -1
-
         self.parsers = (
             ('evt', self.parse_events),
             ('msg', self.parse_messages),
@@ -36,6 +33,13 @@ class Chat(Task):
 
         self.bot.events.subscribe('ping', self.ping)
         self.bot.events.subscribe('spam', self.spam)
+
+    @property
+    def lineid(self):
+        try:
+            return self.bot.session.chat_id
+        except AttributeError:
+            return -1
 
     def process(self):
         json = self.bot.api.call(self.URL, lineid=self.lineid)
@@ -55,25 +59,33 @@ class Chat(Task):
         if self.bot.api.player:
             targets.append(self.bot.api.player.username)
 
+        _lineid = self.lineid
         for msg in messages[::-1]:
             try:
-                self.lineid = msg['line_id']
+                _lineid = msg['line_id']
                 text = msg.get('line_txt')
                 if msg.get('from_name') == self.bot.userinfo.get('nick'):
                     continue
+
+                data = {
+                    'id': msg.get('from_id'),
+                    'name': msg.get('from_name'),
+                    'time': time.time()
+                }
+
                 if text and msg.get('from_name') in self.bot.operators:
                     method, args, kwargs = MessageParser.parse_message(text, targets)
-                    self.bot.events.notify(method, *args, **kwargs)
+                    self.bot.events.notify(method, data, *args, **kwargs)
                 elif msg.get('from_name'):
-                    self.bot.events.notify('chat_message', msg.get('from_name'), text)
+                    self.bot.events.notify('chat_message', data, text)
             except SkipMessage:
                 pass
             except MessageParsingError:
-                self.bot.events.notify('chat_message', msg.get('from_name'), text)
+                self.bot.events.notify('chat_message', data, text)
             except Exception as e:
                 self.log.exception(e)
 
-        self.bot.session.chat_id = self.lineid
+        self.bot.session.chat_id = _lineid
 
     def parse_events(self, messages):
         """
