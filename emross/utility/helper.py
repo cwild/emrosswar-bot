@@ -9,7 +9,6 @@ import Queue
 import sys
 sys.path.extend(['lib/urllib3/'])
 
-from lib import kronos
 from lib.cacheable import CacheableData
 from lib.session import Session
 
