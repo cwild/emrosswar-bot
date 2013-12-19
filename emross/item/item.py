@@ -49,8 +49,16 @@ class Item(EmrossBaseObject):
     def list_enhance(self, type=ItemType.WEAPON):
         return self.bot.api.call(self.ITEM_LIST, action='listupdate', type=type)
 
-    def use(self, city, id):
-        return self.bot.api.call(self.ITEM_OP, action='use', city=city, id=id, num=1)
+    def use(self, city, id, num=1):
+        """
+        {'code': 0, 'ret': {
+            'gold': 3000, 'food': 0,
+            'vipbuff': 0, 'gen': 0,
+            'item': [],
+            'wood': 0, 'rumor': 0,
+            'iron': 0, 'ep': 0, 'gem': 0, 'buff': ''}}
+        """
+        return self.bot.api.call(self.ITEM_OP, action='use', city=city, id=id, num=num)
 
     def sell(self, city, id, **kwargs):
         return self.bot.api.call(self.ITEM_OP, action='sale', city=city, id=id, **kwargs)
