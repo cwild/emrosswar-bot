@@ -273,7 +273,7 @@ class EmrossWarBot(CacheableData):
         except AttributeError:
             last_scan = 0
 
-        hours = getattr(settings, 'scouting_interval', 72)
+        hours = kwargs.get('scouting_interval', 72)
         if time.time() < last_scan + hours*3600:
             logger.info('The world was scanned less than {0} hours ago'.format(hours))
         else:
