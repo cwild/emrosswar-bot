@@ -69,7 +69,7 @@ class BasicFarmer(BaseFarmer):
         return favs
 
     def utilities(self, *args, **kwargs):
-        self.bot.scout_map()
+        self.bot.scout_map(kwargs.get('scout_devil_army_types', []))
         self.bot.clean_war_reports()
 
         if not self.bot.pvp:

@@ -266,12 +266,8 @@ class EmrossWarBot(CacheableData):
 
         return target, army
 
-    def scout_map(self):
+    def scout_map(self, **kwargs):
         logger.info('Trying to find more targets to attack')
-
-        if not len(settings.farming_hours):
-            logger.info('There are no times of day set to farm. No point scouting the map.')
-            return
 
         try:
             last_scan = self.session.last_scan
@@ -283,15 +279,11 @@ class EmrossWarBot(CacheableData):
             logger.info('The world was scanned less than {0} hours ago'.format(hours))
         else:
             try:
-                self.world.search(settings.scout_devil_army_types)
+                self.world.search(**kwargs)
                 self.session.last_scan = time.time()
-            except OutOfSpies, e:
+            except OutOfSpies as e:
                 self.session.last_scan = 0
                 logger.info(e)
-                try:
-                    logger.debug(self.session.map_coords)
-                except AttributeError:
-                    pass
             finally:
                 self.session.save()
 

@@ -51,7 +51,7 @@ class World(Task):
         time.sleep(300)
 
 
-    def search(self, targets=[]):
+    def search(self, targets=[], **kwargs):
         if not targets:
             self.log.info('No targets to scout')
             return
