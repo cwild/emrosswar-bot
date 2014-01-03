@@ -35,8 +35,14 @@ class Study(FilterableCityTask):
         ))
 
     def tech_level(self, city, tech):
+        """
+        Given `city`, return the current level of the queried `tech`.
+
+        [22, 0, 1, 15000, 15000, 15000, 15000, 19]
+        tech, level, unlocked, food, wood, iron, gold, time_required
+        """
         try:
-            tech, level, unlocked = self.tech_levels(city)[tech-1]
+            tech, level, unlocked = [t[:3] for t in self.tech_levels(city) if int(t[0]) == tech][0]
             return level if unlocked == 1 else -1
         except IndexError:
             return -1
