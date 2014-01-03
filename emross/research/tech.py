@@ -22,6 +22,8 @@ class Tech(CostCalculator):
     DEFENSE_FORMATION = 19
     COLLECTION = 20
     ENHANCEMENT = 21
+    RESCUE = 22
+    RESURRECTION = 23
 
 
     COST_MODIFIER = 0.5
@@ -191,6 +193,22 @@ class Tech(CostCalculator):
                 "w": 25000,
                 "f": 25000,
                 "i": 25000,
+                "t": 21600,
+                "v": 0
+            },
+        RESCUE: {
+                "g": 15000,
+                "w": 15000,
+                "f": 15000,
+                "i": 15000,
+                "t": 21600,
+                "v": 0
+            },
+        RESURRECTION: {
+                "g": 50000,
+                "w": 50000,
+                "f": 50000,
+                "i": 50000,
                 "t": 21600,
                 "v": 0
             }

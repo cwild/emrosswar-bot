@@ -1,6 +1,3 @@
-import logging
-import time
-
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.item import inventory
@@ -11,7 +8,6 @@ from tech import Tech
 
 from lib.cacheable import CacheableData
 
-logger = logging.getLogger(__name__)
 
 class Study(FilterableCityTask):
     STUDY_URL = 'game/study_api.php'
@@ -27,7 +23,7 @@ class Study(FilterableCityTask):
         self._cities = {}
 
     def tech_levels(self, city):
-        self.log.info('Find tech levels for city, "{0}"'.format(city.name))
+        self.log.info('Find tech levels for city, "{0}"'.format(EmrossWar.safe_text(city.name)))
         return self._cities.setdefault(city, CacheableData(
             update=self.bot.api.call,
             method=self.STUDY_URL,
@@ -35,8 +31,14 @@ class Study(FilterableCityTask):
         ))
 
     def tech_level(self, city, tech):
+        """
+        Given `city`, return the current level of the queried `tech`.
+
+        [22, 0, 1, 15000, 15000, 15000, 15000, 19]
+        tech, level, unlocked, food, wood, iron, gold, time_required
+        """
         try:
-            tech, level, unlocked = self.tech_levels(city)[tech-1]
+            tech, level, unlocked = [t[:3] for t in self.tech_levels(city) if int(t[0]) == tech][0]
             return level if unlocked == 1 else -1
         except IndexError:
             return -1
@@ -46,18 +48,19 @@ class Study(FilterableCityTask):
         {'code': 0, 'ret': {'cdlist': [{'owner': 0, 'secs': 1557, 'cdtype': 2, 'id': 123456, 'target': 1}]}}
         """
         json = self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
-        name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH %d' % tech)
+        name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH {0}'.format(tech))
         if json['code'] == EmrossWar.SUCCESS:
-            logger.info('Started research "%s" at "%s". Time until completion: %d seconds.' % (name, city.name, json['ret']['cdlist'][0]['secs']))
+            self.log.info('Started research "{0}" at "{1}". Time until completion: {2} seconds.'.format(name, EmrossWar.safe_text(city.name),
+                                                                                                        json['ret']['cdlist'][0]['secs']))
         else:
-            logger.debug('Failed to start "%s" at city "%s"' % (name, city.name))
+            self.log.debug('Failed to start "{0}" at city "{1}"'.format(name, EmrossWar.safe_text(city.name)))
         return json
 
     def can_study(self, city, tech, level):
         try:
             return 0 <= self.tech_level(city, tech) < level
         except IndexError:
-            logger.debug('The university at "%s" is not high enough to study tech %d yet.' % (city.name, tech))
+            self.log.debug('The university at "{0}" is not high enough to study tech {1} yet.'.format(EmrossWar.safe_text(city.name), tech))
             return False
 
     def process(self, tech, level, university=1,
@@ -77,12 +80,12 @@ class Study(FilterableCityTask):
         construction = self.bot.builder.task(Construct)
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
-                logger.info('The university at city "%s" does not meet the specified minimum of %d' % (city.name, university))
+                self.log.info('The university at city "{0}" does not meet the specified minimum of {1}'.format(EmrossWar.safe_text(city.name), university))
                 continue
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks):
-                logger.debug('{hero} is already researching {tech} at {city}'.format(\
+                self.log.debug('{hero} is already researching {tech} at {city}'.format(\
                     hero=city.hero_manager.heroes.get(tasks[0]['owner'], 'N/A'),
                     tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
                     city=city.name))
@@ -96,11 +99,11 @@ class Study(FilterableCityTask):
                     continue
                 elif hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                     owner = hero.data.get('id', 0)
-                    logger.info('{0} chosen to research {1} at {2}'.format(hero,
+                    self.log.info('{0} chosen to research {1} at {2}'.format(hero,
                         EmrossWar.TECHNOLOGY[str(tech)].get('name', '?'),
                         city.name))
                 else:
-                    logger.info('{0} needs to rest before starting research'.format(hero))
+                    self.log.info('{0} needs to rest before starting research'.format(hero))
                     continue
 
             if self.can_study(city, tech, level) and \
