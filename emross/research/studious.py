@@ -23,7 +23,7 @@ class Study(FilterableCityTask):
         self._cities = {}
 
     def tech_levels(self, city):
-        self.log.info('Find tech levels for city, "{0}"'.format(EmrossWar.safe_text(city.name)))
+        self.log.info('Find tech levels for city, "{0}"'.format(city.name))
         return self._cities.setdefault(city, CacheableData(
             update=self.bot.api.call,
             method=self.STUDY_URL,
@@ -50,17 +50,17 @@ class Study(FilterableCityTask):
         json = self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
         name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH {0}'.format(tech))
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('Started research "{0}" at "{1}". Time until completion: {2} seconds.'.format(name, EmrossWar.safe_text(city.name),
+            self.log.info('Started research "{0}" at "{1}". Time until completion: {2} seconds.'.format(name, city.name,
                                                                                                         json['ret']['cdlist'][0]['secs']))
         else:
-            self.log.debug('Failed to start "{0}" at city "{1}"'.format(name, EmrossWar.safe_text(city.name)))
+            self.log.debug('Failed to start "{0}" at city "{1}"'.format(name, city.name))
         return json
 
     def can_study(self, city, tech, level):
         try:
             return 0 <= self.tech_level(city, tech) < level
         except IndexError:
-            self.log.debug('The university at "{0}" is not high enough to study tech {1} yet.'.format(EmrossWar.safe_text(city.name), tech))
+            self.log.debug('The university at "{0}" is not high enough to study tech {1} yet.'.format(city.name, tech))
             return False
 
     def process(self, tech, level, university=1,
@@ -80,7 +80,7 @@ class Study(FilterableCityTask):
         construction = self.bot.builder.task(Construct)
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
-                self.log.info('The university at city "{0}" does not meet the specified minimum of {1}'.format(EmrossWar.safe_text(city.name), university))
+                self.log.info('The university at city "{0}" does not meet the specified minimum of {1}'.format(city.name, university))
                 continue
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
