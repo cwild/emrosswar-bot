@@ -20,7 +20,7 @@ from emross.chat import Chat
 from emross.city import City
 from emross.exceptions import *
 from emross.favourites import Favourites
-from emross.gift import GiftCollector
+from emross.gift import GiftCollector, GiftEvents
 from emross.item import inventory, item
 from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
@@ -81,7 +81,8 @@ class EmrossWarBot(CacheableData):
             (
                 (Chat,),
                 (AutoLottery,),
-                (GiftCollector,)
+                (GiftCollector,),
+                (GiftEvents,),
             ),
         )
 
