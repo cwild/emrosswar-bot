@@ -75,4 +75,8 @@ class BasicFarmer(BaseFarmer):
         if not self.bot.pvp:
             self.bot.clearout_inventory()
 
+        cities = super(BasicFarmer, self).cities(**self.kwargs)
+        for city in cities:
+            city.replenish_food()
+
         self.log.info(self.bot.total_wealth())

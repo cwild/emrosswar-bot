@@ -1,7 +1,7 @@
 import time
 
 from emross.api import EmrossWar
-from emross.exceptions import BotException
+from emross.exceptions import BotException, NoTargetsAvailable
 from emross.favourites import Favourites
 from emross.utility.task import FilterableCityTask
 
