@@ -24,10 +24,13 @@ class GiftEvents(Task):
 
             for event in json['ret']:
                 event_id, collectable = map(int, event[:2])
+
                 if collectable:
-                    collected = True
                     self.log.info('Collect reward for "{0}"'.format(EmrossWar.safe_text(event[7])))
-                    self.bot.api.call(self.ACTIVITY_URL, action='reward', city=city.id, actid=event_id)
+
+                    json = self.bot.api.call(self.ACTIVITY_URL, action='reward', city=city.id, actid=event_id)
+                    if json['code'] != EmrossWar.SUCCESS:
+                        collected = True
 
 
 """
