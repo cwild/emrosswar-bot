@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class Player(object):
     USER_CACHE = 'build/user.cache'
     LOGIN_URL = 'game/login_api.php'
+    MASTER_QUERY_URL = 'info.php'
 
     def __init__(self,
         server,
@@ -87,7 +88,7 @@ class Player(object):
             raise EmrossWarApiException('No password set to relog with {}, try again soon'.format(api.player))
 
 
-        json = api.call('info.php', server=MASTER, user=self.username,
+        json = api.call(self.MASTER_QUERY_URL, server=MASTER, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False)
 
         if json['code'] != EmrossWar.SUCCESS:
@@ -103,7 +104,7 @@ class Player(object):
 
         key = json['ret']['key']
 
-        self._sync_pvp_key(bot, key, user, server=server)
+        self._sync_pvp_key(bot, key, user, server)
 
         return key
 
@@ -135,7 +136,7 @@ class Player(object):
             logger.info('We have another key to try from the remote API.')
             self.key = key
             self.update_user_cache(self.username, key)
-            self._sync_pvp_key(bot, key, user=self.username, server=server)
+            self._sync_pvp_key(bot, key, self.username, server)
             bot.errors.task_done()
             return
 
@@ -204,12 +205,12 @@ class Player(object):
         cache[username] = key
         self.save_user_cache(cache)
 
-    def _sync_pvp_key(self, bot, key, user=None, **kwargs):
+    def _sync_pvp_key(self, bot, key, user=None, server=None, **kwargs):
         if not bot.pvp:
             return
 
         json = bot.api._call(self.LOGIN_URL, sleep=False, handle_errors=False,
-                            key=key, user=user, action='synckey', **kwargs)
+                            key=None, user=user, action='synckey', **kwargs)
 
         """
         Character not known in normal PvP world
@@ -219,10 +220,8 @@ class Player(object):
         """
         if json['code'] == 12:
             json = bot.api._call('game/api_ww.php',
+                server=server, key=key, action='switch', hero_id=0,
                 sleep=False, handle_errors=False,
-                key=key,
-                action='switch',
-                hero_id=0,
                 **kwargs
             )
             if json['code'] == 4005:
