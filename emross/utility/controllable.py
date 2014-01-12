@@ -4,6 +4,7 @@ from emross.utility.base import EmrossBaseObject
 
 class Controllable(EmrossBaseObject):
     COMMAND = None
+    SUB_COMMAND_OVERRIDES = {}
 
     def __init__(self, *args, **kwargs):
         super(Controllable, self).__init__(*args, **kwargs)
@@ -15,6 +16,9 @@ class Controllable(EmrossBaseObject):
 
     def _controller(self, action=None, *args, **kwargs):
         try:
+            # Allow commands to be aliased/renamed
+            action = self.SUB_COMMAND_OVERRIDES.get(action) or action
+
             method = getattr(self, 'action_{0}'.format(action), self.action_help)
             method(*args, **kwargs)
         except Exception as e:
@@ -27,8 +31,12 @@ class Controllable(EmrossBaseObject):
         """
         Provide basic usage info on the specified command.
         """
-        message = None
+
+        # Help should reflect our aliased commands as well
+        for_method = self.SUB_COMMAND_OVERRIDES.get(for_method) or for_method
         method = getattr(self, 'action_{0}'.format(for_method), None)
+
+        message = None
 
         if method:
             if method.__doc__:
