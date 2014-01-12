@@ -45,7 +45,7 @@ class AutoTranslate(Task, Controllable):
                     u'Translating "{0}" to "{1}"!'.format(name, lang)
                 ))
 
-    def action_list(self):
+    def action_list(self, *args, **kwargs):
         """
         List the players to translate for.
         """
@@ -82,7 +82,7 @@ class AutoTranslate(Task, Controllable):
 
         self._mute_period = time.time() + delay
 
-    def action_wake(self):
+    def action_wake(self, *args, **kwargs):
         """
         Wakey, wakey. Rise and shine!
         """
@@ -95,14 +95,18 @@ class AutoTranslate(Task, Controllable):
         if node and node[2] == World.PLAYER_NODE:
             return node[3][1]
 
-    def translate(self, player, text, *args, **kwargs):
-
+    def translate(self, text, *args, **kwargs):
+        player = kwargs['meta-data'].get('name')
         target_lang = self.translate_for.get(player)
+
         if target_lang and self._mute_period < time.time():
             self.log.debug(text)
             converted = TRANSLATOR.translate(text, target_lang)
 
-            self.log.debug(converted)
+            if text == converted:
+                self.log.debug('Converted text is the same, no need to repeat')
+                return
+
             converted = EmrossWar.safe_text(converted)
             self.log.debug(converted)
 
