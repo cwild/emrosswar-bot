@@ -64,7 +64,7 @@ class Study(FilterableCityTask):
             return False
 
     def process(self, tech, level, university=1,
-        use_hero=False, use_scrolls=False, *args, **kwargs):
+        use_hero=False, use_scrolls=False, ordered=False, *args, **kwargs):
 
         cities = self.cities(**kwargs)
         for city in cities:
@@ -78,6 +78,12 @@ class Study(FilterableCityTask):
                     return
 
         construction = self.bot.builder.task(Construct)
+
+        if ordered:
+            # Descending order
+            cities.sort(key = lambda city: construction.structure_level(city, Building.UNIVERSITY), reverse=True)
+            self.log.debug('Ordered cities: {0}'.format([(city.name, construction.structure_level(city, Building.UNIVERSITY)) for city in cities]))
+
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
                 self.log.info('The university at city "{0}" does not meet the specified minimum of {1}'.format(city.name, university))
