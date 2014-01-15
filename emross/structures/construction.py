@@ -57,12 +57,13 @@ class Construct(FilterableCityTask):
                 capacity = 1 + len([b for b in buffs if b['itemid'] in self.EXTRA_SLOT_ITEMS])
                 self.log.debug('Build capacity at castle "{0}" is {1}'.format(city.name, capacity))
 
-                current_build = dict([(t['target'], t) for t in tasks])
+                current_build = dict([(int(t['target']), t) for t in tasks])
 
                 if structure in current_build:
+                    task = current_build[structure]
+                    city.countdown_manager.use_gems_for_task(task, **kwargs)
 
                     if use_scrolls:
-                        task = current_build[structure]
                         city.countdown_manager.use_items_for_task(task, self.COUNTDOWN_ITEMS)
 
                 elif open_slots and self.MAX_BUILD_SLOTS > len(tasks) == capacity:

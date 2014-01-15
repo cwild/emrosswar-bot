@@ -64,6 +64,12 @@ class CountdownManager(EmrossBaseObject, CacheableData):
         self.update()
         self.city.expire()
 
+    def remove_task(self, task):
+        try:
+            self._data['cdlist'].remove(task)
+        except ValueError as e:
+            self.log.error(e)
+
     def use_items_for_task(self, task, items):
         if (time.time() - self.last_cdprice_check) < self.COUNTDOWN_PRICE_INTERVAL:
             return
@@ -106,3 +112,36 @@ class CountdownManager(EmrossBaseObject, CacheableData):
 
     def _reduce_with_item(self, tid, action, item_id):
         return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id, tid=tid, action=action, iid=item_id)
+
+    def use_gems_for_task(self, task, gems=0, **kwargs):
+        """
+        Try to complete a task with the specified number of gems
+        """
+
+        if not gems:
+            # No need to do any work here
+            return
+
+        self.log.info('Attempt to gem the specified task')
+        self.log.debug(task)
+
+        available_gems = self.bot.userinfo.get('money', 0)
+
+        if max(0, available_gems) < gems:
+            return
+
+        remaining = int(task['secs'] - time.time())
+        json = self.bot.api.call(self.GET_COUNTDOWN_PRICE, type=task['cdtype'], secs=remaining)
+
+        cost = int(json['ret'].get('price'))
+
+        if cost > gems:
+            self.log.info('Too expensive for specified number of gems')
+        elif cost == gems:
+            self.log.info('Use {0} gems to complete task {1}'.format(gems, task))
+            json = self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id, tid=task['id'], action='build2')
+
+            if json['code'] == EmrossWar.SUCCESS:
+                self.bot.userinfo['money'] = json['ret'].get('money', available_gems-cost)
+                self.remove_task(task)
+                self.city.expire()

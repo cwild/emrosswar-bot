@@ -71,6 +71,8 @@ class Study(FilterableCityTask):
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
                 if tech == task['target']:
+                    city.countdown_manager.use_gems_for_task(task, **kwargs)
+
                     if use_scrolls:
                         city.countdown_manager.use_items_for_task(task, self.COUNTDOWN_ITEMS)
 
