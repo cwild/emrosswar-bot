@@ -63,7 +63,7 @@ class EmrossWarBot(CacheableData):
 
         self.builder = BuildManager(self)
         self.tasks = {}
-        self.cities = []
+        self._cities = []
 
         self.events = self.builder.task(events.EventManager)
 
@@ -117,6 +117,11 @@ class EmrossWarBot(CacheableData):
         if not self._initialised and self._closing:
             raise BotException('userinfo unavailable and marked for shutdown')
         return self.data
+
+    @property
+    def cities(self):
+        with self.lock:
+            return self._cities
 
     def core_setup(self):
         """
@@ -202,7 +207,7 @@ class EmrossWarBot(CacheableData):
         for city in cities:
             logger.debug(u'Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
-            self.cities.append(city)
+            self._cities.append(city)
 
         for gift in userinfo['gift']:
             self.get_gift(gift)

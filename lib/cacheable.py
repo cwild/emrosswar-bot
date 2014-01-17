@@ -1,11 +1,14 @@
 import logging
 import time
 
+from multiprocessing import RLock
+
 logger = logging.getLogger(__name__)
 
 class CacheableData(object):
     def __init__(self, time_to_live=120, update=None, *args, **kwargs):
         super(CacheableData, self).__init__()
+        self.lock = RLock()
         self._expires = 0
         self._data = {}
         self.time_to_live = time_to_live
@@ -21,25 +24,28 @@ class CacheableData(object):
 
     @property
     def data(self):
-        try:
-            should_update = self.should_update()
-        except Exception:
-            should_update = False
+        with self.lock:
+            try:
+                should_update = self.should_update()
+            except Exception:
+                should_update = False
 
-        if time.time() > self._expires or should_update:
-            self.data = self.update(*self.args, **self.kwargs)
+            if time.time() > self._expires or should_update:
+                self.data = self.update(*self.args, **self.kwargs)
+
         return self._data
 
     @data.setter
     def data(self, value):
-        if isinstance(value, dict):
-            # Default to 0 so we can pass our own dict straight through
-            if value.get('code', 0) != 0:
-                return
-            value = value.get('ret', value)
+        with self.lock:
+            if isinstance(value, dict):
+                # Default to 0 so we can pass our own dict straight through
+                if value.get('code', 0) != 0:
+                    return
+                value = value.get('ret', value)
 
-        self._data = value
-        self._expires = time.time() + self.time_to_live
+            self._data = value
+            self._expires = time.time() + self.time_to_live
 
     def should_update(self):
         return False
