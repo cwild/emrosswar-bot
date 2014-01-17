@@ -50,7 +50,7 @@ class BuildManager(EmrossBaseObject):
                     self.log.exception(e)
 
             if False in results:
-                self.log.debug('Not all parts of {0} stage {1} are complete'.format(stagename, i))
+                #self.log.debug('Not all parts of {0} stage {1} are complete'.format(stagename, i))
                 break
 
         # Free this stage for other threads

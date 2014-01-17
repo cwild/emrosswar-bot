@@ -60,7 +60,6 @@ class EmrossWarApi(object):
     def call(self, *args, **kargs):
         for i in xrange(1, 6):
             try:
-                logger.debug('API call: attempt #%d' % i)
                 json = self._call(*args, **kargs)
 
                 if json['code'] in handlers:
