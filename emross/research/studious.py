@@ -93,10 +93,13 @@ class Study(FilterableCityTask):
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks):
-                self.log.debug('{hero} is already researching {tech} at {city}'.format(\
-                    hero=city.hero_manager.heroes.get(tasks[0]['owner'], 'N/A'),
-                    tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
-                    city=city.name))
+                if tasks[0]['target'] == tech:
+                    self.log.debug('{hero} is already researching {tech} at {city}'.format(\
+                        hero=city.hero_manager.heroes.get(tasks[0]['owner'], 'N/A'),
+                        tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
+                        city=city.name))
+
+                # Already a research in-progress at this city
                 continue
 
             owner = 0
