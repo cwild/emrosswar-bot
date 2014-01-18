@@ -1,5 +1,6 @@
 import time
 
+from emross.utility.events import Event
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
 from emross.utility.task import Task
@@ -68,20 +69,23 @@ class Chat(Task):
                     continue
 
                 data = {
-                    'id': msg.get('from_id'),
-                    'name': msg.get('from_name'),
+                    'player_id': msg.get('from_id'),
+                    'player_name': msg.get('from_name'),
                     'time': time.time()
                 }
 
                 if text and msg.get('from_name') in self.bot.operators:
                     method, args, kwargs = MessageParser.parse_message(text, targets)
-                    self.bot.events.notify(method, data, *args, **kwargs)
+                    event = Event(method, **data)
+                    self.bot.events.notify(event, *args, **kwargs)
                 elif msg.get('from_name'):
-                    self.bot.events.notify('chat_message', data, text)
+                    event = Event('chat_message', **data)
+                    self.bot.events.notify(event, text)
             except SkipMessage:
                 pass
             except MessageParsingError:
-                self.bot.events.notify('chat_message', data, text)
+                event = Event('chat_message', **data)
+                self.bot.events.notify(event, text)
             except Exception as e:
                 self.log.exception(e)
 

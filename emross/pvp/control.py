@@ -12,7 +12,7 @@ class Control(Task, Controllable):
     def setup(self):
         self.queue = Queue.Queue()
 
-    def action_enter(self, *args, **kwargs):
+    def action_enter(self, event, *args, **kwargs):
         """I will attempt to join the PvP world in the next {delay|30} seconds."""
         delay = int(kwargs.get('delay', 30))
         self.sleep(random.randint(1, delay))
@@ -29,7 +29,7 @@ class Control(Task, Controllable):
                 json = self.bot.api.call(self.bot.USERINFO_URL, server=server)
 
                 self.chat.send_message('PvP world: {0}, player "{1}" at ({x},{y})'.format(\
-                    server, json['ret']['user']['nick'],
+                    server, EmrossWar.safe_text(json['ret']['user']['nick']),
                     x=json['ret']['user']['city'][0]['x'],
                     y=json['ret']['user']['city'][0]['y']))
 

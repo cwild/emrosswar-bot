@@ -19,6 +19,17 @@ def subscriber(method=None, **outer):
     return wrapped
 
 
+class Event(object):
+    """
+    Store information about an event.
+    """
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.data = kwargs
+
+    def __getattr__(self, name):
+        return self.data.get(name)
+
 class EventManager(EmrossBaseObject):
     """
     Provide an interface for the bot to react to events in a pre-determined way.
@@ -28,26 +39,24 @@ class EventManager(EmrossBaseObject):
         super(EventManager, self).__init__(bot)
         self.events = {}
 
-    def subscribe(self, event, action):
-        self.events.setdefault(event, []).append(action)
+    def subscribe(self, event_name, action):
+        self.events.setdefault(event_name, []).append(action)
 
-    def notify(self, event, data={}, *args, **kwargs):
+    def notify(self, event, *args, **kwargs):
         """
         Raise the given "event" with all of its subscribers
         """
-        self.log.debug('Process event "{0}" with {1} and {2} (meta-data={meta})'.format(event,
-            args, kwargs, meta=data))
+        self.log.debug('Process event "{0}" with {1} and {2} (meta-data={meta})'.format(\
+            event.name, args, kwargs, meta=event.data))
 
-        kwargs.update({'meta-data': data})
-
-        for action in self.events.get(event, []):
+        for action in self.events.get(event.name, []):
             try:
-                action(*args, **kwargs)
+                action(event, *args, **kwargs)
             except Exception as e:
                 self.log.exception(e)
 
-    def unsubscribe(self, event, action):
+    def unsubscribe(self, event_name, action):
         try:
-            self.events[event].remove(action)
+            self.events[event_name].remove(action)
         except (KeyError, ValueError):
             pass

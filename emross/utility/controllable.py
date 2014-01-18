@@ -14,20 +14,20 @@ class Controllable(EmrossBaseObject):
         if self.COMMAND:
             self.bot.events.subscribe(self.COMMAND, self._controller)
 
-    def _controller(self, action=None, *args, **kwargs):
+    def _controller(self, event, action=None, *args, **kwargs):
         try:
             # Allow commands to be aliased/renamed
             action = self.SUB_COMMAND_OVERRIDES.get(action) or action
 
             method = getattr(self, 'action_{0}'.format(action), self.action_help)
-            method(*args, **kwargs)
+            method(event, *args, **kwargs)
         except Exception as e:
             self.log.exception(e)
 
     def help(self, *args, **kwargs):
         self.chat.send_message("I do not understand what you want me to do.")
 
-    def action_help(self, for_method=None, *args, **kwargs):
+    def action_help(self, event, for_method=None, *args, **kwargs):
         """
         Provide basic usage info on the specified command.
         """

@@ -28,7 +28,7 @@ class AutoTranslate(Task, Controllable):
 
         self.bot.events.subscribe('chat_message', self.translate)
 
-    def action_add(self, player=None, lang='en', *args, **kwargs):
+    def action_add(self, event, player=None, lang='en', *args, **kwargs):
         """
         Add a player who we wish to autotranslate for.
         """
@@ -45,7 +45,7 @@ class AutoTranslate(Task, Controllable):
                     u'Translating "{0}" to "{1}"!'.format(name, lang)
                 ))
 
-    def action_list(self, *args, **kwargs):
+    def action_list(self, event, *args, **kwargs):
         """
         List the players to translate for.
         """
@@ -53,7 +53,7 @@ class AutoTranslate(Task, Controllable):
             [u'{0}({1})'.format(k,v) for k, v in self.translate_for.iteritems()]
         )))
 
-    def action_remove(self, player=None, *args, **kwargs):
+    def action_remove(self, event, player=None, *args, **kwargs):
         """
         Add a player who we wish to autotranslate for.
         """
@@ -71,7 +71,7 @@ class AutoTranslate(Task, Controllable):
         except KeyError:
             pass
 
-    def action_sleep(self, seconds=SLEEP_DURATION, *args, **kwargs):
+    def action_sleep(self, event, seconds=SLEEP_DURATION, *args, **kwargs):
         """
         Number of `seconds` to be muted. I will not translate during this time.
         """
@@ -82,7 +82,7 @@ class AutoTranslate(Task, Controllable):
 
         self._mute_period = time.time() + delay
 
-    def action_wake(self, *args, **kwargs):
+    def action_wake(self, event, *args, **kwargs):
         """
         Wakey, wakey. Rise and shine!
         """
@@ -95,8 +95,8 @@ class AutoTranslate(Task, Controllable):
         if node and node[2] == World.PLAYER_NODE:
             return node[3][1]
 
-    def translate(self, text, *args, **kwargs):
-        player = kwargs['meta-data'].get('name')
+    def translate(self, event, text, *args, **kwargs):
+        player = event.player_name
         target_lang = self.translate_for.get(player)
 
         if target_lang and self._mute_period < time.time():

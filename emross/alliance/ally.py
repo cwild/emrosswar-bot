@@ -70,7 +70,7 @@ class Alliance(Controllable):
             self._info = json['ret']
 
 
-    def action_join(self, *args, **kwargs):
+    def action_join(self, event, *args, **kwargs):
         """
         Join the ally of the player who issued the command!
         Last available team unless specified otherwise.
@@ -80,7 +80,7 @@ class Alliance(Controllable):
 
         try:
             # Get player info
-            json = self.bot.other_player_info(id=kwargs['meta-data']['id'])
+            json = self.bot.other_player_info(id=event.player_id)
             player = json['ret']['user']
 
             # Get alliance join info
@@ -101,7 +101,7 @@ class Alliance(Controllable):
         except KeyError:
             return
 
-    def action_quit(self, *args, **kwargs):
+    def action_quit(self, event, *args, **kwargs):
         """
         Quit the current password. Requires provision of a "password".
         """

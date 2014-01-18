@@ -29,7 +29,7 @@ class ScenarioWalker(Task, Controllable):
         self.html_parser = HTMLParser()
         self.scenario = Scenario(self.bot)
 
-    def action_status(self, **kwargs):
+    def action_status(self, event, **kwargs):
         """How are scenes looking?"""
 
         info = self.scenario.list()

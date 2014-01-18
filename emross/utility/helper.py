@@ -128,7 +128,7 @@ class EmrossWarBot(CacheableData):
         Some utility functions
         """
 
-        def inventory(*args, **kwargs):
+        def inventory(event, *args, **kwargs):
             chat = self.builder.task(Chat)
 
             search_items = []
@@ -151,7 +151,7 @@ class EmrossWarBot(CacheableData):
 
         self.events.subscribe(self.INVENTORY_COMMAND, inventory)
 
-        def status(precision=3, *args, **kwargs):
+        def status(event, precision=3, *args, **kwargs):
             chat = self.builder.task(Chat)
 
             json = self.api.call(self.USERINFO_URL, action='exp')
@@ -179,13 +179,13 @@ class EmrossWarBot(CacheableData):
             ))
         self.events.subscribe(self.STATUS_COMMAND, status)
 
-        def uptime(*args, **kwargs):
+        def uptime(event, *args, **kwargs):
             chat = self.builder.task(Chat)
             f = self.human_friendly_time(time.time() - self.session.start_time)
             chat.send_message('uptime: {0}'.format(f))
         self.events.subscribe(self.UPTIME_COMMAND, uptime)
 
-        def wealth(*args, **kwargs):
+        def wealth(event, *args, **kwargs):
             chat = self.builder.task(Chat)
             chat.send_message(self.total_wealth(*args, **kwargs))
         self.events.subscribe(self.WEALTH_COMMAND, wealth)
