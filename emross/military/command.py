@@ -1,22 +1,23 @@
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
-from emross.chat import Chat
 from emross.exceptions import (InsufficientHeroCommand,
     InsufficientSoldiers,
     NoHeroesAvailable)
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
+from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
 from lib.ordered_dict import OrderedDict
 
-LOOT_COMMAND = 'loot'
 
+class CommandCenter(Task, Controllable):
+    COMMAND = 'barracks'
+    LOOT_COMMAND = 'loot'
 
-class CommandCenter(Task):
     def setup(self):
-        self.bot.events.subscribe(LOOT_COMMAND, self.loot)
-        self.chat = self.bot.builder.task(Chat)
+        # For backwards-compatability
+        self.bot.events.subscribe(self.LOOT_COMMAND, self.action_loot)
 
     def process(self, *args, **kwargs):
         """
@@ -24,7 +25,10 @@ class CommandCenter(Task):
         """
         pass
 
-    def loot(self, x, y, level=None, times=1, *args, **kwargs):
+    def _barracks_action(self, x, y, *args, **kwargs):
+        """
+        Base behavior of the command center
+        """
         nx, ny = self.bot.world.map_size()
 
         try:
@@ -33,8 +37,12 @@ class CommandCenter(Task):
                 raise ValueError
         except ValueError:
             self.chat.send_message('Are you sure about those co-ordinates?')
+            self.log.debug(
+                'Invalid co-ordinates provided: x={0}, y={1}'.format(x, y)
+            )
             return
 
+        level = int(kwargs.get('level', 0))
         if level:
             current_lvl = self.bot.userinfo.get('level', 1)
             exact_lvl, min_lvl, max_lvl = None, 0, 999
@@ -56,32 +64,15 @@ class CommandCenter(Task):
                 self.log.debug('Not within specified level range, stop processing')
                 return
 
-        try:
-            SOLDIER_DATA = getattr(EmrossWar, 'SOLDIER_{0}'.format(self.bot.userinfo['nationid']))
-        except (AttributeError, KeyError):
-            SOLDIER_DATA = EmrossWar.SOLDIER_1
-
-        desired = OrderedDict()
-        for kw, val in kwargs.iteritems():
-            kw = kw.lower()
-            try:
-                parts = val.split(',', 1)
-                qty = int(parts[0])
-                remaining = parts[1:] != []
-            except ValueError:
-                continue
-
-            for soldier_id, data in SOLDIER_DATA.iteritems():
-                if kw in data.get('name', '').lower():
-                    self.log.info('Search for "{0}"'.format(data['name']))
-                    desired[int(soldier_id)] = (qty, remaining)
+        desired = self._parse_desired_troops(**kwargs)
 
         """
         Can we find the desired army at any of our castles?
         """
-        accomplished = False
         launched = 0
-        times = int(times)
+        times = int(kwargs.get('times', 1))
+        attack_type = int(kwargs.get('attack_type', Barracks.LOOT))
+
         for city in self.bot.cities:
             if launched == times:
                 break
@@ -98,42 +89,118 @@ class CommandCenter(Task):
                 # Currently we use heroes with the lowest possible troop capacity
                 city.get_available_heroes(stats=[Hero.COMMAND])
 
+                finished_city = False
                 for i in xrange(times-launched):
+
+                    if finished_city:
+                        break
+
+                    params = {
+                        'action': 'do_war',
+                        'attack_type': attack_type,
+                        'area': x,
+                        'area_x': y
+                    }
+
                     army = city.create_army(troops, mixed=(len(troops)>0))
                     self.log.debug(army)
 
-                    hero = city.choose_hero(sum(army.values()))
-                    if not hero:
-                        self.log.debug('Cannot find a hero to command this army')
+                    army = kwargs.get('hook_army', lambda _: _)(army)
+                    params.update(army)
+
+                    if sum(army.values()) == 0:
+                        self.log.debug('There is no army to send from "{0}"'.format(city.name))
+                        finished_city = True
                         break
 
-                    json = self._send_attack(x, y, city, hero, **army)
+                    if kwargs.get('hero'):
+                        hero = city.choose_hero(sum(army.values()))
+                        if not hero:
+                            self.log.debug('Cannot find a hero to command this army')
+                            finished_city = True
+                            break
+                        params.update({'gen': hero.data['gid'],})
+
+                    # Now the prep-work is done, send stuff
+                    json = city.barracks.confirm_and_do(params, sleep_confirm=(1,2), sleep_do=False)
+
                     if json['code'] == EmrossWar.SUCCESS:
-                        accomplished = True
                         launched += 1
 
                         cd = json['ret']['cd'][0]
                         tm = self.bot.human_friendly_time(cd['secs'])
-                        self.chat.send_message('Loot({0}): {1}. Impact: {2}'.format(launched, cd['ext'], tm))
+                        action = kwargs.get('action', 'action {0}'.format(attack_type))
+                        self.chat.send_message('{0}({1}): {2}. Time: {3}'.format(\
+                            action, launched, cd['ext'], tm))
                     else:
+                        error = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
+                        self.log.debug('{0}: {1}'.format(city.name,
+                            EmrossWar.safe_text(error)
+                        ))
+                        finished_city = True
                         break
 
             except (InsufficientHeroCommand, InsufficientSoldiers, NoHeroesAvailable) as e:
                 self.log.debug(e)
 
-        if not accomplished:
-            self.chat.send_message('Sorry, I was not able to meet the loot requirements.')
 
+    def _parse_desired_troops(self, **kwargs):
+        """
+        Search for known troops types based on kwargs which should arrive as such:
+        lonu=60 kahk=200 overlord=40 etc
+        """
 
-    def _send_attack(self, x, y, city, hero, attack_type=Barracks.LOOT, **kwargs):
-        # as ever, x and y are backwards just to confise things!
-        params = {
-            'action': 'do_war',
-            'attack_type': attack_type,
-            'gen': hero.data['gid'],
-            'area': x,
-            'area_x': y
-        }
-        params.update(kwargs)
+        try:
+            SOLDIER_DATA = getattr(EmrossWar, 'SOLDIER_{0}'.format(self.bot.userinfo['nationid']))
+        except (AttributeError, KeyError):
+            SOLDIER_DATA = EmrossWar.SOLDIER_1
 
-        return city.barracks.confirm_and_do(params, sleep_confirm=(1,2), sleep_do=False)
+        desired = OrderedDict()
+
+        self.log.debug(kwargs)
+        for kw, val in kwargs.iteritems():
+            kw = kw.lower()
+            try:
+                parts = val.split(',', 1)
+                qty = int(parts[0])
+                remaining = parts[1:] != []
+            except (AttributeError, ValueError):
+                continue
+
+            for soldier_id, data in SOLDIER_DATA.iteritems():
+                if kw in data.get('name', '').lower():
+                    self.log.debug('Search for "{0}"'.format(data['name']))
+                    desired[int(soldier_id)] = (qty, remaining)
+
+        return desired
+
+    def action_conquer(self, event, *args, **kwargs):
+        """
+        Who have I looted that I can now conquer?
+        """
+        kwargs.update({'action':'Conquer', 'attack_type': Barracks.CONQUER, 'hero':True})
+        self._barracks_action(*args, **kwargs)
+
+    def action_loot(self, event, *args, **kwargs):
+        """
+        Send a hero to lead an army to attack another player
+        """
+        kwargs.update({'action':'Loot', 'attack_type':Barracks.LOOT, 'hero':True})
+        self._barracks_action(*args, **kwargs)
+
+    def action_scout(self, event, *args, **kwargs):
+        """
+        Send spies to another player
+        """
+
+        kwargs.update({'action':'Scout', 'attack_type':Barracks.SCOUT,
+            'hook_army': lambda army: {'tai_num': army.get('soldier_num2', 1)}
+        })
+        self._barracks_action(*args, **kwargs)
+
+    def action_transport(self, event, *args, **kwargs):
+        """
+        Transport troops to another player
+        """
+        kwargs.update({'action':'Transport', 'attack_type':Barracks.TRANSPORT})
+        self._barracks_action(*args, **kwargs)
