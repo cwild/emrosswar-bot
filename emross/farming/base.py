@@ -1,7 +1,7 @@
 import time
 
 from emross.api import EmrossWar
-from emross.exceptions import BotException, NoTargetsAvailable
+from emross.exceptions import BotException, NoTargetsAvailable, TargetException
 from emross.favourites import Favourites
 from emross.utility.task import FilterableCityTask
 
@@ -84,6 +84,9 @@ class BaseFarmer(FilterableCityTask):
                         break
                     try:
                         self.process_city_with_target(self.current_city, target)
+                    except TargetException as e:
+                        self.log.error(e)
+                        break
                     except BotException:
                         visited_cities.add(self.current_city)
                         self.current_city = next(self.cities)
