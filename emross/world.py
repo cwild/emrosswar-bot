@@ -1,8 +1,7 @@
-import time
-
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
 from emross.favourites import Favourites
+from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
 from emross.utility.task import Task
 
@@ -22,7 +21,7 @@ class World(Task):
         """ These x,y params seem backwards, d'oh!"""
         params = {
             'action': 'do_war',
-            'attack_type': EmrossWar.ATTACK_TYPE_SCOUT,
+            'attack_type': Barracks.SCOUT,
             'tai_num': 1,
             'area': x,
             'area_x': y
@@ -47,8 +46,7 @@ class World(Task):
             self.log.info('Sending spies from {0}'.format(choice.name))
             return choice
 
-        self.log.info('Unable to locate any available spies, sleeping for 5 mins.')
-        time.sleep(300)
+        self.log.info('Unable to locate any available spies.')
 
 
     def search(self, targets=[], **kwargs):
@@ -118,9 +116,8 @@ class World(Task):
                     else:
                         break
 
-                except WorldException:
-                    self.log.info('Sleeping for 5 mins')
-                    time.sleep(300)
+                except WorldException as e:
+                    self.log.error(e)
 
 
             if page['ydown'] > y:
