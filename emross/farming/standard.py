@@ -9,6 +9,7 @@ from emross.exceptions import (EmrossWarApiException,
     NoTargetsFound)
 from emross.farming.base import BaseFarmer
 from emross.favourites import Favourites
+from emross.military.barracks import Barracks
 
 
 class BasicFarmer(BaseFarmer):
@@ -32,7 +33,7 @@ class BasicFarmer(BaseFarmer):
         # send troops to attack
         params = {
             'action': 'do_war',
-            'attack_type': EmrossWar.ACTION_ATTACK,
+            'attack_type': Barracks.ATTACK,
             'gen': hero.data['gid'],
             'area': target.y,
             'area_x': target.x

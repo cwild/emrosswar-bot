@@ -175,18 +175,6 @@ class EmrossWar(object):
     ERROR_UNKNOWN = -1
     ERROR_INVALID_KEY = 2
 
-    """
-    3: "Scout",
-    0: "Loot",
-    7: "Attack",
-    8: "Occupy",
-    9: "Conquer",
-    5: "Build",
-    2: "Transport"
-    """
-    ATTACK_TYPE_SCOUT = 3
-    ACTION_ATTACK = 7
-
     TRUCE = 1
     VACATION = 2
     SLEEP = 4
@@ -196,7 +184,6 @@ class EmrossWar(object):
     INSUFFICIENT_GOLD  = 1306
     ITEM_DOES_NOT_EXIST = 3403
 
-    PVP_ELIMINATED = 7415
 
     @staticmethod
     def safe_text(s):
