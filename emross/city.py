@@ -205,8 +205,10 @@ class City(EmrossBaseObject, CacheableData):
         """
         Which hero should we use?
         """
-        heroes = [h for h in self.hero_manager.ordered_by_stats([Hero.COMMAND]) if
-                h.stat(Hero.STATE) == Hero.AVAILABLE and h.stat(Hero.VIGOR) > 0]
+        heroes = [h for h in self.hero_manager.ordered_by_stats([Hero.COMMAND])
+                    if h.stat(Hero.VIGOR) > 0 and not h.stat(Hero.GUARDING)
+                    and h.stat(Hero.STATE) == Hero.AVAILABLE
+                ]
 
         if not heroes:
             raise NoHeroesAvailable
