@@ -106,7 +106,7 @@ class Chat(Task):
             self.log.exception(e)
 
 
-    def ping(self, *args, **kwargs):
+    def ping(self, event, *args, **kwargs):
         self.send_message('pong')
 
     def send_message(self, message, channel=Channel.ALLIANCE, prefix='', **kwargs):
@@ -126,10 +126,7 @@ class Chat(Task):
                 chunk = ''.join([l for l in letters if l is not None])
                 self.bot.api.call(self.URL, txt=prefix+chunk, targettype=channel, targetid=target)
 
-    def spam(self, *args, **kwargs):
+    def spam(self, event, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
         for i in range(int(kwargs.get('times', 1))):
             self.send_message(msg, channel=kwargs.get('channel', Channel.ALLIANCE))
-
-        pass
-        #logger.debug(message)
