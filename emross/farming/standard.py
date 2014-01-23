@@ -73,7 +73,7 @@ class BasicFarmer(BaseFarmer):
         self.bot.scout_map(targets=kwargs.get('scout_devil_army_types', []), **kwargs)
         self.bot.clean_war_reports()
 
-        if not self.bot.pvp:
+        if not self.bot.pvp and kwargs.get('allow_inventory_clearout', True):
             self.bot.clearout_inventory()
 
         cities = super(BasicFarmer, self).cities(**self.kwargs)
