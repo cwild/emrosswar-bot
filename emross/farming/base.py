@@ -104,9 +104,13 @@ class BaseFarmer(FilterableCityTask):
                 if cycle_done:
                     break
 
-            self.utilities(*args, **kwargs)
-
         except Exception as e:
+            self.log.exception(e)
+
+        try:
+            self.utilities(*args, **kwargs)
+        except Exception as e:
+            self.log.debug('Error encountered during utilities')
             self.log.exception(e)
 
     def process_city_with_target(self, city, target):
