@@ -14,7 +14,7 @@ class BotInfo(object):
 
     def __getitem__(self, name):
         try:
-            return str(self.bot.userinfo['nick'].encode('utf-8'))
+            return self.bot._data.get('nick', '')
         except Exception as e:
             logger.exception(e)
             return ''
