@@ -1,6 +1,7 @@
 """
 Define the interactions between a hero and his world!
 """
+import re
 
 from emross.api import EmrossWar
 from emross.utility.base import EmrossBaseObject
@@ -137,3 +138,21 @@ class Hero(EmrossBaseObject):
         parts.append(')')
 
         return ''.join(parts)
+
+    @classmethod
+    def find(cls, search=None, *args, **kwargs):
+        result = {}
+        try:
+            hero_id = int(search)
+            data = EmrossWar.HERO.get(str(hero_id))
+            if data:
+                result['hero_id'] = hero_id
+                result.update(data)
+        except ValueError:
+            for hero_id, data in EmrossWar.HERO.iteritems():
+                if re.search(search, data.get('name'), re.IGNORECASE):
+                    result['hero_id'] = int(hero_id)
+                    result.update(data)
+                    break
+
+        return result

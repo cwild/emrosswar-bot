@@ -1,12 +1,15 @@
+from __future__ import division
+
 from lib.cacheable import CacheableData
 
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 from emross.arena.hero import Gear, Hero
-from emross.utility.base import EmrossBaseObject
+from emross.utility.controllable import Controllable
 
 
-class HeroManager(EmrossBaseObject, CacheableData):
+class HeroManager(Controllable, CacheableData):
+    COMMAND = 'heroes'
 
     def __init__(self, bot, city):
         super(HeroManager, self).__init__(bot)
@@ -17,6 +20,47 @@ class HeroManager(EmrossBaseObject, CacheableData):
     def heroes(self):
         _ = self.data
         return self._heroes
+
+    def action_status(self, event, *args, **kwargs):
+        """
+        Find the specified hero.
+        """
+        hero = Hero.find(*args, **kwargs)
+
+        if hero:
+            find_id = hero['hero_id']
+
+            for h in self.heroes.itervalues():
+                if int(h.data.get('gid')) == find_id:
+                    s = str(h.stat(Hero.STATE))
+                    state = EmrossWar.LANG['HEROSTATE'].get(s)
+                    message = ['{0}'.format(self.city.name)]
+                    message.append('{0}: {1}'.format(h.client.get('name'), state or s))
+
+                    if int(h.stat(Hero.GUARDING)):
+                        message.append(EmrossWar.LANG['HEROGUARD'])
+
+                    message.append('{0}={1}'.format(EmrossWar.LANG['LEVEL'], h.stat(Hero.LEVEL)))
+                    message.append('{0}={1}'.format(EmrossWar.LANG['ATTACK'], h.stat(Hero.ATTACK)))
+                    message.append('{0}={1}'.format(EmrossWar.LANG['WISDOM'], h.stat(Hero.WISDOM)))
+                    message.append('{0}={1}'.format(EmrossWar.LANG['DEFENSE'], h.stat(Hero.DEFENSE)))
+                    message.append('{0}={1}'.format(EmrossWar.LANG['MAXTROOP'], h.stat(Hero.COMMAND)))
+                    message.append('{0}={1}%'.format('exp', \
+                        round((h.stat(Hero.EXPERIENCE) / h.stat(Hero.TARGET_EXPERIENCE)) * 100,
+                            int(kwargs.get('precision', 3))),
+                    ))
+
+                    if 'gear' in kwargs:
+                        for _item in h.gear.itervalues():
+                            try:
+                                gear = EmrossWar.ITEM[_item['item']['sid']]
+                                up = int(_item['item']['up'])
+                                message.append('{0}(+{1})'.format(gear['name'], up))
+                            except KeyError as e:
+                                self.log.exception(e)
+
+                    self.chat.send_message(', '.join(message))
+                    break
 
     def _hero_gear_handler(self, hero_id):
         def _update(*args, **kwargs):
