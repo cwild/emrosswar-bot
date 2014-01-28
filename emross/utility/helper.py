@@ -17,7 +17,7 @@ from emross import OPERATORS
 from emross.alliance import Alliance
 from emross.api import EmrossWar
 from emross.chat import Chat
-from emross.city import City
+from emross.downtown import City
 from emross.exceptions import *
 from emross.favourites import Favourites
 from emross.gift import GiftCollector, GiftEvents

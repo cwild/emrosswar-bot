@@ -1,6 +1,6 @@
 import unittest
 
-from emross.city import City
+from emross.downtown import City
 from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
 
