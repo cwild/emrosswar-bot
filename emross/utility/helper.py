@@ -47,7 +47,7 @@ class EmrossWarBot(CacheableData):
 
     def __init__(self, api, *args, **kwargs):
         super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
-        self._initialised = False
+        self.is_initialised = False
         self._closing = False
         self.blocked = False
         self.runnable = True
@@ -76,25 +76,6 @@ class EmrossWarBot(CacheableData):
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
 
-        self.core_setup()
-        self.tasks['core'] = (
-            (
-                (Chat,),
-                (AutoLottery,),
-                (GiftCollector,),
-                (GiftEvents,),
-            ),
-        )
-
-        if api.player:
-            if hasattr(settings, 'build_path') and \
-                api.player.disable_global_build == False:
-
-                self.tasks['build_path'] = settings.build_path
-
-            if api.player.custom_build:
-                self.tasks['custom'] = api.player.custom_build
-
 
     def __del__(self):
         logger.debug('Clean up bot instance')
@@ -114,7 +95,7 @@ class EmrossWarBot(CacheableData):
 
     @property
     def userinfo(self):
-        if not self._initialised and self._closing:
+        if not self.is_initialised and self._closing:
             raise BotException('userinfo unavailable and marked for shutdown')
         return self.data
 
@@ -127,6 +108,25 @@ class EmrossWarBot(CacheableData):
         """
         Some utility functions
         """
+
+        self.tasks['core'] = (
+            (
+                (Chat,),
+                (AutoLottery,),
+                (GiftCollector,),
+                (GiftEvents,),
+            ),
+        )
+
+        if self.api.player:
+            if hasattr(settings, 'build_path') and \
+                self.api.player.disable_global_build == False:
+
+                self.tasks['build_path'] = settings.build_path
+
+            if self.api.player.custom_build:
+                self.tasks['custom'] = self.api.player.custom_build
+
 
         def inventory(event, *args, **kwargs):
             chat = self.builder.task(Chat)
@@ -198,7 +198,6 @@ class EmrossWarBot(CacheableData):
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         userinfo = json['ret']['user']
-        self._initialised = True
 
         skip = set([city.id for city in self.cities])
         skip.update(settings.ignore_cities)
@@ -208,6 +207,10 @@ class EmrossWarBot(CacheableData):
             logger.debug(u'Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self._cities.append(city)
+
+        if not self.is_initialised:
+            self.is_initialised = True
+            self.core_setup()
 
         for gift in userinfo['gift']:
             self.get_gift(gift)

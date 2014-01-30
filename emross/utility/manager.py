@@ -31,6 +31,10 @@ def _do_work(bot, *args, **kwargs):
 def _bot_runner(pool, bots, **kwargs):
     while len(bots):
         for bot in bots:
+            if not bot.is_initialised:
+                # Let's get the ball rolling!
+                bot.update()
+
             if bot.blocked:
                 continue
             try:
