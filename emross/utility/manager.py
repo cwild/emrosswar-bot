@@ -31,13 +31,14 @@ def _do_work(bot, *args, **kwargs):
 def _bot_runner(pool, bots, **kwargs):
     while len(bots):
         for bot in bots:
-            if not bot.is_initialised:
-                # Let's get the ball rolling!
-                bot.update()
-
-            if bot.blocked:
-                continue
             try:
+                if not bot.is_initialised:
+                    # Let's get the ball rolling!
+                    bot.update()
+
+                if bot.blocked:
+                    continue
+
                 for task, jobs in bot.tasks.iteritems():
                     if task not in bot.builder.running_build_stages:
                         bot.builder.running_build_stages.add(task)
