@@ -36,7 +36,7 @@ def _bot_runner(pool, bots, **kwargs):
                     # Let's get the ball rolling!
                     bot.update()
 
-                if bot.blocked:
+                if bot.blocked or not bot.is_play_time():
                     continue
 
                 for task, jobs in bot.tasks.iteritems():

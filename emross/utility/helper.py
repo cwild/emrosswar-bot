@@ -302,17 +302,20 @@ class EmrossWarBot(CacheableData):
             pass
 
 
-    def is_attack_time(self):
+    def is_play_time(self):
         """
-        Check if we should be farming at this time of day.
-        Can't be farming 24/7 after all!
+        Check if we should be playing at this time of day.
+        May not wish to be on 24/7 after all!
         """
-        for timespan in settings.farming_hours:
-            if timespan[0] <= time.localtime().tm_hour < timespan[1]:
-                return True
+
+        try:
+            for timespan in self.api.player.playtimes:
+                if timespan[0] <= time.localtime().tm_hour < timespan[1]:
+                    return True
+        except AttributeError:
+            return True
 
         return False
-
 
     def _city_wealth(self, func=max, text='most'):
         city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))

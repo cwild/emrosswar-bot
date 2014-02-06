@@ -69,14 +69,6 @@ enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
 
 prefer_closer = True
 
-"""
-You can set the times at which you would like to farm here.
-
-The default is all day. You can set multiple ranges here though. eg.
-[(6, 9), (15, 18), (22, 23)]
-"""
-farming_hours = [(-1, 25)]
-
 
 plugin_api = {
     'auth': 'username:password',
