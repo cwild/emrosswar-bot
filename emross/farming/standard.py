@@ -25,7 +25,7 @@ class BasicFarmer(BaseFarmer):
             return
 
         army = city.create_army(threshold)
-        hero = city.choose_hero(sum(army.values()))
+        hero = city.choose_hero(sum(army.values()), **self.kwargs)
 
         self.log.info('Sending attack: [{0}/{1}] {2} from "{3}"'.format(\
             target.y, target.x, hero, city.name))

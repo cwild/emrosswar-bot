@@ -201,13 +201,16 @@ class City(EmrossBaseObject, CacheableData):
             self.heroes.append(Hero(data))
 
 
-    def choose_hero(self, capacity=None):
+    def choose_hero(self, capacity=None,
+        exclude_hero_ranks=[],
+        **kwargs):
         """
         Which hero should we use?
         """
         heroes = [h for h in self.hero_manager.ordered_by_stats([Hero.COMMAND])
                     if h.stat(Hero.VIGOR) > 0 and not h.stat(Hero.GUARDING)
                     and h.stat(Hero.STATE) == Hero.AVAILABLE
+                    and h.client.get('rank') not in exclude_hero_ranks
                 ]
 
         if not heroes:
