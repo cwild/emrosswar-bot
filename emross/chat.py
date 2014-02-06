@@ -81,6 +81,9 @@ class Chat(Task):
                 elif msg.get('from_name'):
                     event = Event('chat_message', **data)
                     self.bot.events.notify(event, text)
+                else:
+                    event = Event('scroll_activity', **data)
+                    self.bot.events.notify(event, text)
             except SkipMessage:
                 pass
             except MessageParsingError:
