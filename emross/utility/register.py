@@ -14,12 +14,18 @@ def register(username=None, password=None, referrer=None, server=None, captcha=N
     """
     user=creative&action=reg&referer=rm9y5w&code=875628a8-ccf7-11e0-9fbd-00216b4d955c
     """
+    logger.info('Register user={0}, password={1}, referrer={2}, server={3}'.format(\
+        username, password, referrer, server))
+
+    _hash = uuid.uuid4()
+    logger.info('Use hash {0}'.format(_hash))
+
     json = api._call('info.php',
         server=server or 'm.emrosswar.com',
         user=username,
         action='reg',
         referer=referrer,
-        code=uuid.uuid4(),
+        code=_hash,
         key=None, handle_errors=False)
 
     logger.info(json)
@@ -44,9 +50,10 @@ def register(username=None, password=None, referrer=None, server=None, captcha=N
             logger.error('You need to solve a captcha. Try again by passing the code with --captcha/-c')
             import webbrowser
             webbrowser.open(json['ret']['url'])
+            raise EmrossWarApiException('Unable to create account {0}'.format(username))
 
     except TypeError as e:
-        logging.exception(e)
+        logger.exception(e)
         logger.warning('There was an error during registration.')
 
 
@@ -65,10 +72,18 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--referrer', help='Account refer code', default=None)
     parser.add_argument('-s', '--server', help='Game "MASTER" server', default=None)
     parser.add_argument('-c', '--captcha', help='captcha', default=None)
+    parser.add_argument('-n', '--number', help='number of accounts to make', default=None, type=int)
+    parser.add_argument('-o', '--offset', help='account offset', default=0, type=int)
 
     args = parser.parse_args()
 
     try:
-        register(args.username, args.password, args.referrer, args.server, args.captcha)
-    except EmrossWarApiException, e:
-        logging.exception(e)
+        if args.number is None:
+            register(args.username, args.password, args.referrer, args.server, args.captcha)
+        else:
+            for i in xrange(1 + args.offset, 1 + args.number + args.offset):
+                register('{0}:{1}'.format(args.username, i),
+                    args.password, args.referrer, args.server, args.captcha
+                )
+    except EmrossWarApiException as e:
+        logger.error(e)
