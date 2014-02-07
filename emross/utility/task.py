@@ -1,11 +1,8 @@
-import logging
 import math
 import threading
 import time
 
 from emross.utility.base import EmrossBaseObject
-
-logger = logging.getLogger(__name__)
 
 class Task(EmrossBaseObject):
     """
@@ -41,11 +38,11 @@ class Task(EmrossBaseObject):
 
         return self._result.get(stage, None)
 
-    def process(self, *args, **kwargs):
-        logger.warning('You need to implement a `process` method for this Task.')
-
     def calculate_delay(self):
         return self.INTERVAL
+
+    def process(self, *args, **kwargs):
+        pass
 
     def setup(self):
         pass
@@ -67,6 +64,9 @@ class TaskType:
 
 
 class CostCalculator(object):
+    COST_MODIFIER = 0
+    COSTS = {}
+
     @classmethod
     def cost(cls, tech, level=2, modifier=None):
         modifier = modifier or cls.COST_MODIFIER
@@ -86,10 +86,6 @@ class FilterableCityTask(Task):
 
     def cities(self, city_names=None, city_index=None, **kwargs):
         cities = self.bot.cities
-
-        if len(cities) == 0:
-            logger.debug('No known cities available')
-            return []
 
         if self.bot.pvp:
             # There shall be only ONE!

@@ -19,12 +19,6 @@ class CommandCenter(Task, Controllable):
         # For backwards-compatability
         self.bot.events.subscribe(self.LOOT_COMMAND, self.action_loot)
 
-    def process(self, *args, **kwargs):
-        """
-        Dummy!
-        """
-        pass
-
     def _barracks_action(self, x, y, *args, **kwargs):
         """
         Base behavior of the command center
