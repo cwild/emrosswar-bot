@@ -27,6 +27,7 @@ class Player(object):
         disable_modules = [],
         minimum_food=0,
         operators=[],
+        playtimes=[(-1, 25)],
         *args,
         **kwargs):
 
@@ -41,6 +42,7 @@ class Player(object):
         self.disable_modules = set(disable_modules)
         self.minimum_food = minimum_food
         self.operators = operators
+        self.playtimes = playtimes
         self._remote = None
 
     def __repr__(self):
