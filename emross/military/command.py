@@ -36,9 +36,9 @@ class CommandCenter(Task, Controllable):
             )
             return
 
-        level = int(kwargs.get('level', 0))
+        level = kwargs.get('level')
         if level:
-            current_lvl = self.bot.userinfo.get('level', 1)
+            current_lvl = int(self.bot.userinfo.get('level', 0))
             exact_lvl, min_lvl, max_lvl = None, 0, 999
             try:
                 if '-' in level:
