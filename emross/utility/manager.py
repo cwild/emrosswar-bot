@@ -34,7 +34,7 @@ def _bot_runner(pool, bots, **kwargs):
             try:
                 if not bot.is_initialised:
                     # Let's get the ball rolling!
-                    bot.update()
+                    logger.info('init id={0}'.format(bot.userinfo['id']))
 
                 if bot.blocked or not bot.is_play_time():
                     continue
