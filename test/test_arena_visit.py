@@ -3,10 +3,12 @@ import unittest
 from emross.arena.hero import Hero
 from emross.arena.visit import HeroVisit
 
+from bot import bot
+
 class TestArenaVisit(unittest.TestCase):
 
     def setUp(self):
-        self.visit = HeroVisit(None)
+        self.visit = HeroVisit(bot)
 
     def test_hero_parsing(self):
         heroes = self.visit.split_heroes('172|d|1,68|c|4')
@@ -87,6 +89,15 @@ class TestArenaVisit(unittest.TestCase):
             Hero.ACE: {Hero.HEARTS: 1}
         })
         self.assertEqual('5_all_same', reward)
+
+    def test_selection_two_pairs(self):
+        for rank in [Hero.JACK, Hero.QUEEN, Hero.KING, Hero.ACE]:
+            reward = self.visit.reward_conversion({
+                Hero.TEN: {'*': 2},
+                rank: {'*': 2},
+            })
+            self.assertEqual('4_double', reward)
+
 
 if __name__ == '__main__':
     unittest.main()

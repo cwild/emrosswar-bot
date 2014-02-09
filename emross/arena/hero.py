@@ -69,6 +69,13 @@ class Hero(EmrossBaseObject):
         SPADES: 'Spades'
     }
 
+    FACE_SYMBOLS = {
+        CLUBS: u'\u2660',
+        DIAMONDS: u'\u2666',
+        HEARTS: u'\u2665',
+        SPADES: u'\u2663'
+    }
+
     # Attributes
     ATTACK = 'p'
     DEFENSE = 'c1'

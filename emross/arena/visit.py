@@ -1,33 +1,33 @@
 from copy import deepcopy
-import logging
 
 from emross.api import EmrossWar
+from emross.arena.hero import Hero
+from emross.utility.controllable import Controllable
 from emross.utility.task import Task
-from hero import Hero
 
-class HeroVisit(Task):
+class HeroVisit(Controllable, Task):
     """
     Implementation of the Hero "Visit"/poker game in the arena.
     """
 
+    COMMAND = 'visit'
     INTERVAL = 30
     URL = 'game/gen_visit_api.php'
     UNMET_CURRENCY_CONDITIONS = 1610
 
     def process(self, *args, **kwargs):
+        if self.bot.pvp:
+            self.sleep(86400)
+            return
 
         self.log.info('Run Hero visit routine')
-        json = self.bot.api.call(self.URL)
-        if json['code'] != EmrossWar.SUCCESS:
-            return True
-
-        already_visited = self.split_heroes(json['ret']['visited_list'])
-        can_visit_list = self.split_heroes(json['ret']['can_visit_list'])
+        already_visited, can_visit_list = self.check_visit()
 
         if already_visited:
             self.log.info('Heroes already visited: {0}'.format(', '.join([str(Hero(h)) for h in already_visited])))
         else:
             self.log.info('No heroes have been visited yet')
+
         self.log.info('Heroes available to visit: {0}'.format(', '.join([str(Hero(h)) for h in can_visit_list])))
 
         visited = self.calculate_components([(Hero(h).client['rank'], Hero(h).client['race']) for h in already_visited])
@@ -47,6 +47,14 @@ class HeroVisit(Task):
 
 
         self.sleep(cooldown)
+
+    def check_hand(self):
+        json = self.bot.api.call(self.URL)
+
+        already_visited = self.split_heroes(json['ret']['visited_list'])
+        can_visit_list = self.split_heroes(json['ret']['can_visit_list'])
+
+        return already_visited, can_visit_list
 
     def split_heroes(self, data):
         """
@@ -216,12 +224,38 @@ class HeroVisit(Task):
             for rank in hero_selection.itervalues()])
 
 
+    def action_list(self):
+        """
+        List the visited heroes and the heroes available to visit.
+        """
+        already_visited, can_visit_list = self.check_hand()
+
+        message = []
+
+        for msg, hand in [('Visited', already_visited), ('Available', can_visit_list)]:
+            bits = []
+
+            for card in hand:
+                h = Hero(card)
+                rank = Hero.RANKS[h.client['rank']]
+
+                # 10/J/Q/K/A
+                bits.append(u'{0}{1}'.format(
+                    rank if h.client['rank'] == Hero.TEN else rank[0],
+                    Hero.FACE_SYMBOLS[h.client['race']]
+                ))
+
+            message.append(u'{0}={1}'.format(msg, ','.join(bits)))
+
+        self.chat.send_message(EmrossWar.safe_text(', '.join(message)))
+
+
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(level=logging.DEBUG)
 
     from bot import bot
-    bot.update()
     visit = HeroVisit(bot)
 
     current = {Hero.QUEEN: {2: 1}, Hero.JACK: {2: 3}}
