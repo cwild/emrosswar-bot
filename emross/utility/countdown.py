@@ -18,6 +18,11 @@ class CountdownManager(EmrossBaseObject, CacheableData):
         super(CountdownManager, self).__init__(bot, time_to_live=60)
         self.city = city
         self.last_cdprice_check = 0
+        self.bot.events.subscribe('city.countdown.reload', self._reload)
+
+    def _reload(self, event, city_id):
+        if city_id == self.city.id:
+            self.expire()
 
     def should_update(self):
         return self.is_tainted(self._data['cdlist'])

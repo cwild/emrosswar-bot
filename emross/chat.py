@@ -97,13 +97,24 @@ class Chat(Task):
     def parse_events(self, messages):
         """
         The message may contain useful info such as incoming loot notifcations.
-        Maybe we can use this in future.
         """
         try:
             for msg in messages[::-1]:
-                _type = msg.get('typeid')
-                if _type == ChatEvent.COUNTDOWN_RELOAD:
-                    pass
+                event_type = msg.get('typeid')
+
+                if event_type == ChatEvent.NEW_MAIL:
+                    self.bot.events.notify(Event('mail.message.received'))
+
+                elif event_type == ChatEvent.COUNTDOWN_RELOAD:
+                    event = Event('city.countdown.reload')
+                    self.bot.events.notify(event, city_id=int(msg['cid']))
+
+                elif event_type in [ChatEvent.NEW_CASTLE, ChatEvent.RESYNC_USER]:
+                    # update userinfo on next data access
+                    self.bot.expire()
+
+                elif event_type == ChatEvent.RECEIEVED_TEXT:
+                    self.log.info(msg['txt'])
 
         except Exception as e:
             self.log.exception(e)
