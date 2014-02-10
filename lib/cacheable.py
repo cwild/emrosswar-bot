@@ -1,7 +1,7 @@
 import logging
 import time
 
-from multiprocessing import RLock
+from multiprocessing.dummy import RLock
 
 logger = logging.getLogger(__name__)
 

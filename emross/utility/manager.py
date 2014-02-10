@@ -4,7 +4,7 @@ import time
 import threading
 import Queue
 
-from multiprocessing.pool import ThreadPool
+from multiprocessing.dummy import Process
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,18 @@ WORKER_ERROR_WAIT = 15
 WORKER_ERROR_MAX_WAIT = 3600
 
 
+def _bot_consumer(queue):
+    try:
+        while True:
+            func, args = queue.get()
+            func(*args)
+    except Exception as e:
+        logger.exception(e)
+
 def _do_work(bot, *args, **kwargs):
     bot.builder.process(*args, **kwargs)
 
-def _bot_runner(pool, bots, **kwargs):
+def _bot_runner(queue, bots, **kwargs):
     while len(bots):
         for bot in bots:
             try:
@@ -42,7 +50,7 @@ def _bot_runner(pool, bots, **kwargs):
                 for task, jobs in bot.tasks.iteritems():
                     if task not in bot.builder.running_build_stages:
                         bot.builder.running_build_stages.add(task)
-                        pool.apply_async(_do_work, (bot, jobs, task))
+                        queue.put((_do_work, (bot, jobs, task)))
             except Exception as e:
                 logger.exception(e)
                 continue
@@ -169,10 +177,15 @@ class BotManager(object):
         error_thread.start()
 
         processes = self.kwargs.get('processes') or DEFAULT_POOL_SIZE
-        self.pool = pool = ThreadPool(processes)
+
+        queue = Queue.Queue(processes)
+        for i in range(processes):
+            t = Process(target=_bot_consumer, args=(queue,))
+            t.daemon = True
+            t.start()
 
         if self.console:
-            worker = threading.Thread(target=_bot_runner, args=(pool, self.bots),
+            worker = threading.Thread(target=_bot_runner, args=(queue, self.bots),
                                 kwargs=self.kwargs)
             worker.daemon = True
             worker.start()
@@ -183,4 +196,4 @@ class BotManager(object):
             raise KeyboardInterrupt
         elif workhorse:
             # We can run this directly in this thread
-            _bot_runner(pool, self.bots, **self.kwargs)
+            _bot_runner(queue, self.bots, **self.kwargs)
