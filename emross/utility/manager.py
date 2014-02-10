@@ -26,12 +26,12 @@ WORKER_ERROR_MAX_WAIT = 3600
 
 
 def _bot_consumer(queue):
-    try:
-        while True:
+    while True:
+        try:
             func, args = queue.get()
             func(*args)
-    except Exception as e:
-        logger.exception(e)
+        except Exception as e:
+            logger.exception(e)
 
 def _do_work(bot, *args, **kwargs):
     bot.builder.process(*args, **kwargs)
