@@ -36,3 +36,7 @@ class VisitTooOftenHandler(handler.EmrossHandler):
 class DevilArmyGone(handler.EmrossHandler):
     def process(self, json):
         raise exceptions.TargetException('Targeted NPC is gone!')
+
+class DevilArmyAttackedTooOften(handler.EmrossHandler):
+    def process(self, json):
+        raise exceptions.TargetException('Targeted NPC has been attacked too often in last 24 hours!')

@@ -7,7 +7,8 @@ handlers = {
     2: client_errors.InvalidKeyHandler,
     2541: client_errors.DevilArmyGone,
     7415: client_errors.PvPEliminationHandler,
-    8903: client_errors.CoolDownHandler
+    8903: client_errors.CoolDownHandler,
+    30016: client_errors.DevilArmyAttackedTooOften
 }
 
 HTTP_handlers = {
