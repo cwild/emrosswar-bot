@@ -26,6 +26,7 @@ from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.resources import Resource
 from emross.shop import Shop
+from emross.utility.about import AboutHelper
 from emross.utility.builder import BuildManager
 from emross.utility import events
 from emross.world import World
@@ -67,6 +68,7 @@ class EmrossWarBot(CacheableData):
 
         self.events = self.builder.task(events.EventManager)
 
+        self.about = AboutHelper(self)
         self.alliance = self.builder.task(Alliance)
         self.favourites = self.builder.task(Favourites)
         self.item_manager = self.builder.task(item.Item)
