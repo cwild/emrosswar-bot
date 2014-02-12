@@ -201,9 +201,9 @@ class ScenarioWalker(Task, Controllable):
 
                         if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
-                            self.log.debug('Started scenario %d' % scenario)
-                            self.log.info('Started scenario "%s" with %s' % \
-                                (EmrossWar.SCENARIO_TEXT.map_name(scenario),
+                            self.log.debug('Started scenario {0}'.format(scenario))
+                            self.log.info('Started scenario "{0}" with {1}'.format(
+                                EmrossWar.SCENARIO_TEXT.map_name(scenario),
                                 ','.join(EmrossWar.HERO[str(a['hero'])]['name'] for a in armies)
                                 )
                             )
@@ -243,7 +243,7 @@ class ScenarioWalker(Task, Controllable):
         except ValueError:
             delay = min(wait) - start_time + 86400
 
-        self.log.info('Timed scenarios. Retry in %d seconds' % delay)
+        self.log.info('Timed scenarios. Retry in {0} seconds'.format(delay))
         self.sleep(delay)
 
         return False
@@ -293,7 +293,7 @@ class ScenarioWalker(Task, Controllable):
                     break
                 elif str(army['path'][0]) in info['ret']['status']:
                     node = army['path'][0]
-                    self.log.info('Already defeated point %d. We are safe here!' % node)
+                    self.log.info('Already defeated point {0}. We are safe here!'.format(node))
 
                     if node in visited and node is not current['pos']:
                         self.log.debug('We need to return to node {0} on our next move!'.format(node))
