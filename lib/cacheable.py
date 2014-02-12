@@ -1,14 +1,16 @@
 import logging
 import time
 
-from multiprocessing.dummy import RLock
-
 logger = logging.getLogger(__name__)
+
+class _DummyWith(object):
+    def __enter__(self): pass
+    def __exit__(self, type, value, traceback): return True
+_with = _DummyWith()
 
 class CacheableData(object):
     def __init__(self, time_to_live=120, update=None, *args, **kwargs):
         super(CacheableData, self).__init__()
-        self.lock = RLock()
         self._expires = 0
         self._data = {}
         self.time_to_live = time_to_live
@@ -23,8 +25,18 @@ class CacheableData(object):
         return self.data.__getitem__(val)
 
     @property
+    def _lock(self):
+        """
+        Locking should be provided by subclass
+        """
+        try:
+            return self.lock
+        except AttributeError:
+            return _with
+
+    @property
     def data(self):
-        with self.lock:
+        with self._lock:
             try:
                 should_update = self.should_update()
             except Exception:
@@ -37,7 +49,7 @@ class CacheableData(object):
 
     @data.setter
     def data(self, value):
-        with self.lock:
+        with self._lock:
             if isinstance(value, dict):
                 # Default to 0 so we can pass our own dict straight through
                 if value.get('code', 0) != 0:

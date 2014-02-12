@@ -9,6 +9,8 @@ import Queue
 import sys
 sys.path.extend(['lib/urllib3/'])
 
+from multiprocessing.dummy import RLock
+
 from lib.cacheable import CacheableData
 from lib.session import Session
 
@@ -48,6 +50,7 @@ class EmrossWarBot(CacheableData):
 
     def __init__(self, api, *args, **kwargs):
         super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
+        self.lock = RLock()
         self.is_initialised = False
         self._closing = False
         self.blocked = False
