@@ -158,6 +158,10 @@ class ScenarioWalker(Task, Controllable):
                             scored = c.hero_manager.ordered_by_scored_stats(scoring, command, exclude)
                             try:
                                 hero, score = scored[0]
+
+                                if hero.stat(Hero.GUARDING):
+                                    self.log.debug('Skip guardian: {0}'.format(hero))
+                                    continue
                                 exclude.append(hero.data['gid'])
                                 champion_heroes_by_city[c].append(scored[0])
                             except IndexError:
