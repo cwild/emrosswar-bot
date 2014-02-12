@@ -13,4 +13,5 @@ class NoHeroesAvailable(BotException): pass
 class InsufficientHeroCommand(BotException): pass
 class InsufficientSoldiers(BotException): pass
 
+class ResourceException(BotException): pass
 class TradeException(BotException): pass

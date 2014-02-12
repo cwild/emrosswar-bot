@@ -1,6 +1,7 @@
 from lib.cacheable import CacheableData
 
 from emross.api import EmrossWar
+from emross.exceptions import ResourceException
 from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 
@@ -134,11 +135,12 @@ class Barracks(EmrossBaseObject, CacheableData):
         city=12553&action=war_task&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600
         carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
         """
+        costs = dict((k[5], int(v)) for k, v in params.iteritems()
+                    if k.startswith('cost_'))
 
         try:
-            current_food = self.city.resource_manager.get_amount_of(Resource.FOOD)
-            if params['cost_food'] > current_food:
-                self.city.replenish_food(params['cost_food']-current_food)
+            if not self.city.resource_manager.meet_requirements(costs):
+                raise ResourceException('Insufficient resources to perform this task')
         except KeyError as e:
             self.log.exception(e)
 
@@ -153,14 +155,12 @@ class Barracks(EmrossBaseObject, CacheableData):
                 soldier = [s for s in self.soldiers if i == s[0]][0]
                 soldier[1] -= v
 
-            for k, v in kwargs.iteritems():
-                if k.startswith('cost_'):
-                    try:
-                        res = k[5] # w,i,f,g
-                        cur = self.city.resource_manager.get_amount_of(res)
-                        self.city.resource_manager.set_amount_of(res, cur-int(v))
-                    except KeyError:
-                        pass
+            for res, v in costs.iteritems():
+                try:
+                    cur = self.city.resource_manager.get_amount_of(res)
+                    self.city.resource_manager.set_amount_of(res, cur-int(v))
+                except KeyError:
+                    pass
 
         return json
 
