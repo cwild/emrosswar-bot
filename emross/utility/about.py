@@ -18,5 +18,10 @@ class AboutHelper(Controllable):
         """
         Current branch hash
         """
-        git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'])
+        command = ['git', 'rev-parse', 'HEAD']
+        try:
+            git_hash = subprocess.check_output(command)
+        except AttributeError:
+            git_hash = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()[0]
+
         self.chat.send_message('commit: {0}'.format(git_hash))
