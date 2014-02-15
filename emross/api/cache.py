@@ -1,10 +1,14 @@
 import hashlib
 import logging
 import os
-import simplejson
 import threading
 import time
 import urllib3
+
+try:
+    import simplejson
+except ImportError:
+    import json as simplejson
 
 from emross import master as MASTER
 

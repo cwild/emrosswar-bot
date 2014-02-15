@@ -4,7 +4,11 @@ import sys
 import threading
 import time
 
-import simplejson
+try:
+    import simplejson
+except ImportError:
+    import json as simplejson
+
 try:
     from simplejson import JSONDecodeError
 except ImportError:
