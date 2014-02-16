@@ -43,6 +43,13 @@ class Study(FilterableCityTask):
         except IndexError:
             return -1
 
+    def get_tech_level(self, tech):
+        construction = self.bot.builder.task(Construct)
+        cities = sorted(self.bot.cities, reverse=True, key= lambda city:
+            construction.structure_level(city, Building.UNIVERSITY)
+        )
+        return max(self.tech_level(cities[0], tech), 0)
+
     def upgrade(self, city, tech, owner=0):
         """
         {'code': 0, 'ret': {'cdlist': [{'owner': 0, 'secs': 1557, 'cdtype': 2, 'id': 123456, 'target': 1}]}}

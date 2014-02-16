@@ -9,6 +9,8 @@ class _DummyWith(object):
 _with = _DummyWith()
 
 class CacheableData(object):
+    LOCKED = False
+
     def __init__(self, time_to_live=120, update=None, *args, **kwargs):
         super(CacheableData, self).__init__()
         self._expires = 0
@@ -42,7 +44,9 @@ class CacheableData(object):
             except Exception:
                 should_update = False
 
-            if time.time() > self._expires or should_update:
+            if self.LOCKED:
+                self.log.debug('Data is locked from auto-updating')
+            elif time.time() > self._expires or should_update:
                 self.data = self.update(*self.args, **self.kwargs)
 
         return self._data

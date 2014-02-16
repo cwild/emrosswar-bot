@@ -1,3 +1,4 @@
+from emross.research.tech import Tech
 from emross.utility.task import CostCalculator
 
 class Soldier(CostCalculator):
@@ -173,6 +174,31 @@ class Soldier(CostCalculator):
     @classmethod
     def cost(cls, troop, quantity, *args, **kwargs):
         return super(Soldier, cls).cost(troop, modifier=quantity-1)
+
+
+class SoldierStat:
+    ATTACK = 'a'
+    CRITICAL = 'e'
+    DEFENSE = 'd'
+    HEALTH = 'h'
+    SPEED = 's'
+    UPKEEP = 'f'
+
+
+SOLDIER_STAT_MODIFIERS = {
+    Soldier.KAHKLEH: {
+        SoldierStat.ATTACK: lambda total, tech_level: total * (0.005 + \
+                ((tech_level(Tech.ADVANCED_WEAPON) * 0.025) + \
+                tech_level(Tech.ATTACK_FORMATION) * 0.025) / 100),
+
+        SoldierStat.DEFENSE: lambda total, tech_level: total * (0.005 + \
+                ((tech_level(Tech.ADVANCED_ARMOUR) * 0.025) + \
+                tech_level(Tech.DEFENSE_FORMATION) * 0.025) / 100)
+    }
+}
+SOLDIER_STAT_MODIFIERS[Soldier.BERSERKER] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
+SOLDIER_STAT_MODIFIERS[Soldier.MASTER] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
+SOLDIER_STAT_MODIFIERS[Soldier.OVERLORD] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
 
 
 if __name__ == "__main__":

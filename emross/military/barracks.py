@@ -25,9 +25,33 @@ class Barracks(EmrossBaseObject, CacheableData):
     DO_NOT_ENGAGE = 2
     DO_NOT_ENGAGED_IF_OUTNUMBERED = 3
 
+    SOLDIER_INFO_EXPIRY = 86400
+
     def __init__(self, bot, city):
         super(Barracks, self).__init__(bot)
         self.city = city
+        self._soldier_data = {}
+
+
+    def soldier_data(self, soldier):
+        """
+        game/soldier_educate_api.php action=info&city=197619&stype=1
+
+        {"code":0,"ret":{"a":15,"d":8,"s":50,"h":80,"f":1,"e":150}}
+
+        Infantry
+        Attack:	15		Defense:	8
+        Critical:	150%		Upkeep:	1
+        Health:	80		Speed:	50
+        """
+        return self._soldier_data.setdefault(int(soldier), CacheableData(
+            time_to_live=self.SOLDIER_INFO_EXPIRY,
+            update=self.bot.api.call,
+            method=self.SOLDIER_EDUCATE_URL,
+            action='info',
+            city=self.city.id,
+            stype=soldier
+        ))
 
     @property
     def soldiers(self):
