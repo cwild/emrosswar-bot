@@ -232,53 +232,6 @@ class EmrossWarBot(CacheableData):
         logger.info('Collecting gift "{0}"'.format(gift_item))
         return self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
-    def find_target_for_army(self, city, cat=Favourites.DEVIL_ARMY):
-        """
-        Get next fav which is available for attack
-
-        [18936, 165, 35, 1, 0]
-        _, x, y, *, attacked
-        """
-
-        army, target = None, None
-
-        try:
-            for rating, threshold in settings.soldier_threshold:
-                try:
-                    army = city.create_army(threshold)
-                except (InsufficientSoldiers, NoHeroesAvailable):
-                    army, target = None, None
-                    continue
-
-                done = False
-                favs = [e for e in self.favourites.favs[cat] if e.rating is rating]
-
-                for t in favs:
-                    if t.attack < self.npc_attack_limit:
-                        target = t
-                        done = True
-                        break
-
-                if done:
-                    break
-
-        except KeyError, e:
-            pass
-
-        if not army:
-            raise InsufficientSoldiers
-
-        if not target:
-            if len(favs) == 0:
-                raise NoTargetsFound, 'There are no DAs in the favs list for the selected army: %s' % army
-
-            raise NoTargetsAvailable, 'No targets with less than %d attacks found!' % self.npc_attack_limit
-
-        rating = (range(6, 0, -1)+range(7,9))[target.rating-1]
-        logger.info('Target is %d* %d/%d with attack count %d' % (rating, target.y, target.x, target.attack))
-
-        return target, army
-
     def scout_map(self, **kwargs):
         logger.info('Trying to find more targets to attack')
 
