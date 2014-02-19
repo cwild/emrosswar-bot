@@ -40,3 +40,9 @@ class DevilArmyGone(handler.EmrossHandler):
 class DevilArmyAttackedTooOften(handler.EmrossHandler):
     def process(self, json):
         raise exceptions.TargetException('Targeted NPC has been attacked too often in last 24 hours!')
+
+class CaptchaHandler(handler.EmrossHandler):
+    DELAY_PERIOD = 1800
+
+    def process(self, json):
+        raise exceptions.DelayTaskProcessing('Try this Task again later!', self.DELAY_PERIOD)

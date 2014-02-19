@@ -1,7 +1,7 @@
 import time
 
 from emross.api import EmrossWar
-from emross.exceptions import BotException, NoTargetsAvailable, TargetException
+from emross import exceptions
 from emross.favourites import Favourites
 from emross.utility.task import FilterableCityTask
 
@@ -40,7 +40,7 @@ class BaseFarmer(FilterableCityTask):
             favs[:] = self.sort_favourites(favs)
 
             if len(favs) == 0:
-                yield NoTargetsAvailable('No favourites are available to attack')
+                yield exceptions.NoTargetsAvailable('No favourites are available to attack')
                 continue
 
             for target in favs:
@@ -84,10 +84,14 @@ class BaseFarmer(FilterableCityTask):
                         break
                     try:
                         self.process_city_with_target(self.current_city, target)
-                    except TargetException as e:
+                    except exceptions.TargetException as e:
                         self.log.error(e)
                         break
-                    except BotException:
+                    except exceptions.DelayTaskProcessing as e:
+                        self.sleep(e.delay)
+                        cycle_done = True
+                        break
+                    except exceptions.BotException:
                         visited_cities.add(self.current_city)
                         self.current_city = next(self.cities)
                     except Exception as e:

@@ -48,7 +48,7 @@ class Task(EmrossBaseObject):
         pass
 
     def sleep(self, seconds=INTERVAL):
-        self._next_run = time.time() + seconds
+        self._next_run = time.time() + (seconds or self.INTERVAL)
 
 
 class TaskType:

@@ -15,3 +15,8 @@ class InsufficientSoldiers(BotException): pass
 
 class ResourceException(BotException): pass
 class TradeException(BotException): pass
+
+class DelayTaskProcessing(BotException):
+    def __init__(self, message, delay=None):
+        super(DelayTaskProcessing, self).__init__(message)
+        self.delay = delay
