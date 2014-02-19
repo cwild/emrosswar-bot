@@ -7,7 +7,7 @@ ENEMY_TROOPS = (('Horror', 6000), ('Nightmare', 0), ('Inferno', 0))
 
 class TestMail(unittest.TestCase):
     def setUp(self):
-        from bot import bot
+        from test import bot
         self.bot = bot
 
     def test_mail_parser_types(self):

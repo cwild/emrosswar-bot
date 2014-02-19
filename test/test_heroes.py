@@ -7,10 +7,9 @@ from emross.arena.heroes import HeroManager
 class TestScenario(unittest.TestCase):
 
     def setUp(self):
-        from bot import bot
+        from test import bot
 
-        bot.cities = []
-        city = City(None, 0, 'TEST_CITY', 0, 0)
+        city = bot.cities[0]
 
         self.hero_manager1 = HeroManager(bot, city)
         self.hero_manager1._heroes = {

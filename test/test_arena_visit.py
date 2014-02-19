@@ -3,7 +3,7 @@ import unittest
 from emross.arena.hero import Hero
 from emross.arena.visit import HeroVisit
 
-from bot import bot
+from test import bot
 
 class TestArenaVisit(unittest.TestCase):
 
