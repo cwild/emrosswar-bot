@@ -135,10 +135,10 @@ class HeroManager(Controllable, CacheableData):
         except IndexError:
             pass
 
-    def ordered_by_stats(self, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=[]):
+    def ordered_by_stats(self, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=[], descending=True):
         exclude = set(exclude)
         heroes = [hero for hero in self.heroes.values() if hero.stat('gid') not in exclude]
-        heroes.sort(key = lambda hero: [hero.data.get(stat) for stat in stats], reverse=True)
+        heroes.sort(key=lambda hero: [hero.data.get(stat) for stat in stats], reverse=descending)
         return heroes
 
     def ordered_by_scored_stats(self, scoring=[(Hero.COMMAND, 1)], heroes=None, exclude=[]):

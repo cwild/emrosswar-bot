@@ -5,7 +5,7 @@ modifiers do not gain from this.
 """
 
 class NPCAlliance(object):
-    def tech(self, *args):
+    def tech(self, tech, *args, **kwargs):
         return 0
 
 alliance = NPCAlliance()

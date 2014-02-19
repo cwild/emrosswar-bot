@@ -109,7 +109,7 @@ class Hero(EmrossBaseObject):
     WAR = 4
     WORKING = 5
 
-    def __init__(self, data={}, gear={}):
+    def __init__(self, data={}, gear={}, **kwargs):
         self.data = data
         self._gear = gear
 

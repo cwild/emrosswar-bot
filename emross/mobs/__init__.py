@@ -1,3 +1,8 @@
+from __future__ import division
+
+from emross.api import EmrossWar
+from emross.arena.hero import Hero as BaseHero
+from emross.military.camp import SoldierStat
 from emross.mobs.ally import alliance
 
 commanders = []
@@ -14,22 +19,44 @@ class DevilArmy:
     EIGHT_STAR = 8
 
 
-class Hero(object):
+class Hero(BaseHero):
     BASE_ATTACK = 50
     BASE_DEFENSE = 30
 
     def __init__(self, name, **kwargs):
+        super(Hero, self).__init__(**kwargs)
         self.name = name
-        self.attack = kwargs.get('attack', self.BASE_ATTACK)
-        self.defense = kwargs.get('defense', self.BASE_DEFENSE)
+        self.attack = self.data[BaseHero.ATTACK] = kwargs.get('attack', self.BASE_ATTACK)
+        self.defense = self.data[BaseHero.DEFENSE] = kwargs.get('defense', self.BASE_DEFENSE)
+
 
 class Unit(object):
     BASE_ATTACK = 200
     BASE_DEFENSE = 100
-    BASE_CRITICAL = 250
+    BASE_CRITICAL = 100
 
-    def __init__(self, name, **kwargs):
+    UNITS = []
+
+    def __init__(self, name, rating, **kwargs):
         self.name = name
-        self.attack = kwargs.get('attack', self.BASE_ATTACK)
-        self.defense = kwargs.get('defense', self.BASE_DEFENSE)
-        self.critical = kwargs.get('critical', self.BASE_CRITICAL)
+        self.rating = rating
+        self.data = {}
+        self.attack = self.data[SoldierStat.ATTACK] = kwargs.get('attack', self.BASE_ATTACK)
+        self.defense = self.data[SoldierStat.DEFENSE] = kwargs.get('defense', self.BASE_DEFENSE)
+        self.critical = self.data[SoldierStat.CRITICAL] = kwargs.get('critical', self.BASE_CRITICAL)
+
+        self.__class__.UNITS.append(self)
+
+    @classmethod
+    def soldier_data(cls, troop):
+        return troop.data
+
+    @classmethod
+    def find(cls, name, rating):
+        for unit in cls.UNITS:
+            if name == unit.name and rating == unit.rating:
+                return unit
+
+        ratings = range(6, 0, -1) + range(7, 9)
+        raise ValueError('No NPC Unit named "{0}" ({1}* {2}) found.'.format(name,
+            ratings[rating-1], EmrossWar.LANG.get('MONSTER', 'DevilArmy')))

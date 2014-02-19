@@ -26,6 +26,9 @@ class CacheableData(object):
     def __getitem__(self, val):
         return self.data.__getitem__(val)
 
+    def __len__(self):
+        return len(self._data)
+
     @property
     def _lock(self):
         """
@@ -89,10 +92,13 @@ if __name__ == "__main__":
         return kwargs
 
     d = CacheableData(5, fn, 111, method='noop', test=456)
+    logger.info('len={0}'.format(len(d)))
     logger.info(d.data)
+    logger.info('len={0}'.format(len(d)))
     d.data = {'code':0, 'ret': {'b':1}}
     logger.info(d.data)
     logger.info(d['b'])
 
     d.data = {'code':1, 'ret': {'b':2}}
     logger.info(d['b'])
+    logger.info('len={0}'.format(len(d)))

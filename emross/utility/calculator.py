@@ -17,8 +17,10 @@ HALL_CONTRIBUTIONS = {
 
 
 class WarCalculator(EmrossBaseObject):
+    HERO_BASE_MODIFIER = 200
 
-    def defense(self, hero, troops={}, ally=None, **kwargs):
+    def defense(self, hero, troops={}, ally=None, soldier_data=None,
+                hero_base=HERO_BASE_MODIFIER, **kwargs):
         """
         Calculate the precise amount of defense a hero and his troops will have.
 
@@ -27,10 +29,8 @@ class WarCalculator(EmrossBaseObject):
               * (1 + HallToughness/100))
               + HeroChestArmor
         """
-
         _ally = ally or self.bot.alliance
-
-        soldier_data = self.bot.cities[0].barracks.soldier_data
+        soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
 
         hero_defense = 0
         hero_armour = 0
@@ -44,7 +44,7 @@ class WarCalculator(EmrossBaseObject):
 
         tenacity = 1 + _ally.tech(AllyTech.TENACITY) * HALL_CONTRIBUTIONS.get(AllyTech.TENACITY, 0)
 
-        hero_contribution = 200 + math.ceil(hero_defense * tenacity)
+        hero_contribution = hero_base + math.ceil(hero_defense * tenacity)
 
         research = self.bot.builder.task(Study)
         troop_defense = []
@@ -52,8 +52,12 @@ class WarCalculator(EmrossBaseObject):
         for troop, qty in troops.iteritems():
             troop_data = soldier_data(troop)
 
+            if not len(troop_data):
+                raise ValueError('Unable to find soldier data for "{0}"'.format(troop))
+
             total = (troop_data[SoldierStat.DEFENSE] * qty)
-            total *= hero_contribution
+            total *= hero_contribution or 1
+
             total *= (1 + _ally.tech(AllyTech.TOUGHNESS) * HALL_CONTRIBUTIONS.get(AllyTech.TOUGHNESS, 0))
 
             func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.DEFENSE)
@@ -65,7 +69,8 @@ class WarCalculator(EmrossBaseObject):
         return sum(troop_defense) + hero_armour
 
 
-    def attack(self, hero, troops={}, ally=None, **kwargs):
+    def attack(self, hero, troops={}, ally=None, soldier_data=None,
+                hero_base=HERO_BASE_MODIFIER, **kwargs):
         """
         Calculate the attack range given the hero and its army.
         From minimum attack to maximum possible.
@@ -75,7 +80,7 @@ class WarCalculator(EmrossBaseObject):
                   * (1 + HallBattleCry/100)
         """
         _ally = ally or self.bot.alliance
-        soldier_data = self.bot.cities[0].barracks.soldier_data
+        soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
 
         hero_attack = 0
         if hero:
@@ -83,7 +88,7 @@ class WarCalculator(EmrossBaseObject):
 
         valor = 1 + _ally.tech(AllyTech.VALOR) * HALL_CONTRIBUTIONS.get(AllyTech.VALOR, 0)
 
-        hero_contribution = 200 + math.ceil(hero_attack * valor)
+        hero_contribution = hero_base + math.ceil(hero_attack * valor)
 
         research = self.bot.builder.task(Study)
         min_attack, max_attack = [], []
@@ -91,8 +96,11 @@ class WarCalculator(EmrossBaseObject):
         for troop, qty in troops.iteritems():
             troop_data = soldier_data(troop)
 
+            if not len(troop_data):
+                raise ValueError('Unable to find soldier data for "{0}"'.format(troop))
+
             total = (troop_data[SoldierStat.ATTACK] * qty)
-            total *= hero_contribution
+            total *= hero_contribution or 1
             total *= (1 + _ally.tech(AllyTech.BATTLECRY) * HALL_CONTRIBUTIONS.get(AllyTech.BATTLECRY, 0))
 
             func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.ATTACK)
