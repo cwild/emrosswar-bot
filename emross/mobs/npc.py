@@ -29,22 +29,29 @@ class NPC(EmrossBaseObject):
         """
         def _fetch_report(*args, **kwargs):
             try:
-                report = self.bot.session.mobs[self.id]
-                if time.time() < report.get('timestamp',0) + REPORT_MAX_AGE:
+                mobs = self.bot.session.mobs
+            except AttributeError:
+                mobs = self.bot.session.mobs = {}
+
+            try:
+                report = mobs[self.id]
+                if time.time() < report['time_queried'] + REPORT_MAX_AGE:
                     return report
-            except (AttributeError, KeyError):
-                self.bot.session.mobs = {}
+            except KeyError:
+                pass
+
 
             json = self.bot.api.call(*args, **kwargs)
-            timestamp, msg = json['ret'].get('fav', (0, ''))
+            added_timestamp, msg = json['ret'].get('fav', (0, ''))
 
             result = {
-                'timestamp': timestamp,
+                'time_added': added_timestamp,
+                'time_queried': time.time(),
                 'hero': self.bot.scout_mail.parser.find_hero(msg),
                 'troops': self.bot.scout_mail.parser.find_troops(msg),
             }
 
-            self.bot.session.mobs[self.id] = result
+            mobs[self.id] = result
             return result
 
         self._report = CacheableData(time_to_live=REPORT_LIFETIME,

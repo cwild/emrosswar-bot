@@ -143,30 +143,32 @@ class ScoutMailHandler(MailHandler):
 
 class MailParser:
     def __init__(self, troops=(), heroes=()):
-        self.troops = troops
+        self.troops = {}
+        for troop, count in troops:
+            self.troops[troop] = {'count': count, 'regex': re.compile('{0}\((\d+)\)'.format(troop))}
 
         self.reHeroes = []
         for hero in heroes:
-            self.reHeroes.append(re.compile(r'<b>\[{0}\]<\\/b><br\\/>({1})'.format(HERO_SEARCH_TEXT, hero)))
-
-        self.reTroops = []
-        for troop, count in troops:
-            self.reTroops.append(re.compile('%s\((\d+)\)' % troop))
+            obj = hero, re.compile(r'<b>\[{0}\]<\\/b><br\\/>({1})'.format(HERO_SEARCH_TEXT, hero))
+            self.reHeroes.append(obj)
 
 
     def find_hero(self, message):
-        for reg in self.reHeroes:
+        for hero, reg in self.reHeroes:
             t = reg.search(message)
             if t:
                 return t.group(1)
 
     def find_troops(self, message):
-        troops = []
-        for reg in self.reTroops:
-            count, t = 0, reg.search(message)
+        troops = {}
+        for troop, data in self.troops.iteritems():
+            reg = data.get('regex')
+
+            t = reg.search(message)
             if t:
                 count = int(t.group(1))
-            troops.append(count)
+                troops[troop] = count
+
         return troops
 
 
@@ -174,5 +176,10 @@ class MailParser:
         """
         If the troop count is not exceeded for a given troop type then this target is attackable
         """
-        limits = [t[1] for t in self.troops]
-        return False not in [a<=b for a,b in zip(troops, limits)]
+
+        for troop, qty in troops.iteritems():
+
+            if self.troops.get(troop, {}).get('count', 0) < qty:
+                return False
+
+        return True
