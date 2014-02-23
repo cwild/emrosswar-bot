@@ -1,37 +1,9 @@
-import logging
-import re
-
+from emross.mail import WAR_RESULT_LIST
+from emross.mail.message import Mail
+from emross.mail.parser import MailParser
 from emross.utility.base import EmrossBaseObject
 
 import settings
-
-logger = logging.getLogger(__name__)
-
-class MailException: pass
-class NoMailInInbox(MailException): pass
-
-HERO_SEARCH_TEXT = 'Hero'
-WAR_RESULT_INFO = 'game/war_result_info_api.php'
-WAR_RESULT_LIST = 'game/war_result_list_api.php'
-
-class Mail(EmrossBaseObject):
-
-    def __init__(self, bot, id, data):
-        super(Mail, self).__init__(bot)
-        self.id = id
-        self.data = data
-        self.message = None
-        self.processed = False
-
-    def fetch(self):
-        self.message = self.bot.api.call(WAR_RESULT_INFO, id=self.id)['ret']
-
-    def delete(self):
-        return self.bot.api.call(WAR_RESULT_LIST, action='delete', id=self.id)
-
-    def add_fav(self, cat):
-        return self.bot.favourites.add(wid=self.id, cat=cat)
-
 
 class MailHandler(EmrossBaseObject):
     TYPE = None
@@ -55,8 +27,6 @@ class MailHandler(EmrossBaseObject):
         else:
             raise MailException
 
-
-
     def delete_bulk(self, id):
         parts = map(None, *(iter(id),) * 10)
 
@@ -64,7 +34,6 @@ class MailHandler(EmrossBaseObject):
             ids = ','.join(str(o.id) for o in part if o is not None)
             self.log.info('Deleting mail {0}'.format(ids))
             self.bot.api.call(WAR_RESULT_LIST, action='delete', id=ids)
-
 
     def process(self):
         self.mail[:] = []
@@ -91,6 +60,7 @@ class AttackMailHandler(MailHandler):
 
         self.delete_bulk(processed_mail)
         self.mail[:] = []
+
 
 class ScoutMailHandler(MailHandler):
     TYPE = 3
@@ -132,54 +102,8 @@ class ScoutMailHandler(MailHandler):
                 self.log.warning('Error parsing mail: %s\n\n%s\n\n\n%s' % (mail.data, mail.message, '*'*40))
 
 
-
         # Now delete the mails
         processed_mail = [m for m in self.mail if m.processed]
-
         self.delete_bulk(processed_mail)
 
         self.mail[:] = [m for m in self.mail if not m.processed]
-
-
-class MailParser:
-    def __init__(self, troops=(), heroes=()):
-        self.troops = {}
-        for troop, count in troops:
-            self.troops[troop] = {'count': count, 'regex': re.compile('{0}\((\d+)\)'.format(troop))}
-
-        self.reHeroes = []
-        for hero in heroes:
-            obj = hero, re.compile(r'<b>\[{0}\]<\\/b><br\\/>({1})'.format(HERO_SEARCH_TEXT, hero))
-            self.reHeroes.append(obj)
-
-
-    def find_hero(self, message):
-        for hero, reg in self.reHeroes:
-            t = reg.search(message)
-            if t:
-                return t.group(1)
-
-    def find_troops(self, message):
-        troops = {}
-        for troop, data in self.troops.iteritems():
-            reg = data.get('regex')
-
-            t = reg.search(message)
-            if t:
-                count = int(t.group(1))
-                troops[troop] = count
-
-        return troops
-
-
-    def is_attackable(self, troops):
-        """
-        If the troop count is not exceeded for a given troop type then this target is attackable
-        """
-
-        for troop, qty in troops.iteritems():
-
-            if self.troops.get(troop, {}).get('count', 0) < qty:
-                return False
-
-        return True

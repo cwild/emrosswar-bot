@@ -1,17 +1,25 @@
+from emross.alliance import AllyTech as AT, Donator
+from emross import mobs
+from emross import pvp
+from emross.item import inventory
 from emross.military.camp import Soldier
-from emross.mobs import DevilArmy
+from emross.military.trainer import Cavalry, Trainer
+from emross.research.enhance import AutoEnhance
+from emross.research.studious import Study
+from emross.research.tech import Tech
+from emross.scenario.scene import Scenario
+from emross.scenario.walker import ScenarioWalker
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
+from emross.trade.auto import AutoTrade
+from emross.utility.player import Player
+
 
 user_agent = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7'
 
 game_server = 'YOURSERVER.emrosswar.com'
 api_key = ''
 pushid = ''
-
-from emross.utility.player import Player
-multi_bot = []
-multi_bot.append(Player(server='s1.emrosswar.com',key='key1...'))
-multi_bot.append(Player(server='s2.emrosswar.com',key='key2...',pushid='abc'))
-multi_bot.append(Player(server='s3.emrosswar.com',key='key3...',user_agent='my custom agent'))
 
 
 """Id = 12553, name = crow tree
@@ -30,15 +38,19 @@ If this is unspecified, the storage will be filled to max capacity.
 
 
 TOO_OFTEN_WARNING = '''You visit too often!'''
-concurrent_attack_limit = 18
 
 exclude_heroes = []
 
+mobs.units = [
+    mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR, attack=15, defense=8, critical=180),
+    mobs.Unit('Nitemare', mobs.DevilArmy.SIX_STAR, attack=40, defense=12, critical=317.5),
+    mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR, attack=120, defense=40, critical=120),
+]
 
 """
 What types of Devil Army should we scout on the world map?
 """
-scout_devil_army_types = [DevilArmy.FIVE_STAR, DevilArmy.SIX_STAR]
+scout_devil_army_types = [mobs.DevilArmy.FIVE_STAR, mobs.DevilArmy.SIX_STAR]
 
 """
 It will start attacking from the first in the list, moving through the list
@@ -67,25 +79,10 @@ Inferno 9500
 enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
 
 
-prefer_closer = True
-
-
 plugin_api = {
     'auth': 'username:password',
     'url': 'http://emross.cryformercy.com/client/plugins/api/'
 }
-
-
-from emross.research.studious import Study
-from emross.research.tech import Tech
-from emross.structures.buildings import Building
-from emross.structures.construction import Construct
-
-from emross.scenario.scene import Scenario
-from emross.scenario.walker import ScenarioWalker
-
-from emross.item import inventory
-from emross.trade.auto import AutoTrade
 
 
 trade_options = (AutoTrade, (AutoTrade.SELLER, [inventory.ALLIANCE_TOKEN]),
@@ -93,13 +90,6 @@ trade_options = (AutoTrade, (AutoTrade.SELLER, [inventory.ALLIANCE_TOKEN]),
         )
 
 #trade_options = (AutoTrade, (AutoTrade.BUYER, 900), {'team':True})
-
-from emross.military.trainer import Cavalry, Trainer
-
-from emross import pvp
-
-from emross.alliance import AllyTech as AT, Donator
-from emross.research.enhance import AutoEnhance
 
 build_path = (
     (
@@ -158,3 +148,9 @@ build_path = (
         (Study, (Tech.DEFENSE_FORMATION, 20, 22))
     )
 )
+
+
+multi_bot = []
+multi_bot.append(Player(server='s1.emrosswar.com',key='key1...'))
+multi_bot.append(Player(server='s2.emrosswar.com',key='key2...',pushid='abc'))
+multi_bot.append(Player(server='s3.emrosswar.com',key='key3...',user_agent='my custom agent'))
