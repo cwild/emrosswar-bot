@@ -132,18 +132,18 @@ class City(EmrossBaseObject, CacheableData):
 
                     continue
 
-                soldiers = [s for s in self.barracks.soldiers if s[0] == soldier][0]
+                available = self.barracks.available_units(soldier)
                 use_remaining = False
 
                 if qty is Soldier.REMAINING:
-                    qty = min([soldiers[1]-utilised, remaining_hero_command])
+                    qty = min([available-utilised, remaining_hero_command])
                     use_remaining = qty>0
 
                     if use_remaining is False:
                         # We are not able to take any more of this troop
                         continue
 
-                if use_remaining or soldiers[1]-utilised >= qty:
+                if use_remaining or available-utilised >= qty:
                     army[soldier] = utilised + qty
                     remaining_hero_command -= qty
 

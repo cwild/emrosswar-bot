@@ -1,3 +1,2 @@
 from emross.farming.standard import BasicFarmer
-
-__all__ = ['BasicFarmer']
+from emross.farming.efficient import EfficientFarmer

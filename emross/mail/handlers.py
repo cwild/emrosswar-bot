@@ -1,4 +1,7 @@
-from emross.mail import WAR_RESULT_LIST
+import time
+
+from emross.api import EmrossWar
+from emross.mail import MailException, NoMailInInbox, WAR_RESULT_LIST
 from emross.mail.message import Mail
 from emross.mail.parser import MailParser
 from emross.utility.base import EmrossBaseObject
@@ -50,13 +53,35 @@ class MailHandler(EmrossBaseObject):
 
 class AttackMailHandler(MailHandler):
     TYPE = -1
+    CLEANUP_WAIT = 300
 
-    def process(self):
+    def process(self, war_report_cleanup_delay=CLEANUP_WAIT, delete_losses=False, **kwargs):
         self.log.info('Cleaning up war reports...')
         super(AttackMailHandler, self).process()
 
         # Now delete the mails
-        processed_mail = [m for m in self.mail if m.data['dname'] is None]
+        processed_mail = []
+        for m in self.mail:
+            if m.data['dname'] is not None:
+                continue
+
+            if war_report_cleanup_delay is False:
+                self.log.debug('Do not delete any war reports')
+                continue
+            else:
+                remain = time.time() - m.data.get('time',0) + war_report_cleanup_delay
+                if remain > 0:
+                    self.log.debug('Leave war report {0} for at least a further {1}'.format(\
+                        m.data['id'], remain))
+                    continue
+
+            if not delete_losses:
+                if self.bot.userinfo['id'] == m.data['aid'] and m.data['flag'] != 1:
+                    self.log.debug('War report id={0} did not win. Do not delete.'.format(m.id))
+                    continue
+
+            processed_mail.append(m)
+
 
         self.delete_bulk(processed_mail)
         self.mail[:] = []
@@ -69,7 +94,7 @@ class ScoutMailHandler(MailHandler):
         super(ScoutMailHandler, self).__init__(bot)
         self.parser = MailParser(settings.enemy_troops)
 
-    def process(self):
+    def process(self, add_scout_report_func=None, **kwargs):
         """
         Read through all scout reports and examine the reports
         we have of any devil armies
@@ -83,19 +108,27 @@ class ScoutMailHandler(MailHandler):
                 if mail.data['dname']:
                     continue
 
+                if not add_scout_report_func:
+                    continue
+
                 mail.fetch()
 
                 troops = self.parser.find_troops(mail.message['scout_report']['result'])
-                if self.parser.is_attackable(troops):
+                if add_scout_report_func(troops):
                     result = 'ADDED'
                     mail.add_fav(2)
                 else:
                     result = 'REJECTED'
 
+                vals = []
+                for name, qty in troops.iteritems():
+                    vals.append('{0}({1})'.format(name, qty))
+                vals = ', '.join(vals)
 
-                self.log.info('%s devil army at [%d/%d] with troops %s' % (result, mail.data['dx'], mail.data['dy'],
-                    ', '.join(['%s(%d)'] * len(settings.enemy_troops)) % sum(zip([s for s, c in settings.enemy_troops], troops), ())))
-
+                self.log.info('{0} {npc} at [{1}/{2}] with troops {3}'.format(\
+                    result, mail.data['dx'], mail.data['dy'], vals,
+                    npc=EmrossWar.LANG.get('MONSTER', 'DevilArmy'))
+                )
 
                 mail.processed = True
             except TypeError:

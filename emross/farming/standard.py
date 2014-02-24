@@ -1,5 +1,6 @@
 import time
 
+from emross import mobs
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.exceptions import (EmrossWarApiException,
@@ -14,6 +15,11 @@ from emross.military.barracks import Barracks
 
 class BasicFarmer(BaseFarmer):
     INTERVAL = 300
+
+    DEFAULT_SCOUT_DEVIL_ARMY_TYPES = [
+        mobs.DevilArmy.SIX_STAR,
+        mobs.DevilArmy.FIVE_STAR
+    ]
 
     def process_city_with_target(self, city, target):
         soldier_threshold = self.kwargs.get('soldier_threshold')
@@ -70,7 +76,11 @@ class BasicFarmer(BaseFarmer):
         return favs
 
     def utilities(self, *args, **kwargs):
-        self.bot.scout_map(targets=kwargs.get('scout_devil_army_types', []), **kwargs)
+        self.bot.scout_map(
+            targets=kwargs.get('scout_devil_army_types', self.DEFAULT_SCOUT_DEVIL_ARMY_TYPES),
+            add_scout_report_func=self.bot.scout_mail.parser.is_attackable,
+            **kwargs
+        )
         self.bot.clean_war_reports()
 
         if not self.bot.pvp and kwargs.get('allow_inventory_clearout', True):

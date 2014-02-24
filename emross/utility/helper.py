@@ -255,7 +255,7 @@ class EmrossWarBot(CacheableData):
 
         try:
             logger.info('Look at scout reports to try to locate devil armies')
-            self.scout_mail.process()
+            self.scout_mail.process(**kwargs)
         except MailException:
             pass
 
@@ -289,9 +289,9 @@ class EmrossWarBot(CacheableData):
     def poorest_city(self):
         return self._city_wealth(min, 'least')
 
-    def clean_war_reports(self):
+    def clean_war_reports(self, **kwargs):
         try:
-            self.war_mail.process()
+            self.war_mail.process(**kwargs)
         except MailException:
             pass
 

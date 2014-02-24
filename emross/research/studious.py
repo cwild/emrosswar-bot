@@ -23,9 +23,12 @@ class Study(FilterableCityTask):
         self._cities = {}
 
     def tech_levels(self, city):
-        self.log.info('Find tech levels for city, "{0}"'.format(city.name))
+        def _updater(*args, **kwargs):
+            self.log.info('Find tech levels for city, "{0}"'.format(city.name))
+            return self.bot.api.call(*args, **kwargs)
+
         return self._cities.setdefault(city, CacheableData(
-            update=self.bot.api.call,
+            update=_updater,
             method=self.STUDY_URL,
             city=city.id
         ))

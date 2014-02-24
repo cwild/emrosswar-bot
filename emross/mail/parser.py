@@ -33,11 +33,12 @@ class MailParser:
                 troops[troop] = count
         return troops
 
-    def is_attackable(self, troops):
+    def is_attackable(self, troops, troop_limits={}):
         """
         If the troop count is not exceeded for a given troop type then this target is attackable
         """
+        limits = troop_limits or self.troops
         for troop, qty in troops.iteritems():
-            if self.troops.get(troop, {}).get('count', 0) < qty:
+            if limits.get(troop, {}).get('count', 0) < qty:
                 return False
         return True

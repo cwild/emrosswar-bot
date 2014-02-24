@@ -132,6 +132,13 @@ class Barracks(EmrossBaseObject, CacheableData):
         except (IndexError, TypeError):
             return False
 
+    def available_units(self, troop):
+        try:
+            troop_id, qty, unlocked = self.soldiers[troop-1]
+            return qty
+        except (IndexError, TypeError):
+            return 0
+
     def confirm_and_do(self, params, sleep_confirm=(), sleep_do=(), **kwargs):
         json = self._action_confirm(params, sleep=sleep_confirm, **kwargs)
 

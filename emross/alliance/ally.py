@@ -41,7 +41,6 @@ class Alliance(Controllable):
     def tech(self, tech):
         try:
             state, level, cooldown = self.hall_tech[tech-1]
-            self.log.debug('"{0}" is level {1}'.format(EmrossWar.LANG['ALLY_TECH'][str(tech)]['name'], level))
             return level
         except (IndexError, ValueError):
             return 0

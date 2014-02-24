@@ -27,7 +27,7 @@ class CacheableData(object):
         return self.data.__getitem__(val)
 
     def __len__(self):
-        return len(self._data)
+        return len(self.data)
 
     @property
     def _lock(self):
