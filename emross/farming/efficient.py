@@ -51,6 +51,10 @@ class EfficientFarmer(BaseFarmer):
         data.update(self.MOB_CALCULATIONS)
         report = target.report
 
+        if not report['troops']:
+            self.log.debug('Error with report {0}'.format(target.id))
+            raise exceptions.TargetException('No troops found for the report at ({x}, {y})'.format(x=target.x, y=target.y))
+
         for troop, count in report['troops'].iteritems():
             try:
                 idx = mobs.Unit.find(troop, target.rating)
@@ -71,7 +75,7 @@ class EfficientFarmer(BaseFarmer):
                     hero.stat(Hero.VIGOR) == 0,
                     hero.stat(Hero.STATE) != Hero.AVAILABLE,
                     hero.client.get('rank') in self.kwargs.get('exclude_hero_ranks', []),
-                    hero.client.get('rank') in self.kwargs.get('exclude_hero_ranks_by_rating', {}).get(target.rating)
+                    hero.client.get('rank') in self.kwargs.get('exclude_hero_ranks_by_rating', {}).get(target.rating, [])
                     ]):
                 self.log.debug('Hero "{0}" is not available.'.format(hero))
                 continue
@@ -100,7 +104,8 @@ class EfficientFarmer(BaseFarmer):
                             city.create_army(army, heroes=[hero], mixed=True)
                             heroes.append((hero, army))
                             capable_army = True
-                        except exceptions.BotException:
+                        except exceptions.BotException as e:
+                            self.log.debug(e)
                             del army[troop]
 
                         break
