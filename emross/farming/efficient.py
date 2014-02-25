@@ -128,10 +128,16 @@ class EfficientFarmer(BaseFarmer):
         self.log.debug(heroes)
 
         hero, army = heroes[0]
+
+        SOLDIER_DATA = getattr(EmrossWar, 'SOLDIER_{0}'.format(self.bot.userinfo.get('nationid', 1)))
+        army_text = ', '.join(['{0}x{1}'.format(qty, SOLDIER_DATA[str(troop)].get('name', 'troop_{0}'.format(troop)))
+                               for troop, qty in army.iteritems()])
+
         army = city.create_army(army, heroes=[hero], mixed=True)
 
-        self.log.info('Sending calculated attack: [{0}/{1}] {2} from "{3}"'.format(\
-            target.y, target.x, hero, city.name))
+
+        self.log.info('Sending calculated attack: [{0}/{1}] {2} from "{3}" with {4}'.format(\
+            target.y, target.x, hero, city.name, army_text))
 
         # send troops to attack
         params = {
