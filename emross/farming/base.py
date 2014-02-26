@@ -91,7 +91,8 @@ class BaseFarmer(FilterableCityTask):
                         self.sleep(e.delay)
                         cycle_done = True
                         break
-                    except exceptions.BotException:
+                    except exceptions.BotException as e:
+                        self.log.debug(e)
                         visited_cities.add(self.current_city)
                         self.current_city = next(self.cities)
                     except Exception as e:
