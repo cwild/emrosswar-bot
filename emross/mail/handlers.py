@@ -69,10 +69,10 @@ class AttackMailHandler(MailHandler):
                 self.log.debug('Do not delete any war reports')
                 continue
             else:
-                remain = time.time() - m.data.get('time',0) + war_report_cleanup_delay
-                if remain > 0:
+                interval = time.time() - m.data.get('time', 0)
+                if interval < war_report_cleanup_delay:
                     self.log.debug('Leave war report {0} for at least a further {1}'.format(\
-                        m.data['id'], remain))
+                        m.data['id'], interval-war_report_cleanup_delay))
                     continue
 
             if not delete_losses:
