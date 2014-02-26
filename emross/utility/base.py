@@ -1,10 +1,12 @@
 import logging
 
+from emross.api import EmrossWar
+
 logger = logging.getLogger(__name__)
 
 class BotFormatter(logging.Formatter):
     def format(self, record):
-        record.__dict__['bot'] = record.__dict__.get('bot') or ''
+        record.bot = record.__dict__.get('bot') or ''
         return logging.Formatter.format(self, record)
 
 class BotInfo(object):
@@ -14,7 +16,7 @@ class BotInfo(object):
 
     def __getitem__(self, name):
         try:
-            return self.bot._data.get('nick', '')
+            return EmrossWar.safe_text(self.bot._data.get('nick', ''))
         except Exception as e:
             logger.exception(e)
             return ''
