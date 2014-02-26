@@ -68,7 +68,6 @@ class EfficientFarmer(BaseFarmer):
         self.log.debug('Calculations for {0}, defense={1}, min_attack={2}, max_attack={3}'.format(\
             report['troops'], npc_defense, npc_min_attack, npc_max_attack))
 
-        capable_army = False
         heroes = []
         for hero in city.hero_manager.heroes.itervalues():
 
@@ -82,6 +81,7 @@ class EfficientFarmer(BaseFarmer):
                 continue
 
             army = {}
+            capable_army = False
             carry = hero.stat(Hero.COMMAND)
 
             for troop in farming_troops:
@@ -120,9 +120,6 @@ class EfficientFarmer(BaseFarmer):
 
         if not heroes:
             raise exceptions.NoHeroesAvailable('No heroes to lead an army')
-
-        if not capable_army:
-            raise exceptions.BotException('No capable army found with any hero')
 
         heroes.sort(key=lambda h: h[1])
         self.log.debug(heroes)
