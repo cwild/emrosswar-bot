@@ -1,8 +1,16 @@
 import logging
 
-from emross.api import EmrossWar
-
 logger = logging.getLogger(__name__)
+
+
+def safe_text(s):
+    if isinstance(s, unicode):
+        return s.encode('utf-8')
+    elif isinstance(s, str):
+        # Must be encoded in UTF-8
+        return s.decode('utf-8')
+    return s
+
 
 class BotFormatter(logging.Formatter):
     def format(self, record):
@@ -16,7 +24,7 @@ class BotInfo(object):
 
     def __getitem__(self, name):
         try:
-            return EmrossWar.safe_text(self.bot._data.get('nick', ''))
+            return safe_text(self.bot._data.get('nick', ''))
         except Exception as e:
             logger.exception(e)
             return ''
