@@ -35,6 +35,7 @@ class TestMail(unittest.TestCase):
             (False, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Nightmare(1337)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
             (True, 'ChaosDevourer', """<b>[Hero]<\/b><br\/>ChaosDevourer (Lvl.12)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(2387)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
             (True, 'ChaosDevourer', """<b>[Hero]<\/b><br\/>ChaosDevourer (Lvl.12)<br\/><br\/><b>[Troops]<\/b><br\/>(1234)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
+            (True, 'ChaosDevourer', """<b>[Hero]<\/b><br\/>ChaosDevourer (Lvl.12)<br\/><br\/><b>[Troops]<\/b><br/>(1234)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
 
             # An unknown hero eg. in a special event
             (False, None, """<b>[Hero]<\/b><br\/>SpecialHero (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Inferno(9293)<br>Attack(120)&nbsp;&nbsp;Defense(40)&nbsp;&nbsp;Health(180)<br>""")

@@ -7,7 +7,11 @@ class MailParser:
     def __init__(self, troops=(), heroes=()):
         self.troops = {}
         for troop, count in troops:
-            self.troops[troop] = {'count': count, 'regex': re.compile(r'<br(?:\\/)?>(?:{0})\((\d+)\)'.format(troop))}
+            self.troops[troop] = {
+                'count': count,
+                # Support for <br>, <br/>, <br\/>
+                'regex': re.compile(r'<br(?:\\?/)?>(?:{0})\((\d+)\)'.format(troop))
+            }
 
         self.reHeroes = []
         for hero in heroes:
