@@ -1,3 +1,4 @@
+import copy
 import time
 
 from emross import exceptions
@@ -47,8 +48,7 @@ class EfficientFarmer(BaseFarmer):
             raise exceptions.BotException('No farming troops have been defined')
 
         self.log.debug('Calculate attack for {0}'.format(target.report))
-        data = {}
-        data.update(self.MOB_CALCULATIONS)
+        data = copy.deepcopy(self.MOB_CALCULATIONS)
         report = target.report
 
         if not report['troops']:
