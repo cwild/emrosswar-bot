@@ -37,8 +37,9 @@ class Unit(object):
 
     UNITS = []
 
-    def __init__(self, name, rating, **kwargs):
-        self.name = name
+    def __init__(self, name, rating, alias='*Unknown Unit*', **kwargs):
+        self._name = name
+        self.alias = alias
         self.rating = rating
         self.data = {}
         self.attack = self.data[SoldierStat.ATTACK] = kwargs.get('attack', self.BASE_ATTACK)
@@ -47,6 +48,10 @@ class Unit(object):
 
         self.__class__.UNITS.append(self)
 
+    @property
+    def name(self):
+        return self._name or self.alias
+
     @classmethod
     def soldier_data(cls, troop):
         return troop.data
@@ -54,7 +59,7 @@ class Unit(object):
     @classmethod
     def find(cls, name, rating):
         for unit in cls.UNITS:
-            if name == unit.name and rating == unit.rating:
+            if name == unit._name and rating == unit.rating:
                 return unit
 
         ratings = range(6, 0, -1) + range(7, 9)

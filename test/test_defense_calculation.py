@@ -38,9 +38,9 @@ class TestDefenseCalculation(unittest.TestCase):
         ]
 
 
+        # Apparently, the NPC hero has no effect on the calculations
         self.npc_comboes = [
             ({
-                # Apparently, the NPC hero has no effect on the calculations
                 'hero': None,
                 'hero_base': 0,
                 'troops': {
@@ -50,6 +50,15 @@ class TestDefenseCalculation(unittest.TestCase):
                 'ally': mobs.alliance,
                 'soldier_data': mobs.Unit.soldier_data
             }, (64000, 207500, 648500)),
+            ({
+                'hero': None,
+                'hero_base': 0,
+                'troops': {
+                    mobs.Unit.find('Horror', mobs.DevilArmy.SIX_STAR): 5452,
+                },
+                'ally': mobs.alliance,
+                'soldier_data': mobs.Unit.soldier_data
+            }, (43616, 81780, 147204)),
         ]
 
     def test_player_attack(self):
