@@ -1,6 +1,13 @@
 import copy
 import time
 
+#Fix for python2.6, see http://bugs.python.org/issue1515
+import types
+def _deepcopy_method(x, memo): # Copy instance methods
+    return type(x)(x.im_func, copy.deepcopy(x.im_self, memo), x.im_class)
+copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
+
+
 from emross import exceptions
 from emross import mobs
 from emross.api import EmrossWar
