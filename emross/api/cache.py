@@ -69,7 +69,7 @@ class EmrossContent(object):
             # Load the localfile from disk
             if not content:
                 try:
-                    logger.info('Load "%s" from cache' % localfile)
+                    logger.debug('Load "%s" from cache' % localfile)
                     fp = open(localfile, 'rb')
                     content = fp.read()
                 except IOError:
@@ -81,7 +81,7 @@ class EmrossContent(object):
 
     @classmethod
     def get_file(cls, filename, **kwargs):
-        logger.debug('Download file "%s"' % filename)
+        logger.info('Download file "%s"' % filename)
         return cls.pool.request('GET', os.path.join(DATA_URL % MASTER, filename), headers={'User-Agent': USER_AGENT}, **kwargs)
 
     @classmethod
