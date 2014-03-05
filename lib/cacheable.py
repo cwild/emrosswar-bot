@@ -63,8 +63,9 @@ class CacheableData(object):
                     return
                 value = value.get('ret', value)
 
-            self._data = value
-            self._expires = time.time() + self.time_to_live
+            if value is not None:
+                self._data = value
+                self._expires = time.time() + self.time_to_live
 
     def should_update(self):
         return False

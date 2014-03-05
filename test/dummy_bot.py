@@ -32,7 +32,7 @@ for c in bot._cities:
 
 
 # Maxed-out hall
-bot.alliance._info = [5, 1200300400, '?', 1000000, 0,
+bot.alliance._data = [5, 1200300400, '?', 1000000, 0,
     [(0,5,0) for _ in range(20)]
 ]
 

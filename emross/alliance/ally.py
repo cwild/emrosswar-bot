@@ -4,18 +4,19 @@ from emross.api import EmrossWar
 from emross.alliance import ALLIANCE_INFO_URL, ALLIANCE_URL
 from emross.utility.controllable import Controllable
 
+from lib.cacheable import CacheableData
+
 RANK_LEADER = 1
 RANK_OFFICER = 3
 RANK_MEMBER = 5
 
-class Alliance(Controllable):
+class Alliance(Controllable, CacheableData):
     COMMAND = 'ally'
     COMMAND_PASSWORD = None
     MAX_TECH_LEVEL = 5
 
     def __init__(self, bot):
         super(Alliance, self).__init__(bot)
-        self._info = []
         self.id = None
         self._time = None
 
@@ -28,15 +29,12 @@ class Alliance(Controllable):
 
         return guildid > 0
 
-    @property
-    def info(self):
-        if not self._info:
-            self.update()
-        return self._info
+    # For backwards-compatability
+    info = lambda self: self.data
 
     @property
     def hall_tech(self):
-        return self.info[5]
+        return self.data[5]
 
     def tech(self, tech):
         try:
@@ -59,14 +57,12 @@ class Alliance(Controllable):
         if self.id == 0:
             return
 
-        ally = self.bot.userinfo.get('guild', '').encode('utf-8')
-        self.log.info('is a member of "{0}"'.format(ally))
+        self.log.info('is a member of "{0}"'.format(
+            EmrossWar.safe_text(self.bot.userinfo.get('guild', ''))
+        ))
 
         self.log.debug('Update alliance hall info')
-        json = self.bot.api.call(ALLIANCE_INFO_URL, op='info')
-
-        if json['code'] == EmrossWar.SUCCESS:
-            self._info = json['ret']
+        return self.bot.api.call(ALLIANCE_INFO_URL, op='info')
 
 
     def action_join(self, event, *args, **kwargs):

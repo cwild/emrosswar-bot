@@ -111,7 +111,7 @@ class Donator(Task):
                 json = self.bot.api.call(ALLIANCE_INFO_URL, op='donate', num=gold, city=city.id)
                 if json['code'] == EmrossWar.SUCCESS:
                     self.hall_timeout = time.time() + json['ret'][4]
-                    self.bot.alliance._info = json['ret']
+                    self.bot.alliance._data = json['ret']
             except IndexError:
                 pass
             except TypeError:
