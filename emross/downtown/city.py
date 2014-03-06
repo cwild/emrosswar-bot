@@ -25,6 +25,9 @@ class City(EmrossBaseObject, CacheableData):
         self.name = EmrossWar.safe_text(name)
         self.x = x
         self.y = y
+        self.log.debug('Created new city: name="{name}", id={id}, x={x}, y={y}'.format(\
+                name=self.name, id=self.id, x=x, y=y)
+        )
 
         self.barracks = Barracks(bot, self)
         self.hero_manager = HeroManager(bot, self)

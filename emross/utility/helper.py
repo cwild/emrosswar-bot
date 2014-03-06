@@ -199,7 +199,9 @@ class EmrossWarBot(CacheableData):
         """
         Setup bot with player account data
         """
-        logger.info('Updating player info')
+        nick = self._data.get('nick', getattr(self.api, 'player', '*UNKNOWN*'))
+
+        logger.info('Updating player info', extra={'bot': nick})
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         userinfo = json['ret']['user']
@@ -209,8 +211,8 @@ class EmrossWarBot(CacheableData):
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
         for city in cities:
-            logger.debug(u'Adding "{0}" ({1}) to city list'.format(city['name'], city['id']))
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
+            logger.debug(u'Adding "{0}" ({1}) to city list'.format(city.name, city.id))
             self._cities.append(city)
 
         if not self.is_initialised:
@@ -223,7 +225,7 @@ class EmrossWarBot(CacheableData):
         return userinfo
 
     def get_gift(self, gift):
-        gid = int(gift['id'])
+        gid = gift['id']
         try:
             gift_item = EmrossWar.ITEM[str(gid)]['name']
         except KeyError:
