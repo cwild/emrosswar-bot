@@ -212,7 +212,7 @@ class EmrossWarBot(CacheableData):
 
         for city in cities:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
-            logger.debug(u'Adding "{0}" ({1}) to city list'.format(city.name, city.id))
+            logger.debug('Adding "{0}" ({1}) to city list'.format(city.name, city.id))
             self._cities.append(city)
 
         if not self.is_initialised:
