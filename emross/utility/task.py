@@ -10,6 +10,12 @@ class Task(EmrossBaseObject):
     """
     INTERVAL = 60
 
+    """
+    If ENFORCED_INTERVAL is set then we can search the bot.session for this value
+    and only run if the INTERVAL has passed
+    """
+    ENFORCED_INTERVAL = False
+
     def __init__(self, *args, **kwargs):
         super(Task, self).__init__(*args, **kwargs)
 
@@ -18,6 +24,20 @@ class Task(EmrossBaseObject):
         self._last_cycle = 0
         self._next_run = 0
         self.setup()
+
+    @property
+    def last_cycle(self):
+        if self._last_cycle == 0 and self.ENFORCED_INTERVAL:
+            self._last_cycle = getattr(self.bot.session, 'last_cycle_{0}'.format(self.__class__.__name__), 0)
+
+        return self._last_cycle
+
+    @last_cycle.setter
+    def last_cycle(self, value):
+        self._last_cycle = value
+
+        if self.ENFORCED_INTERVAL:
+            setattr(self.bot.session, 'last_cycle_{0}'.format(self.__class__.__name__), value)
 
     def run(self, cycle_start, stage, *args, **kwargs):
         """
@@ -28,8 +48,9 @@ class Task(EmrossBaseObject):
         task has fired previously and is not rescheduled to run yet.
         """
         with self.lock:
-            if self._last_cycle == cycle_start or cycle_start > self._next_run:
-                self._last_cycle = cycle_start
+            if self.can_run_process(cycle_start):
+                self.last_cycle = cycle_start
+
                 self._result[stage] = self.process(*args, **kwargs)
 
                 if self._next_run < cycle_start:
@@ -37,6 +58,16 @@ class Task(EmrossBaseObject):
                     self.sleep(delay)
 
         return self._result.get(stage, None)
+
+    def can_run_process(self, cycle_start):
+        if self.ENFORCED_INTERVAL and self.last_cycle + self.INTERVAL > cycle_start:
+            # The enforced interval must pass first
+            return False
+
+        if self.last_cycle == cycle_start or cycle_start > self._next_run:
+            return True
+
+        return False
 
     def calculate_delay(self):
         return self.INTERVAL

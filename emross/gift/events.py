@@ -4,6 +4,7 @@ from emross.utility.task import Task
 
 class GiftEvents(Task):
     INTERVAL = 3600
+    ENFORCED_INTERVAL = True
     ACTIVITY_URL = 'game/api_interior_activity.php'
 
     def process(self):

@@ -3,7 +3,8 @@ from emross.utility.task import Task
 
 
 class GiftCollector(Task):
-    INTERVAL = 86400
+    INTERVAL = 3600*2
+    ENFORCED_INTERVAL = True
     GIFT_URL = 'game/gift_api.php'
 
     def process(self):
