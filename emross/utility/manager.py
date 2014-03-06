@@ -41,8 +41,17 @@ def _bot_runner(queue, bots, **kwargs):
         for bot in bots:
             try:
                 if not bot.is_initialised:
-                    # Let's get the ball rolling!
-                    logger.info('init id={0}'.format(bot.userinfo['id']))
+                    def _bot_init(_bot):
+                        # Let's get the ball rolling!
+                        with _bot.lock:
+                            if _bot.is_initialised:
+                                return
+                            logger.debug('init id={0}'.format(_bot.userinfo['id']))
+                            _bot.is_initialised = True
+
+                    # Delegate to a worker
+                    queue.put((_bot_init, (bot,)))
+                    continue
 
                 if bot.blocked or not bot.is_play_time():
                     continue
@@ -160,7 +169,7 @@ class BotManager(object):
                 worker.daemon = True
                 worker.start()
             else:
-                logger.info('No need to use a main thread for this worker!')
+                logger.debug('No need to use a main thread for this worker!')
                 worker = EmrossBaseObject(bot)
 
             workers.append(worker)
