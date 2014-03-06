@@ -29,9 +29,6 @@ class Alliance(Controllable, CacheableData):
 
         return guildid > 0
 
-    # For backwards-compatability
-    info = lambda self: self.data
-
     @property
     def hall_tech(self):
         return self.data[5]

@@ -64,7 +64,7 @@ class Donator(Task):
 
         if check_hall:
             hall_name = EmrossWar.TRANSLATE.get('f_ally')['31']
-            cooldown = self.bot.alliance.info[4]
+            cooldown = self.bot.alliance.data[4]
             if cooldown is not 0:
                 self.log.info('Cannot donate to {0} yet. Try again in {1} seconds'.format(
                     hall_name, cooldown))
@@ -72,9 +72,9 @@ class Donator(Task):
             else:
                 try:
                     if force_hall_donation is False:
-                        self.bot.alliance.info[1] / self.bot.alliance.info[2]
+                        self.bot.alliance.data[1] / self.bot.alliance.data[2]
 
-                    amount = self.bot.alliance.info[3]
+                    amount = self.bot.alliance.data[3]
                     city = self.bot.richest_city()
                     self.donate_to_hall(gold=amount, city=city)
                 except TypeError:
@@ -93,8 +93,8 @@ class Donator(Task):
             self.sleep(interval)
 
     def donate_to_hall(self, gold, city):
-        if self.bot.alliance.info[4] is not 0:
-            self.hall_timeout = time.time() + self.bot.alliance.info[4]
+        if self.bot.alliance.data[4] is not 0:
+            self.hall_timeout = time.time() + self.bot.alliance.data[4]
             return
 
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
@@ -111,7 +111,7 @@ class Donator(Task):
                 json = self.bot.api.call(ALLIANCE_INFO_URL, op='donate', num=gold, city=city.id)
                 if json['code'] == EmrossWar.SUCCESS:
                     self.hall_timeout = time.time() + json['ret'][4]
-                    self.bot.alliance._data = json['ret']
+                    self.bot.alliance.data = json['ret']
             except IndexError:
                 pass
             except TypeError:
