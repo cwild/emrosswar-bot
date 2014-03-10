@@ -102,6 +102,14 @@ class EfficientFarmer(BaseFarmer):
 
                     try:
                         defense = self.calculator.defense(hero, army)
+
+                        """
+                        Optimisation to reduce calls to `calculator.attack`
+                        Each call takes around 1ms so this can be significant!
+                        """
+                        if defense < npc_max_attack:
+                            continue
+
                         min_attack, max_attack = self.calculator.attack(hero, army)
                     except ValueError as e:
                         raise exceptions.TargetException(e.message)
