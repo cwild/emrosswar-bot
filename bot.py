@@ -39,10 +39,10 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)
     parser.add_argument('-c', '--console', help='Interactive console', action='store_true', default=False)
     parser.add_argument('-p', '--poolsize', help='Number of threads to use in the pool', type=int, default=None)
+    parser.add_argument('-s', '--socket', help='Establish a bi-directional server socket', action='store_true', default=False)
     args = parser.parse_args()
 
-
-    manager = BotManager(console=args.console, processes=args.poolsize)
+    manager = BotManager(console=args.console, processes=args.poolsize, socket=args.socket)
 
     try:
         if not args.multi:

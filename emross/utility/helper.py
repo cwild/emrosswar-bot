@@ -48,7 +48,7 @@ class EmrossWarBot(CacheableData):
     UPTIME_COMMAND = 'uptime'
     WEALTH_COMMAND = 'wealth'
 
-    def __init__(self, api, *args, **kwargs):
+    def __init__(self, api, socket_writer=None, *args, **kwargs):
         super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
         self.lock = RLock()
         self.is_initialised = False
@@ -58,6 +58,7 @@ class EmrossWarBot(CacheableData):
 
         self.api = api
         api.bot = self
+        self._socket_writer = socket_writer
         self.errors = Queue.Queue()
 
         self.session = Session(self)
@@ -103,6 +104,12 @@ class EmrossWarBot(CacheableData):
         if not self.is_initialised and self._closing:
             raise BotException('userinfo unavailable and marked for shutdown')
         return self.data
+
+    def socket_writer(self, data):
+        try:
+            self._socket_writer.put(data)
+        except Exception as e:
+            logger.exception(e)
 
     @property
     def cities(self):

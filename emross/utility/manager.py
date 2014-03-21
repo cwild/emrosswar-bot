@@ -12,6 +12,7 @@ from emross.api import EmrossWarApi
 from emross.exceptions import BotException
 from emross.utility.base import EmrossBaseObject
 from emross.utility.helper import EmrossWarBot
+from emross.utility.socket_handlers import JsonSocketHandler
 
 
 DEFAULT_POOL_SIZE = 10
@@ -140,6 +141,7 @@ class BotManager(object):
         self.bots = []
         self.console = console
         self.kwargs = kwargs
+        self.socket = None
 
     def bot(self, nickname=None, *args, **kwargs):
         """A helper function to locate a running bot"""
@@ -149,14 +151,31 @@ class BotManager(object):
             if nick.startswith(nickname) or nick.endswith(nickname):
                 return bot
 
-    def initialise_bots(self):
+    def initialise_bots(self, **kwargs):
         for player in self.players:
             api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
-            bot = EmrossWarBot(api)
-            self.bots.append(bot)
+
+            self.bots.append(
+                EmrossWarBot(api, **kwargs)
+            )
 
     def run(self, func=None, workhorse=True):
-        self.initialise_bots()
+
+        if self.kwargs.get('socket'):
+            try:
+                from emross.utility.socket import establish_connection
+                self.socket = establish_connection()
+
+                socket_handler = JsonSocketHandler(self.socket, self.bots)
+                socket_handler.daemon = True
+                socket_handler.start()
+            except Exception as e:
+                logger.exception(e)
+
+
+        self.initialise_bots(
+            socket_writer=getattr(self.socket, 'queue_out', None)
+        )
 
         workers = []
         for bot in self.bots:
@@ -181,7 +200,7 @@ class BotManager(object):
         so we need to spawn a thread to process each bot's error queue.
         """
 
-        error_thread = threading.Thread(target=_error_checker, args=(workers, self.bots))
+        error_thread = Process(target=_error_checker, args=(workers, self.bots))
         error_thread.daemon = True
         error_thread.start()
 
@@ -194,7 +213,7 @@ class BotManager(object):
             t.start()
 
         if self.console:
-            worker = threading.Thread(target=_bot_runner, args=(queue, self.bots),
+            worker = Process(target=_bot_runner, args=(queue, self.bots),
                                 kwargs=self.kwargs)
             worker.daemon = True
             worker.start()
