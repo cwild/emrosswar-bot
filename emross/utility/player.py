@@ -94,7 +94,15 @@ class Player(object):
                     action='login', pvp=0, key=None, handle_errors=False)
 
         if json['code'] != EmrossWar.SUCCESS:
-            raise BotException('Invalid account username')
+            try:
+                err = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
+            except KeyError:
+                err = 'Received error {0} during login'.format(json['code'])
+
+            msg = '"{0}": {1}'.format(self.username, err)
+            bot.pushover.send_message(msg, title='Account Logon Error')
+
+            raise BotException(msg)
 
         server = json['ret']['server'][7:-1]
         user = json['ret']['user']

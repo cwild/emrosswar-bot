@@ -81,7 +81,11 @@ enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
 
 plugin_api = {
     'auth': 'username:password',
-    'url': 'http://emross.cryformercy.com/client/plugins/api/'
+    'url': 'http://emross.cryformercy.com/client/plugins/api/',
+    'pushover': {
+        'token': 'YOUR_APP_TOKEN',
+        'user': 'YOUR_USER_TOKEN'
+    }
 }
 
 

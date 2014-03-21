@@ -30,6 +30,7 @@ from emross.resources import Resource
 from emross.shop import Shop
 from emross.utility.about import AboutHelper
 from emross.utility.builder import BuildManager
+from emross.utility.pushover import Pushover
 from emross.utility import events
 from emross.world import World
 
@@ -81,6 +82,7 @@ class EmrossWarBot(CacheableData):
 
         self.scout_mail = ScoutMailHandler(self)
         self.war_mail = AttackMailHandler(self)
+        self.pushover = Pushover
 
 
     def __del__(self):
