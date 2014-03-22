@@ -3,9 +3,10 @@ import time
 
 #Fix for python2.6, see http://bugs.python.org/issue1515
 import types
-def _deepcopy_method(x, memo): # Copy instance methods
-    return type(x)(x.im_func, copy.deepcopy(x.im_self, memo), x.im_class)
-copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
+if types.MethodType not in copy._deepcopy_dispatch:
+    def _deepcopy_method(x, memo): # Copy instance methods
+        return type(x)(x.im_func, copy.deepcopy(x.im_self, memo), x.im_class)
+    copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
 
 
 from emross import exceptions
@@ -95,9 +96,17 @@ class EfficientFarmer(BaseFarmer):
 
                 count = 0
                 available = city.barracks.available_units(troop)
+                defense = 0
 
                 while not capable_army and carry > count < available:
-                    count += 1
+                    if count == 0:
+                        # Use the defense from the last calculated troop wave
+                        approx_qty = self.calculator.troops_to_defend_attack(troop, npc_max_attack-defense, hero)
+                        self.log.debug('Use approximately {0} of troop {1}'.format(approx_qty, troop))
+                        count = min(carry, available, approx_qty)
+                    else:
+                        count += 1
+
                     army[troop] = count
 
                     try:
@@ -120,6 +129,7 @@ class EfficientFarmer(BaseFarmer):
                             heroes.append((hero, army))
                             capable_army = True
                         except exceptions.BotException as e:
+                            defense = 0
                             self.log.debug(e)
                             del army[troop]
 

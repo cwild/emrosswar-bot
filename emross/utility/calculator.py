@@ -113,3 +113,48 @@ class WarCalculator(EmrossBaseObject):
             )))
 
         return sum(min_attack), sum(max_attack)
+
+    def troops_to_defend_attack(self, troop, required_defense, hero, ally=None,
+        soldier_data=None, hero_base=HERO_BASE_MODIFIER, **kwargs):
+        """
+        Calculate how many of the given soldier type would be required
+        to defend the target_attack
+        """
+        total = 0
+
+        _ally = ally or self.bot.alliance
+        soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
+
+        hero_defense = 0
+        hero_armour = 0
+
+        if hero:
+            hero_defense = hero.stat(Hero.DEFENSE)
+            try:
+                hero_armour = hero.gear[Gear.ARMOR_SLOT]['item']['attr'][Gear.TROOP_DEFENSE]
+            except (IndexError, KeyError):
+                pass
+
+        tenacity = 1 + _ally.tech(AllyTech.TENACITY) * HALL_CONTRIBUTIONS.get(AllyTech.TENACITY, 0)
+
+        hero_contribution = hero_base + math.ceil(hero_defense * tenacity)
+
+        research = self.bot.builder.task(Study)
+
+        troop_data = soldier_data(troop)
+
+        if not len(troop_data):
+            raise ValueError('Unable to find soldier data for "{0}"'.format(troop))
+
+        total = troop_data[SoldierStat.DEFENSE]
+        total *= hero_contribution or 1
+
+        total *= (1 + _ally.tech(AllyTech.TOUGHNESS) * HALL_CONTRIBUTIONS.get(AllyTech.TOUGHNESS, 0))
+
+        func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.DEFENSE)
+        if func:
+            total = func(total, research.get_tech_level)
+
+        total = int(math.floor(total))
+
+        return int(math.floor((required_defense-hero_armour) / total))

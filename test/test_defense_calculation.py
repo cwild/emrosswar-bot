@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from emross import mobs
@@ -13,6 +14,7 @@ mobs.units = [
     mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR, attack=15, defense=8, critical=180),
     mobs.Unit('Nitemare', mobs.DevilArmy.SIX_STAR, attack=40, defense=12, critical=317.5),
     mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR, attack=120, defense=40, critical=120),
+    mobs.Unit('Inferno', mobs.DevilArmy.SEVEN_STAR, attack=120, defense=40, critical=362.5),
 ]
 
 from test import bot
@@ -85,3 +87,20 @@ class TestDefenseCalculation(unittest.TestCase):
         self.assertRaises(ValueError, mobs.Unit.find,
             'Unknown_NPC', mobs.DevilArmy.EIGHT_STAR
         )
+
+    def test_troops_required(self):
+        start = time.time()
+
+        num = self.calculator.troops_to_defend_attack(Soldier.KAHKLEH, 9876543210,
+                hero=Hero({
+                        Hero.ATTACK: 172,
+                        Hero.WISDOM: 35,
+                        Hero.DEFENSE: 39
+                    })
+                )
+
+        finish = time.time()
+        duration = finish - start
+
+        self.assertEqual(num, 10495795)
+        self.assertTrue(duration < 1, msg='Calculation took a long time')
