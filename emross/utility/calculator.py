@@ -157,4 +157,5 @@ class WarCalculator(EmrossBaseObject):
 
         total = int(math.floor(total))
 
-        return int(math.floor((required_defense-hero_armour) / total))
+        # Round-up the number of required units!
+        return int(math.ceil((required_defense-hero_armour) / total))
