@@ -76,7 +76,8 @@ class Study(FilterableCityTask):
     def process(self, tech, level, university=1,
         use_hero=False, use_scrolls=False, ordered=False, *args, **kwargs):
 
-        cities = self.cities(**kwargs)
+        # Copy the cities so ordering doesn't affect the real order
+        cities = list(self.cities(**kwargs))
         for city in cities:
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             for task in tasks:
