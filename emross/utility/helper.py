@@ -87,11 +87,10 @@ class EmrossWarBot(CacheableData):
 
     def __del__(self):
         logger.debug('Clean up bot instance')
-        self.disconnect()
 
     def disconnect(self):
-        logger.info('Stop the task scheduler for this bot')
-        self.scheduler.stop()
+        self.runnable = False
+        self.blocked = True
 
     def shutdown(self):
         self._closing = True
@@ -288,7 +287,7 @@ class EmrossWarBot(CacheableData):
 
     def _city_wealth(self, func=max, text='most'):
         city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        logger.info('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
+        logger.debug('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
             resource=EmrossWar.LANG.get('COIN', 'gold'),
             city=city.name, amount=city.resource_manager.get_amount_of(Resource.GOLD))
         )
@@ -328,7 +327,7 @@ class EmrossWarBot(CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.info('Last page of item type {0}'.format(itype))
+                    logger.debug('Last page of item type {0}'.format(itype))
                     break
 
             if sale_list:
@@ -406,7 +405,7 @@ class EmrossWarBot(CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.info('Last page of item type {0}'.format(item_type))
+                    logger.debug('Last page of item type {0}'.format(item_type))
                     break
 
         return result

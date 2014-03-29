@@ -46,7 +46,7 @@ class Construct(FilterableCityTask):
         for city in self.cities(**kwargs):
 
             if city.data[0] == 0:
-                self.log.info('City "{0}" is out of free land. Unable to build.'.format(city.name))
+                self.log.debug('City "{0}" is out of free land. Unable to build.'.format(city.name))
                 continue
 
             current_level = self.structure_level(city, structure)

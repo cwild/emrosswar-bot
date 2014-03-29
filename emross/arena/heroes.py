@@ -103,7 +103,7 @@ class HeroManager(Controllable, CacheableData):
             city=self.city.id)
 
     def update(self):
-        self.log.info('Update heroes at city "{0}"'.format(self.city.name))
+        self.log.debug('Update heroes at city "{0}"'.format(self.city.name))
 
         json = self.bot.api.call(CONSCRIPT_URL, city=self.city.id, action='gen_list')
 
@@ -130,7 +130,7 @@ class HeroManager(Controllable, CacheableData):
             hero = self.ordered_by_stats(stats=(stat,))[0]
             self.log.debug(hero)
             attr_name = Hero.ATTRIBUTE_NAMES.get(stat, 'UNKNOWN')
-            self.log.info('{0} with {1} {2}'.format(hero, hero.data.get(stat), attr_name))
+            self.log.debug('{0} with {1} {2}'.format(hero, hero.data.get(stat), attr_name))
             return hero
         except IndexError:
             pass

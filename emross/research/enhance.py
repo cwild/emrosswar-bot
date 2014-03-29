@@ -48,7 +48,7 @@ class AutoEnhance(Task):
         enhance = int(study.tech_level(city, Tech.ENHANCEMENT) / 3)
         max_level = level_uni + max(0, enhance)
 
-        self.log.info('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}'.format(
+        self.log.debug('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}'.format(
             EmrossWar.BUILDING[str(Building.UNIVERSITY)].get('name'),
             level_uni,
             city.name,
@@ -75,7 +75,7 @@ class AutoEnhance(Task):
         items.sort(key = lambda i: [ i.get('up'), i.get('p')], reverse=True)
 
         for count, item in enumerate(items, start=1):
-            self.log.info('{0}: {name} (+{enhance}), {cost}'.format(count,
+            self.log.debug('{0}: {name} (+{enhance}), {cost}'.format(count,
                 name=EmrossWar.ITEM[str(item['sid'])]['name'],
                 enhance=item['up'],
                 cost=item['p']
@@ -92,7 +92,7 @@ class AutoEnhance(Task):
                         percent, success_rate))
                     continue
 
-                self.log.info('Item search: Enhance ({0}%), Maximum cost: {1}'.format(\
+                self.log.debug('Item search: Enhance ({0}%), Maximum cost: {1}'.format(\
                     success_rate, maximum_cost))
 
                 for item in items:

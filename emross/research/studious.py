@@ -24,7 +24,7 @@ class Study(FilterableCityTask):
 
     def tech_levels(self, city):
         def _updater(*args, **kwargs):
-            self.log.info('Find tech levels for city, "{0}"'.format(city.name))
+            self.log.debug('Find tech levels for city, "{0}"'.format(city.name))
             return self.bot.api.call(*args, **kwargs)
 
         return self._cities.setdefault(city, CacheableData(
@@ -99,7 +99,7 @@ class Study(FilterableCityTask):
 
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
-                self.log.info('The university at city "{0}" does not meet the specified minimum of {1}'.format(city.name, university))
+                self.log.debug('The university at city "{0}" does not meet the specified minimum of {1}'.format(city.name, university))
                 continue
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)

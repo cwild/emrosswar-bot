@@ -63,7 +63,7 @@ class City(EmrossBaseObject, CacheableData):
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
-        self.log.info('Updating city "{0}"'.format(self.name))
+        self.log.debug('Updating city "{0}"'.format(self.name))
         json = self.bot.api.call(self.GET_CITY_INFO, city=self.id)
 
         self.bot.userinfo['level'] = json['ret']['grade']
@@ -78,7 +78,7 @@ class City(EmrossBaseObject, CacheableData):
 
 
     def replenish_food(self, amount=None):
-        self.log.info('Replenishing food')
+        self.log.debug('Replenishing food')
         if not amount:
             food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
             amount = food_limit - food

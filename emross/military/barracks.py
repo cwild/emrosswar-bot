@@ -67,7 +67,7 @@ class Barracks(EmrossBaseObject, CacheableData):
             [15, 126, True], [16, 0, True], [17, 7163, True], [18, 200, True]],
         'def': 2}}
         """
-        self.log.info('Update soldier listing for the camp at "{0}"'.format(self.city.name))
+        self.log.debug('Update soldier listing for the camp at "{0}"'.format(self.city.name))
         return self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
 
     def train_troops(self, soldier, quantity, hero=0):
@@ -146,7 +146,7 @@ class Barracks(EmrossBaseObject, CacheableData):
             params.update(json['ret'])
             return self._action_do(params, sleep=sleep_do, **kwargs)
         else:
-            self.log.info(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
+            self.log.warning(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
             return json
 
     def _action_confirm(self, params, **kwargs):

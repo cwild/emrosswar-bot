@@ -23,7 +23,7 @@ class ChestOpener(Task):
                 inventory.SILVER_CHEST[0],
                 inventory.SILVER_KEY[0],
             ])
-        self.log.info(items)
+        self.log.debug(items)
 
         comboes = [
             (Quest.BRONZE_KEY, inventory.BRONZE_CHEST[0], inventory.BRONZE_KEY[0]),
@@ -49,7 +49,7 @@ class ChestOpener(Task):
                 self.log.debug(to_convert)
 
                 if to_convert < 1:
-                    self.log.info('No need to convert any "{0}"'.format(chest_name))
+                    self.log.debug('No need to convert any "{0}"'.format(chest_name))
                 else:
                     try:
                         q = [q for q in self.quest_manager.list()
@@ -83,7 +83,7 @@ class ChestOpener(Task):
             if num > 0:
                 city = self.bot.poorest_city()
             else:
-                self.log.info('Unable to open any "{0}" at this point'.format(chest_name))
+                self.log.debug('Unable to open any "{0}" at this point'.format(chest_name))
                 continue
 
             opened = 0
@@ -101,7 +101,7 @@ class ChestOpener(Task):
                             rcvd['num'], EmrossWar.ITEM[str(rcvd['sid'])].get('name'),
                             chest_name
                         ))
-                    self.log.info('Opened {0}x"{1}" so far'.format(opened, chest_name))
+                    self.log.debug('Opened {0}x"{1}" so far'.format(opened, chest_name))
                 except IndexError:
                     break
 

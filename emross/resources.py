@@ -110,7 +110,7 @@ class ResourceManager(EmrossBaseObject):
                                 self.get_amount_of(Resource.GOLD)
 
                 if gold_required > 0:
-                    self.log.info('We need to unbrick {0} {1} before converting'.format(\
+                    self.log.debug('We need to unbrick {0} {1} before converting'.format(\
                         gold_required, EmrossWar.LANG.get('COIN', 'gold')))
 
                     should_convert = self.bot.find_gold_for_city(self.city,

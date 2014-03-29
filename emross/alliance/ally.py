@@ -43,6 +43,9 @@ class Alliance(Controllable, CacheableData):
     def update(self):
         guildid = self.bot.userinfo.get('guildid', 0)
 
+        if guildid == 0:
+            return
+
         if guildid != self.id:
             # Only log if our alliance membership has changed
             if self.id is not None:
@@ -51,12 +54,10 @@ class Alliance(Controllable, CacheableData):
             # update the guildid
             self.id = guildid
 
-        if self.id == 0:
-            return
+            self.log.info('is a member of "{0}"'.format(
+                EmrossWar.safe_text(self.bot.userinfo.get('guild', ''))
+            ))
 
-        self.log.info('is a member of "{0}"'.format(
-            EmrossWar.safe_text(self.bot.userinfo.get('guild', ''))
-        ))
 
         self.log.debug('Update alliance hall info')
         return self.bot.api.call(ALLIANCE_INFO_URL, op='info')

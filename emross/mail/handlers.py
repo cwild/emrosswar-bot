@@ -35,7 +35,7 @@ class MailHandler(EmrossBaseObject):
 
         for part in parts:
             ids = ','.join(str(o.id) for o in part if o is not None)
-            self.log.info('Deleting mail {0}'.format(ids))
+            self.log.debug('Deleting mail {0}'.format(ids))
             self.bot.api.call(WAR_RESULT_LIST, action='delete', id=ids)
 
     def process(self):
@@ -44,7 +44,7 @@ class MailHandler(EmrossBaseObject):
         page = 1
         while True:
             _max = self.list_mail(page)
-            self.log.info('Reading page {0}/{1}'.format(page, _max))
+            self.log.debug('Reading page {0}/{1}'.format(page, _max))
 
             if _max == page:
                 break
@@ -56,7 +56,7 @@ class AttackMailHandler(MailHandler):
     CLEANUP_WAIT = 300
 
     def process(self, war_report_cleanup_delay=CLEANUP_WAIT, delete_losses=False, **kwargs):
-        self.log.info('Cleaning up war reports...')
+        self.log.info('Cleaning up war reports')
         super(AttackMailHandler, self).process()
 
         # Now delete the mails
