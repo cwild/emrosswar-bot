@@ -136,6 +136,10 @@ class CastleBuilder(Task):
             if json['code'] != EmrossWar.SUCCESS:
                 return
 
+            self.log.info('Castle "{0}" build under way at x={1}, y={2}'.format(
+                proposed_name, area_x, area_y
+            ))
+
             city.barracks.expire()
 
             if patient:
