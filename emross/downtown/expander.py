@@ -54,7 +54,8 @@ class CastleBuilder(Task):
         remaining = permitted - len(self.bot.cities) - in_progress
         self.log.debug('Remaining castles to build: {0}'.format(remaining))
 
-        cur = 1 + len(self.bot.cities)
+        # Where should we start counting from?
+        cur = 1 + len(self.bot.cities) + in_progress
         for i in xrange(cur, cur+remaining):
             # Find city with Lonufal
 
