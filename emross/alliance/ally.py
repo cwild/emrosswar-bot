@@ -16,7 +16,7 @@ class Alliance(Controllable, CacheableData):
     MAX_TECH_LEVEL = 5
 
     def __init__(self, bot):
-        super(Alliance, self).__init__(bot)
+        super(Alliance, self).__init__(bot, cache_data_type=list)
         self.id = None
         self._time = None
 

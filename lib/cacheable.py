@@ -11,10 +11,11 @@ _with = _DummyWith()
 class CacheableData(object):
     LOCKED = False
 
-    def __init__(self, time_to_live=120, update=None, *args, **kwargs):
+    def __init__(self, time_to_live=120, update=None, cache_data_type=dict, *args, **kwargs):
         super(CacheableData, self).__init__()
         self._expires = 0
-        self._data = {}
+        self._data_type = cache_data_type
+        self._data = cache_data_type()
         self.time_to_live = time_to_live
 
         if update:
@@ -72,7 +73,7 @@ class CacheableData(object):
 
     def update(self, *args, **kwargs):
         logger.warning('No update method provided for this data handler')
-        return {}
+        return self._data
 
     def expire(self, clear=False):
         """
@@ -81,7 +82,7 @@ class CacheableData(object):
         """
         logger.debug('Reset the cached data expiry time')
         if clear:
-            self._data = {}
+            self._data = self._data_type()
         self._expires = 0
 
 if __name__ == "__main__":
