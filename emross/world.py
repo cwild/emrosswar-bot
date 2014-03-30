@@ -7,6 +7,7 @@ from emross.utility.task import Task
 
 class World(Task):
     MAP_URL = 'game/api_world_map.php'
+    FREE_LAND = 0
     PLAYER_NODE = -1
 
     def __init__(self, bot, *args, **kwargs):

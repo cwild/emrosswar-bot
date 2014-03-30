@@ -2,7 +2,6 @@ from lib.cacheable import CacheableData
 
 from emross.api import EmrossWar
 from emross.exceptions import ResourceException
-from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 
 
@@ -140,16 +139,16 @@ class Barracks(EmrossBaseObject, CacheableData):
             return 0
 
     def confirm_and_do(self, params, sleep_confirm=(), sleep_do=(), **kwargs):
-        json = self._action_confirm(params, sleep=sleep_confirm, **kwargs)
+        json = self.action_confirm(params, sleep=sleep_confirm, **kwargs)
 
         if json['code'] == EmrossWar.SUCCESS:
             params.update(json['ret'])
-            return self._action_do(params, sleep=sleep_do, **kwargs)
+            return self.action_do(params, sleep=sleep_do, **kwargs)
         else:
             self.log.warning(EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])])
             return json
 
-    def _action_confirm(self, params, **kwargs):
+    def action_confirm(self, params, **kwargs):
         """
         We need to confirm that we wish to perform this action.
         Shows the cost of performing the action both in resources and time
@@ -161,12 +160,16 @@ class Barracks(EmrossBaseObject, CacheableData):
         return self.bot.api.call(self.ACTION_CONFIRM_URL, city=self.city.id, **kwargs)
 
 
-    def _action_do(self, params, **kwargs):
+    def action_do(self, params, alternative_costs={}, **kwargs):
         """
         city=12553&action=war_task&attack_type=7&gen=22&area=110&area_x=258&soldier_num15=600
         carry=820800&cost_food=108000&cost_wood=0&cost_iron=0&cost_gold=0&distance=6720&travel_sec=120
         """
-        costs = dict((k[5], int(v)) for k, v in params.iteritems()
+
+        if alternative_costs:
+            costs = alternative_costs
+        else:
+            costs = dict((k[5], int(v)) for k, v in params.iteritems()
                     if k.startswith('cost_'))
 
         try:
