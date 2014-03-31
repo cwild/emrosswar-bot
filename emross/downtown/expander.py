@@ -113,7 +113,7 @@ class CastleBuilder(Task):
                 remaining = json['ret']['carry'] - sum(costs.values())
                 resources[Resource.GOLD] = remaining
 
-                if not city.resource_manager.meet_requirements(resources, **kwargs):
+                if not city.resource_manager.meet_requirements(resources.copy(), **kwargs):
                     return
 
 
