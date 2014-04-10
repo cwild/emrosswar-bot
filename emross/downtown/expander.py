@@ -17,6 +17,13 @@ class CastleBuilder(Task):
     PATIENT = True
     TAKE_RESOURCES = True
 
+    def setup(self):
+        def check_cleared_tasks(event, task):
+            if task['cdtype'] == TaskType.ACTION and task['target'] == Barracks.BUILD:
+                event.propagate = False
+                self.bot.expire()
+        self.bot.events.subscribe('countdown.task.expired', check_cleared_tasks)
+
     def find_closest_free_land(self, city):
         nodes = self.bot.world.get_page(city.x, city.y)['map']
         free_land = [node for node in nodes if node[2] == World.FREE_LAND]

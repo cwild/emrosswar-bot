@@ -26,6 +26,7 @@ class Event(object):
     def __init__(self, name, **kwargs):
         self.name = name
         self.data = kwargs
+        self.propagate = True
 
     def __getattr__(self, name):
         return self.data.get(name)
@@ -50,6 +51,10 @@ class EventManager(EmrossBaseObject):
             event.name, args, kwargs, meta=event.data))
 
         for action in self.events.get(event.name, []):
+            if not event.propagate:
+                self.log.debug('Do not further propagate "{0}"'.format(event.name))
+                break
+
             try:
                 action(event, *args, **kwargs)
             except Exception as e:

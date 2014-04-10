@@ -2,6 +2,7 @@ import time
 
 from emross.api import EmrossWar
 from emross.utility.base import EmrossBaseObject
+from emross.utility.events import Event
 from emross.utility.task import TaskType
 from lib.cacheable import CacheableData
 
@@ -43,9 +44,18 @@ class CountdownManager(EmrossBaseObject, CacheableData):
         return tasks
 
     def is_tainted(self, tasks):
-        tainted = len(tasks) != len([t for t in tasks if t['secs'] > time.time()])
-        if tainted:
-            self.log.debug('Tainted task list (time={0}): {1}'.format(time.time(), tasks))
+        """
+        Check if any of the tasks should now be completed.
+        Fire an event for each expired task
+        """
+        tainted = False
+        for task in tasks:
+            if task['secs'] > time.time():
+                tainted = True
+                self.log.debug('Tainted task list (time={0}): {1}'.format(time.time(), task))
+                event = Event('countdown.task.expired', city=self.city)
+                self.bot.events.notify(event, task)
+
         return tainted
 
     def get_countdown_info(self):
