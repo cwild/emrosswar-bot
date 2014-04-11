@@ -6,7 +6,6 @@ from emross.mail.message import Mail
 from emross.mail.parser import MailParser
 from emross.utility.base import EmrossBaseObject
 
-import settings
 
 class MailHandler(EmrossBaseObject):
     TYPE = None
@@ -92,7 +91,7 @@ class ScoutMailHandler(MailHandler):
 
     def __init__(self, bot):
         super(ScoutMailHandler, self).__init__(bot)
-        self.parser = MailParser(settings.enemy_troops)
+        self.parser = MailParser()
 
     def process(self, add_scout_report_func=None, **kwargs):
         """

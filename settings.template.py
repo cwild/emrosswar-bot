@@ -68,17 +68,6 @@ soldier_threshold = [
 ]
 
 
-"""                                                                                                                                                  
-Maximum number of troops which we will consider attacking
-
-eg.
-Horror 100
-Nightmare 200
-Inferno 9500
-"""
-enemy_troops = (('Horror', 100), ('Nightmare', 200), ('Inferno', 9500))
-
-
 plugin_api = {
     'auth': 'username:password',
     'url': 'http://emross.cryformercy.com/client/plugins/api/',

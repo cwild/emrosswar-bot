@@ -1,16 +1,24 @@
 import re
 
+from emross import mobs
+
 HERO_SEARCH_TEXT = 'Hero'
 
 
 class MailParser:
-    def __init__(self, troops=(), heroes=()):
+    def __init__(self, troops=mobs.units, heroes=()):
         self.troops = {}
-        for troop, count in troops:
-            self.troops[troop] = {
+        for troop in troops:
+            try:
+                search, count = troop
+            except TypeError:
+                # name attr or the direct value of troop
+                search, count = getattr(troop, 'name', troop), 0
+
+            self.troops[search] = {
                 'count': count,
                 # Support for <br>, <br/>, <br\/>
-                'regex': re.compile(r'<br(?:\\?/)?>(?:{0})\((\d+)\)'.format(troop))
+                'regex': re.compile(r'<br(?:\\?/)?>(?:{0})\((\d+)\)'.format(search))
             }
 
         self.reHeroes = []
