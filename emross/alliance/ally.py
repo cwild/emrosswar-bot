@@ -12,7 +12,6 @@ RANK_MEMBER = 5
 
 class Alliance(Controllable, CacheableData):
     COMMAND = 'ally'
-    COMMAND_PASSWORD = None
     MAX_TECH_LEVEL = 5
 
     def __init__(self, bot):
@@ -94,6 +93,7 @@ class Alliance(Controllable, CacheableData):
         except KeyError:
             return
 
+    @Controllable.restricted
     def action_quit(self, event, *args, **kwargs):
         """
         Quit the current password. Requires provision of a "password".
@@ -105,19 +105,10 @@ class Alliance(Controllable, CacheableData):
         If this is a command that was sent before we were in the ally then
         we should not respond as it wasn't aimed at us.
         """
-        if self._time is None or kwargs.get('time', time.time()) < self._time:
+        if self._time is None or event.data.get('time', time.time()) < self._time:
             return
 
-        password = kwargs.get('password')
-
-        if password and self.COMMAND_PASSWORD:
-
-            # Password present but must match
-            if self.COMMAND_PASSWORD.lower() == password.lower():
-
-                if self.bot.userinfo.get('gpower') == RANK_MEMBER:
-                    self.bot.api.call(ALLIANCE_INFO_URL, delid=self.bot.userinfo.get('id'))
-                else:
-                    self.chat.send_message('I rank too high to simply quit!')
-            else:
-                self.chat.send_message('No, I am quite happy staying here.')
+        if self.bot.userinfo.get('gpower') == RANK_MEMBER:
+            self.bot.api.call(ALLIANCE_INFO_URL, delid=self.bot.userinfo.get('id'))
+        else:
+            self.chat.send_message('I rank too high to simply quit!')

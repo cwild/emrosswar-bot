@@ -1,9 +1,13 @@
+import functools
+
 from emross.api import EmrossWar
 from emross.chat import Chat
 from emross.utility.base import EmrossBaseObject
 
+
 class Controllable(EmrossBaseObject):
     COMMAND = None
+    COMMAND_PASSWORD = None
     SUB_COMMAND_OVERRIDES = {}
 
     def __init__(self, *args, **kwargs):
@@ -51,3 +55,30 @@ class Controllable(EmrossBaseObject):
 
         if message:
             self.chat.send_message(message, **kwargs)
+
+    @classmethod
+    def restricted(cls, method=None, password=True, **outer):
+        """
+        If called without method, we've been called with optional arguments.
+        We return a decorator with the optional arguments filled in.
+        Next time round we'll be decorating method.
+        """
+        if method is None:
+            return functools.partial(cls.restricted, password=password, **outer)
+
+        @functools.wraps(method)
+        def wrapped(self, *args, **kwargs):
+
+            if password:
+                if not self.COMMAND_PASSWORD:
+                    self.log.debug('This command requires a password.')
+                    return
+
+                if self.COMMAND_PASSWORD.lower() != kwargs.get('password', '').lower():
+                    self.log.debug('The command password does not match!')
+                    return
+
+            outer.update(kwargs)
+            return method(self, *args, **outer)
+
+        return wrapped
