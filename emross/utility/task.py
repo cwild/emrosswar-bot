@@ -75,11 +75,14 @@ class Task(EmrossBaseObject):
     def process(self, *args, **kwargs):
         pass
 
+    def reschedule(self, delay=-1):
+        self._next_run = time.time() + delay
+
     def setup(self):
         pass
 
     def sleep(self, seconds=INTERVAL):
-        self._next_run = time.time() + (seconds or self.INTERVAL)
+        self.reschedule(seconds or self.INTERVAL)
 
 
 class TaskType:

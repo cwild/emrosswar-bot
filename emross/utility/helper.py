@@ -240,7 +240,13 @@ class EmrossWarBot(CacheableData):
             gift_item = gid
 
         logger.info('Collecting gift "{0}"'.format(gift_item))
-        return self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
+        json = self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
+
+        if int(gid) == inventory.DAILY_GIFT[0]:
+            self.session.last_daily_gift = time.time()
+            self.events.notify(events.Event('emross.gift.daily.received'))
+
+        return json
 
     def scout_map(self, **kwargs):
         logger.info('Trying to find more targets to attack')
