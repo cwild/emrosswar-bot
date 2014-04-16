@@ -28,6 +28,13 @@ from emross.api.cache import EmrossCache
 
 logger = logging.getLogger(__name__)
 
+
+class DummyResponse(object):
+    def __init__(self, status, data):
+        self.headers = None
+        self.status = status
+        self.data = data
+
 class EmrossWarApi(object):
     _LOCK = threading.Lock()
     CONN_POOL = None
@@ -123,15 +130,7 @@ class EmrossWarApi(object):
                 )
         except exceptions.HTTPError as e:
             logger.exception(e)
-
-            class DummyResponse(object):
-                pass
-
-            r = DummyResponse()
-            r.status = 503
-            r.data = e
-
-
+            r = DummyResponse(status=503, data=e)
 
         if r.status not in [200, 304]:
             logger.debug(r.data)
@@ -150,8 +149,12 @@ class EmrossWarApi(object):
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
 
-        json = simplejson.loads(jsonp)
-        logger.debug(json)
+        try:
+            json = simplejson.loads(jsonp)
+            logger.debug(json)
+        except Exception:
+            logger.debug('Error with response. Headers: {0}, Body: {1}'.format(r.headers, r.data))
+            raise
 
         if int(json.get('code', 0)) == 0:
             self.error_timer = 0
