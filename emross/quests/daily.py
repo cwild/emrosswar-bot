@@ -46,10 +46,13 @@ class DailyMissions(Task):
             for mission in missions:
                 data = EmrossWar.MISSION[mission['mid']]
 
-                self.log.debug('"{0} {name}": {description} ({done}/{totaltimes})'.format(\
-                    EmrossWar.LANG['MISSION_LANGUAGE']['DAILY'],
-                    done=mission['done'], **data
-                ))
+                try:
+                    self.log.debug('"{0} {name}": {description} ({done}/{totaltimes})'.format(\
+                        EmrossWar.LANG['MISSION_LANGUAGE']['DAILY'],
+                        done=mission['done'], **data
+                    ))
+                except UnicodeEncodeError:
+                    self.log.debug(data)
 
                 status = int(mission['status'])
 
