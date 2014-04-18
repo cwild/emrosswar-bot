@@ -15,6 +15,7 @@ class HeroRecruit(FilterableCityTask):
                 check_rumours=RUMOUR_CHECKING, *args, **kwargs):
 
         delays = []
+        poor_cities = set()
 
         for city in self.cities(**kwargs):
             if city.hero_manager.remaining_hero_capacity < 1:
@@ -29,6 +30,7 @@ class HeroRecruit(FilterableCityTask):
 
             if gold and not city.resource_manager.meet_requirements({Resource.GOLD: gold}, **kwargs):
                 delays.append(300)
+                poor_cities.add(city)
                 continue
 
 
@@ -42,6 +44,7 @@ class HeroRecruit(FilterableCityTask):
 
                 if json['code'] == EmrossWar.INSUFFICIENT_GOLD:
                     self.log.info('Insufficient gold to buy a drink!')
+                    poor_cities.add(city)
                     delays.append(300)
 
 
@@ -64,8 +67,11 @@ class HeroRecruit(FilterableCityTask):
             try:
                 city = [
                     city for city in self.cities(**kwargs)
-                    if city.hero_manager.remaining_hero_capacity > 0
+                    if city not in poor_cities and
+                    city.hero_manager.remaining_hero_capacity > 0
                     ][0]
+
+                self.log.info('Checking for hero rumours')
                 rumoured_heroes = self.bot.api.call(CONSCRIPT_URL,
                     city=city.id, action='rumors')['ret']['hero']
 
@@ -81,8 +87,12 @@ class HeroRecruit(FilterableCityTask):
                         json = self.bot.api.call(CONSCRIPT_URL, city=city.id,
                             action='rumor_use', gid=_hero['gid'])
 
-                        if json['code'] == EmrossWar.SUCCESS and not self.recruit_hero(city, hero):
+                        if json['code'] != EmrossWar.SUCCESS:
+                            continue
+
+                        if not self.recruit_hero(city, hero):
                             delays.append(30)
+                            break
             except IndexError:
                 pass
 
