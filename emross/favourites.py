@@ -1,4 +1,4 @@
-import logging
+import collections
 import math
 
 # Needs to be defined ahead of NPC import
@@ -6,11 +6,11 @@ FAVOURITES_URL = 'game/api_fav.php'
 
 from emross.api import EmrossWar
 from emross.mobs.npc import NPC
-from emross.utility.base import EmrossBaseObject
+from emross.utility.controllable import Controllable
 
-logger = logging.getLogger(__name__)
 
-class Favourites(EmrossBaseObject):
+class Favourites(Controllable):
+    COMMAND = 'favs'
     LORD = 1
     DEVIL_ARMY = 2
     COLONY = 3
@@ -21,12 +21,30 @@ class Favourites(EmrossBaseObject):
 
     def __init__(self, bot):
         super(Favourites, self).__init__(bot)
-        self.favs = {}
+        self.favs = collections.defaultdict(list)
+
+    @Controllable.restricted
+    def action_clear(self, event, *args, **kwargs):
+        self.clear_favs(*args, **kwargs)
+
+    def action_status(self, event, *args, **kwargs):
+        """
+        Find out the current state of the favourites list
+        """
+        self.get_favs()
+
+        favs = self.favs[self.DEVIL_ARMY]
+        self.chat.send_message('{num}*{monster}: {remain} remaining loots.'.format(\
+            num=len(favs),
+            monster=EmrossWar.LANG.get('MONSTER', 'NPCs'),
+            remain=sum([self.bot.npc_attack_limit - x.attack for x in favs])
+        ))
 
     def add(self, wid, cat):
         return self.bot.api.call(FAVOURITES_URL, act='addreport', wid=wid, cat=cat)
 
-    def clear_favs(self, cat=DEVIL_ARMY):
+    def clear_favs(self, cat=DEVIL_ARMY, *args, **kwargs):
+        cat = int(cat)
         for f in self.favs[cat]:
             self.log.info('Deleting fav {0}'.format(f.id))
             self.bot.api.call(FAVOURITES_URL, act='delfavnpc', fid=f.id)
@@ -35,7 +53,7 @@ class Favourites(EmrossBaseObject):
         json = self.bot.api.call(FAVOURITES_URL, act='getfavnpc', cat=cat)
         favs = json['ret']['favs']
 
-        self.favs[cat] = []
+        self.favs[cat][:] = []
         for data in favs:
             fav = self.TYPES[cat](data, self.bot)
             self.favs[cat].append(fav)
@@ -50,6 +68,7 @@ class Favourites(EmrossBaseObject):
 
 
 if __name__ == '__main__':
+    import logging
     logging.basicConfig(level=logging.DEBUG)
     from bot import bot
 
