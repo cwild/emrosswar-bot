@@ -173,7 +173,7 @@ class HeroManager(Controllable, CacheableData):
         arena = self.bot.builder.task(Construct).structure_level(self.city, Building.ARENA)
         capacity = math.ceil(arena / 2)
         remaining = int(capacity - len(self.heroes))
-        self.log.info('{0} remaining hero slots at "{1}"'.format(remaining, self.city.name))
+        self.log.debug('{0} remaining hero slots at "{1}"'.format(remaining, self.city.name))
         return remaining
 
     def revive_hero(self, hero):
