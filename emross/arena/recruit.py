@@ -1,13 +1,7 @@
-from __future__ import division
-
-import math
-
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
 from emross.resources import Resource
-from emross.structures.buildings import Building
-from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask
 
 RUMOURS = EmrossWar.TRANSLATE['f_city_hero'].get('1', 'Rumours')
@@ -15,21 +9,15 @@ RECRUIT = EmrossWar.TRANSLATE['f_city_hero'].get('3', 'Recruit')
 
 class HeroRecruit(FilterableCityTask):
     INTERVAL = 3600
+    RUMOUR_CHECKING = False
 
-    def process(self, recruit_heroes=[], recruit_hero_ranks=[], *args, **kwargs):
+    def process(self, recruit_heroes=[], recruit_hero_ranks=[],
+                check_rumours=RUMOUR_CHECKING, *args, **kwargs):
 
-        st = self.bot.builder.task(Construct)
         delays = []
 
         for city in self.cities(**kwargs):
-            arena = st.structure_level(city, Building.ARENA)
-
-            if arena < 1:
-                self.log.debug('There is no arena at "{0}"'.format(city.name))
-                continue
-
-            capacity = math.ceil(arena / 2)
-            if capacity <= len(city.hero_manager.heroes):
+            if city.hero_manager.remaining_hero_capacity < 1:
                 self.log.debug('There is no space to recruit any further heroes at "{0}"'.format(city.name))
                 continue
 
@@ -69,13 +57,46 @@ class HeroRecruit(FilterableCityTask):
 
                 if any(recruit_conditions):
                     self.log.info('Found a desired hero to recruit: {0}'.format(hero))
+                    if not self.recruit_hero(city, hero):
+                        delays.append(30)
 
-                    json = self.bot.api.call(CONSCRIPT_URL, city=city.id, action='hire_process')
+        if check_rumours:
+            try:
+                city = [
+                    city for city in self.cities(**kwargs)
+                    if city.hero_manager.remaining_hero_capacity > 0
+                    ][0]
+                rumoured_heroes = self.bot.api.call(CONSCRIPT_URL,
+                    city=city.id, action='rumors')['ret']['hero']
 
-                    if json['code'] == EmrossWar.SUCCESS:
-                        self.log.info('"{0}" recruited at "{1}"!'.format(hero, city.name))
-                    else:
-                        self.log.info('Could not recruit "{0}"'.format(hero))
+                for _hero in rumoured_heroes:
+                    hero = Hero(_hero)
+
+                    recruit_conditions = [
+                        hero.data.get('gid') in recruit_heroes,
+                        hero.client.get('rank') in recruit_hero_ranks,
+                    ]
+
+                    if any(recruit_conditions) and _hero['num'] == _hero['max']:
+                        json = self.bot.api.call(CONSCRIPT_URL, city=city.id,
+                            action='rumor_use', gid=_hero['gid'])
+
+                        if json['code'] == EmrossWar.SUCCESS and not self.recruit_hero(city, hero):
+                            delays.append(30)
+            except IndexError:
+                pass
 
         if delays:
             self.sleep(min(delays))
+
+
+    def recruit_hero(self, city, hero):
+        json = self.bot.api.call(CONSCRIPT_URL, city=city.id, action='hire_process')
+
+        if json['code'] == EmrossWar.SUCCESS:
+            self.log.info('"{0}" recruited at "{1}"!'.format(hero, city.name))
+            city.hero_manager.expire()
+            return True
+        else:
+            self.log.info('Could not recruit "{0}"'.format(hero))
+        return False

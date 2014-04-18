@@ -1,10 +1,14 @@
 from __future__ import division
 
+import math
+
 from lib.cacheable import CacheableData
 
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 from emross.arena.hero import Gear, Hero
+from emross.structures.buildings import Building
+from emross.structures.construction import Construct
 from emross.utility.controllable import Controllable
 
 
@@ -160,6 +164,17 @@ class HeroManager(Controllable, CacheableData):
         self.log.debug(result)
 
         return result
+
+    @property
+    def remaining_hero_capacity(self):
+        """
+        How many more heroes do we have space to hold at this arena?
+        """
+        arena = self.bot.builder.task(Construct).structure_level(self.city, Building.ARENA)
+        capacity = math.ceil(arena / 2)
+        remaining = int(capacity - len(self.heroes))
+        self.log.info('{0} remaining hero slots at "{1}"'.format(remaining, self.city.name))
+        return remaining
 
     def revive_hero(self, hero):
         """
