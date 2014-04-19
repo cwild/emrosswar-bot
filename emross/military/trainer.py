@@ -1,17 +1,25 @@
+import time
+
 from emross.api import EmrossWar
+from emross.arena.hero import Hero
 from emross.military.camp import Soldier
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
 
-import logging
-logger = logging.getLogger(__name__)
-import time
 
 class Cavalry:
-    def __init__(self, troop, quantity, *args, **kwargs):
+    USE_HERO = False
+    WAIT_FOR_HERO = True
+
+    def __init__(self, troop, quantity, minimum=0,
+                use_hero=USE_HERO, wait_for_hero=WAIT_FOR_HERO,
+                *args, **kwargs):
         self.troop = troop
         self.quantity = quantity
+        self.minimum = minimum
+        self.use_hero = use_hero
+        self.wait_for_hero = wait_for_hero
 
 
 class Trainer(FilterableCityTask):
@@ -35,7 +43,7 @@ class Trainer(FilterableCityTask):
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
                 delays.append(int(tasks[0]['secs'])-time.time())
-                self.log.info('Already training troops at castle "{0}"'.format(city.name))
+                self.log.debug('Already training troops at castle "{0}"'.format(city.name))
                 continue
 
             troops = city.barracks.total_troops()
@@ -44,7 +52,7 @@ class Trainer(FilterableCityTask):
             for cavalry in cavalries:
                 try:
                     if not city.barracks.can_train(cavalry.troop):
-                        self.log.info('Cannot train troop type {0} at city "{1}"'.format(cavalry.troop, city.name))
+                        self.log.debug('Cannot train troop type {0} at city "{1}"'.format(cavalry.troop, city.name))
                         continue
 
                     if cavalry.quantity > troops[cavalry.troop]:
@@ -52,13 +60,24 @@ class Trainer(FilterableCityTask):
                         self.log.debug('Shortfall of {0} troops of type {1} at city "{2}"'.format(desired, cavalry.troop, city.name))
 
                         qty = 0
-                        while city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty+1), convert=False) and qty < desired:
+                        maximum = min(camp_space, desired)
+                        while qty < maximum and city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty+1), convert=False):
                             qty += 1
 
-                        qty = min(qty, camp_space)
-                        if qty > 0:
+                        if 0 < qty >= cavalry.minimum:
                             city.resource_manager.meet_requirements(Soldier.cost(cavalry.troop, qty), convert=True)
-                            json = city.barracks.train_troops(cavalry.troop, qty)
+
+                            hero_id = 0
+                            if cavalry.use_hero:
+                                hero = city.hero_manager.highest_stat_hero(Hero.ATTACK)
+                                if hero and hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
+                                    hero_id = hero.data.get('gid', 0)
+                                    self.log.info('Chosen to train troops with "{0}" at {1}'.format(hero, city.name))
+                                elif cavalry.wait_for_hero:
+                                    continue
+
+                            json = city.barracks.train_troops(cavalry.troop, qty, hero_id)
+
                             if json['code'] == EmrossWar.SUCCESS:
                                 delay = int(json['ret']['cdlist'][0]['secs'])
                                 city.countdown_manager.add_tasks(json['ret']['cdlist'])
