@@ -110,6 +110,7 @@ class Donator(Task):
             try:
                 json = self.bot.api.call(ALLIANCE_INFO_URL, op='donate', num=gold, city=city.id)
                 if json['code'] == EmrossWar.SUCCESS:
+                    city.resource_manager.modify_amount_of(Resource.GOLD, -gold)
                     self.hall_timeout = time.time() + json['ret'][4]
                     self.bot.alliance.data = json['ret']
             except IndexError:

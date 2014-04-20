@@ -67,6 +67,9 @@ class ResourceManager(EmrossBaseObject):
     def set_amount_of(self, resource, amount):
         self.city.data[Resource.OFFSETS[resource]] = amount
 
+    def modify_amount_of(self, resource, amount):
+        self.city.data[Resource.OFFSETS[resource]] += amount
+
     def meet_requirements(self, resource_levels, convert=True, unbrick=False,
                             include_minimum_food=True, **kwargs):
         """
