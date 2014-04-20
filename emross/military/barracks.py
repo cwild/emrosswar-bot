@@ -191,8 +191,7 @@ class Barracks(EmrossBaseObject, CacheableData):
 
             for res, v in costs.iteritems():
                 try:
-                    cur = self.city.resource_manager.get_amount_of(res)
-                    self.city.resource_manager.set_amount_of(res, cur-int(v))
+                    city.resource_manager.modify_amount_of(res, -int(v))
                 except KeyError:
                     pass
 

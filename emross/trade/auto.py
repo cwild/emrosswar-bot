@@ -77,8 +77,7 @@ class AutoTrade(Task):
                     json = self.trade.buy_item(city, item['id'], sleep=sleep)
 
                     if json['code'] == EmrossWar.SUCCESS:
-                        gold = city.resource_manager.get_amount_of(Resource.GOLD)
-                        city.resource_manager.set_amount_of(Resource.GOLD, gold-int(item['price']))
+                        city.resource_manager.modify_amount_of(Resource.GOLD, -int(item['price']))
                         purchased.append(item['id'])
                     elif json['code'] == EmrossWar.INSUFFICIENT_GOLD:
                         self.log.info('Not enough gold at city "{0}" to purchase item {1}'.format(city.name, item['id']))

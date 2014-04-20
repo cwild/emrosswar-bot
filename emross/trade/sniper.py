@@ -32,7 +32,7 @@ class TradeSniper:
                         if json['code'] == EmrossWar.SUCCESS:
                             print 'Bought item %d for %d gold' % (item_id, price)
                             try:
-                                city.resource_manager.set_amount_of(Resource.GOLD, gold-int(price))
+                                city.resource_manager.modify_amount_of(Resource.GOLD, -int(price))
                             except Exception, e:
                                 print e
 

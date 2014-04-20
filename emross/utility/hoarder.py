@@ -44,8 +44,7 @@ class GoldHoarder(Task):
 
                     json = self.bot.api.call(GOLD_CONVERSION_URL, city=city.id, type=gold_type, num=qty)
                     if json['code'] == EmrossWar.SUCCESS:
-                        current = city.resource_manager.get_amount_of(Resource.GOLD)
-                        city.resource_manager.set_amount_of(Resource.GOLD, current-int(json['ret']))
+                        city.resource_manager.modify_amount_of(Resource.GOLD, -int(json['ret']))
                         delay = min(int(json['ext'][0]), self.INTERVAL)
                         break
                     elif json['code'] == self.NOT_ALLOWED_DURING_WAR:

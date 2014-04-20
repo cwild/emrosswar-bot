@@ -59,8 +59,7 @@ class AutoLoyalty(FilterableCityTask):
 
                                 if json['code'] == EmrossWar.SUCCESS:
                                     hero.data[Hero.LOYALTY] = int(json['ret']['fealty'])
-                                    gold = city.resource_manager.get_amount_of(Resource.GOLD)
-                                    city.resource_manager.set_amount_of(Resource.GOLD, gold-self.LOYALTY_COST)
+                                    city.resource_manager.modify_amount_of(Resource.GOLD, -self.LOYALTY_COST)
                                 elif json['code'] == self.DAILY_HERO_REWARD_LIMIT:
                                     total_failures += 1
                                     failures += 1
