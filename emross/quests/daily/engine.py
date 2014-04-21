@@ -44,6 +44,7 @@ class DailyMissions(Task):
 
             missions = self.list()['ret']
             mission_data = dict()
+            accepted = set()
 
             for mission in missions:
                 data = EmrossWar.MISSION[mission['mid']]
@@ -77,6 +78,9 @@ class DailyMissions(Task):
                     running = True
                     break
 
+                elif status == ACCEPTED:
+                    accepted.add(mission['id'])
+
             """
             If none of the existing missions are completed then let's try to
             handle them ourselves
@@ -84,6 +88,8 @@ class DailyMissions(Task):
             if not running:
 
                 for mission_id in MISSION_HANDLERS.iterkeys():
+                    if mission_id not in accepted:
+                        continue
                     try:
                         data = mission_data[mission_id]
                         parts = MISSION_HANDLERS[mission_id]
