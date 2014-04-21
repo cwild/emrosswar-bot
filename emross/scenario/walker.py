@@ -26,6 +26,7 @@ class ScenarioWalker(Task, Controllable):
     COMMAND = 'scenario'
 
     def setup(self):
+        self.bot.events.subscribe('emross.gift.daily.received', lambda _: self.reschedule())
         self.html_parser = HTMLParser()
         self.scenario = Scenario(self.bot)
 
@@ -69,17 +70,25 @@ class ScenarioWalker(Task, Controllable):
             self.sleep(86400)
             return True
 
-        if len(self.bot.cities) == 0:
-            return resume
-
         if self.bot.userinfo.get('status', 0) in [EmrossWar.TRUCE, EmrossWar.VACATION]:
             self.sleep(60)
             return True
+
+        if self.scenario.current and scenario != self.scenario.current:
+            self.log.debug('Already a different scene in progress!')
+            return
+
+        if self.scenario.highest != -1 and not scenario <= self.scenario.highest:
+            self.log.debug('This scenario has not been unlocked yet')
+            return
 
         json = self.scenario.list()
 
         if json['code'] != EmrossWar.SUCCESS:
             return resume
+
+        if 'highest_fb' in json['ret']:
+            self.scenario.highest = int(json['ret']['highest_fb'])
 
         if json['ret'].get('hasLottery', False):
             self.scenario.finish()
@@ -88,11 +97,13 @@ class ScenarioWalker(Task, Controllable):
 
         if 'fb_label' in json['ret']:
             # Scenario in progress
+            self.scenario.current = int(json['ret']['fb_label'])
 
-            if scenario != int(json['ret']['fb_label']):
+            if scenario != self.scenario.current:
                 self.log.info('Already on a different scenario with {0} seconds remaining.'.format(json['ret']['remaining_time']))
-                self.sleep(json['ret']['remaining_time'])
                 return resume
+
+            self.finish_cycle()
 
             if int(json['ret']['finish']) == 1:
                 self.scenario.finish()
@@ -120,7 +131,11 @@ class ScenarioWalker(Task, Controllable):
             self.process_paths(scenario)
         else:
             # Not started yet
+            if scenario > self.scenario.highest:
+                self.log.debug('Need to complete lower scenes first')
+                return
             if json['ret']['times'] == 0:
+                self.finish_cycle()
                 self.log.info('Out of turns in Scenarios. Try later.')
                 if times:
                     self.can_start(times)

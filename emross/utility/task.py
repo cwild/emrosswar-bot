@@ -25,6 +25,11 @@ class Task(EmrossBaseObject):
         self._next_run = 0
         self.setup()
 
+    def finish_cycle(self):
+        self._next_run = self.last_cycle
+        self.last_cycle = 0.1
+        self.log.debug('Do not run any further "{0}" tasks on the current build cycle'.format(self.__class__.__name__))
+
     @property
     def last_cycle(self):
         if self._last_cycle == 0 and self.ENFORCED_INTERVAL:

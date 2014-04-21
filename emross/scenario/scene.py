@@ -29,6 +29,11 @@ class Scenario(EmrossBaseObject):
     SCENARIO_EXPIRED = 9014
     SCENARIO_OCCUPIED_ALREADY = 9015
 
+    def __init__(self, *args, **kwargs):
+        super(Scenario, self).__init__(*args, **kwargs)
+        self.current = None
+        self.highest = -1
+
     def attack(self, gen, pos):
         """
         fb_attack.php?gen=4&pos=4
@@ -178,7 +183,7 @@ class Scenario(EmrossBaseObject):
         return self.bot.api.call(self.MOVE_URL, pos=pos)
 
     def lottery_wheel(self, action='list'):
-        self.bot.api.call(self.LOTTERY_URL, action=action)
+        return self.bot.api.call(self.LOTTERY_URL, action=action)
 
     def restock(self, gen):
         """
@@ -223,7 +228,11 @@ class Scenario(EmrossBaseObject):
 
         json = self.bot.api.call(self.START_URL, city=city.id, fb=scenario, fb_mode=mode, gen=gen, **soldiers)
 
-        return json['code'] == EmrossWar.SUCCESS
+        if json['code'] == EmrossWar.SUCCESS:
+            self.current = scenario
+            return True
+
+        return False
 
     def finish(self):
         """

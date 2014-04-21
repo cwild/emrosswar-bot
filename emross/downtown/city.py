@@ -36,6 +36,9 @@ class City(EmrossBaseObject, CacheableData):
         self.resource_manager = ResourceManager(bot, city=self)
         self.countdown_manager = CountdownManager(bot, city=self)
 
+    def __repr__(self):
+        return u'City("{0.name}", x={0.x}, y={0.y})'.format(self)
+
     def update(self):
         """Get castle info"""
 
