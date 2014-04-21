@@ -86,7 +86,10 @@ class DailyMissions(Task):
                 for mission_id in MISSION_HANDLERS.iterkeys():
                     try:
                         data = mission_data[mission_id]
-                        cls, _args, _kwargs = MISSION_HANDLERS[mission_id]
+                        parts = MISSION_HANDLERS[mission_id]
+                        cls = parts[0]
+                        _args = next(iter(parts[1:2]), ())
+                        _kwargs = next(iter(parts[2:3]), {})
 
                         if cls(self.bot).process(Mission(data), *_args, **_kwargs):
                             running = True

@@ -27,12 +27,13 @@ class HallDonationHandler(MissionHandler):
         if self.bot.alliance.in_ally:
             return self.bot.builder.task(Donator).donate_to_hall(gold=amount)
 
-MISSION_HANDLERS['164'] = (HallDonationHandler, (10000,), {})
-MISSION_HANDLERS['165'] = (HallDonationHandler, (20000,), {})
-MISSION_HANDLERS['166'] = (HallDonationHandler, (30000,), {})
-MISSION_HANDLERS['167'] = (HallDonationHandler, (40000,), {})
-MISSION_HANDLERS['168'] = (HallDonationHandler, (50000,), {})
-MISSION_HANDLERS['169'] = (HallDonationHandler, (60000,), {})
-MISSION_HANDLERS['170'] = (HallDonationHandler, (70000,), {})
-MISSION_HANDLERS['171'] = (HallDonationHandler, (80000,), {})
-MISSION_HANDLERS['172'] = (HallDonationHandler, (100000,), {})
+MISSION_HANDLERS['164'] = (HallDonationHandler, (10000,))
+MISSION_HANDLERS['165'] = (HallDonationHandler, (20000,))
+MISSION_HANDLERS['166'] = (HallDonationHandler, (30000,))
+MISSION_HANDLERS['167'] = (HallDonationHandler, (40000,))
+MISSION_HANDLERS['168'] = (HallDonationHandler, (50000,))
+MISSION_HANDLERS['169'] = (HallDonationHandler, (60000,))
+MISSION_HANDLERS['170'] = (HallDonationHandler, (70000,))
+MISSION_HANDLERS['171'] = (HallDonationHandler, (80000,))
+MISSION_HANDLERS['172'] = (HallDonationHandler, (100000,))
+
