@@ -79,7 +79,7 @@ class DailyMissions(Task):
                     break
 
                 elif status == ACCEPTED:
-                    accepted.add(mission['id'])
+                    accepted.add(mission['mid'])
 
             """
             If none of the existing missions are completed then let's try to
