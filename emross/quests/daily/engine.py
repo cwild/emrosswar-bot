@@ -1,4 +1,5 @@
 from emross.api import EmrossWar
+from emross.quests.daily.handlers import Mission, MISSION_HANDLERS
 from emross.utility.task import Task
 
 EmrossWar.extend('MISSION', 'translation/%(lang)s/mission_data.js')
@@ -42,9 +43,11 @@ class DailyMissions(Task):
             running = False
 
             missions = self.list()['ret']
+            mission_data = dict()
 
             for mission in missions:
                 data = EmrossWar.MISSION[mission['mid']]
+                mission_data[str(mission['mid'])] = data
 
                 try:
                     self.log.debug('"{0} {name}": {description} ({done}/{totaltimes})'.format(\
@@ -73,3 +76,22 @@ class DailyMissions(Task):
                     json = self.reward(mission['id'])
                     running = True
                     break
+
+            """
+            If none of the existing missions are completed then let's try to
+            handle them ourselves
+            """
+            if not running:
+
+                for mission_id in MISSION_HANDLERS.iterkeys():
+                    try:
+                        data = mission_data[mission_id]
+                        cls, _args, _kwargs = MISSION_HANDLERS[mission_id]
+
+                        if cls(self.bot).process(Mission(data), *_args, **_kwargs):
+                            running = True
+                            break
+                    except KeyError:
+                        pass
+                    except Exception as e:
+                        self.log.exception(e)

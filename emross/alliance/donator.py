@@ -92,10 +92,13 @@ class Donator(Task):
         except ValueError:
             self.sleep(interval)
 
-    def donate_to_hall(self, gold, city):
+    def donate_to_hall(self, gold, city=None):
         if self.bot.alliance.data[4] is not 0:
             self.hall_timeout = time.time() + self.bot.alliance.data[4]
             return
+
+        if not city:
+            city = self.bot.richest_city()
 
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
 
@@ -113,6 +116,7 @@ class Donator(Task):
                     city.resource_manager.modify_amount_of(Resource.GOLD, -gold)
                     self.hall_timeout = time.time() + json['ret'][4]
                     self.bot.alliance.data = json['ret']
+                    return True
             except IndexError:
                 pass
             except TypeError:
