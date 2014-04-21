@@ -108,6 +108,7 @@ class ScenarioWalker(Task, Controllable):
             if int(json['ret']['finish']) == 1:
                 self.scenario.finish()
                 self.scenario = Scenario(self.bot)
+                self.reschedule()
                 return resume
 
             if not hasattr(self.scenario, 'armies'):
@@ -346,12 +347,14 @@ class ScenarioWalker(Task, Controllable):
                 self.log.info('Scenario finished!')
                 self.scenario.finish()
                 self.scenario = Scenario(self.bot)
+                self.reschedule()
                 return
 
             if info['code'] == Scenario.SCENARIO_EXPIRED:
                 self.log.info('Scenario time limit has expired')
                 self.scenario.finish()
                 self.scenario = Scenario(self.bot)
+                self.reschedule()
                 return
 
             if info['code'] == Scenario.SCENARIO_OCCUPIED_ALREADY:
