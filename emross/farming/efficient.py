@@ -181,23 +181,23 @@ class EfficientFarmer(BaseFarmer):
             target.attack += 1
             hero.data[Hero.STATE] = Hero.WAR
 
-    def sort_favourites(self, favs=[]):
+    def sort_targets(self, targets=[]):
         """
         Sort based on the ratings, as soldier_threshold always did.
         """
         ratings = self.kwargs.get('scout_devil_army_types', self.NPC_RATING_ORDER)
         fav_by_rating = {}
 
-        for fav in favs:
+        for fav in targets:
             if fav.rating in ratings:
                 fav_by_rating.setdefault(fav.rating, []).append(fav)
 
 
-        favs[:] = []
+        targets[:] = []
         for rating in ratings:
-            favs.extend(fav_by_rating.get(rating, []))
+            targets.extend(fav_by_rating.get(rating, []))
 
-        return favs
+        return targets
 
     def target_troops_are_attackable(self, troops):
         enemy_troops = self.kwargs.get('enemy_troops')

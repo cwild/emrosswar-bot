@@ -35,16 +35,25 @@ class BaseFarmer(FilterableCityTask):
 
     def _find_targets(self):
         while True:
-            self.bot.favourites.get_favs(self.FAVOURITES_TYPE)
-            favs = self.bot.favourites.favs[self.FAVOURITES_TYPE]
-            favs[:] = self.sort_favourites(favs)
+            try:
+                targets = self.get_targets()
+            except Exception as e:
+                self.log.exception(e)
+                yield exceptions.NoTargetsAvailable('Error finding targets')
+                continue
 
-            if len(favs) == 0:
+            if len(targets) == 0:
                 yield exceptions.NoTargetsAvailable('No favourites are available to attack')
                 continue
 
-            for target in favs:
+            for target in targets:
                 yield target
+
+    def get_targets(self):
+        self.bot.favourites.get_favs(self.FAVOURITES_TYPE)
+        favs = self.bot.favourites.favs[self.FAVOURITES_TYPE]
+        favs[:] = self.sort_targets(favs)
+        return favs
 
     def process(self, concurrent_attack_limit=CONCURRENT_ATTACK_LIMIT,
             *args, **kwargs):
@@ -121,8 +130,8 @@ class BaseFarmer(FilterableCityTask):
     def process_city_with_target(self, city, target):
         pass
 
-    def sort_favourites(self, favs=[]):
-        return favs
+    def sort_targets(self, targets=[]):
+        return targets
 
     def utilities(self, *args, **kwargs):
         pass
