@@ -31,6 +31,24 @@ class CountdownManager(EmrossBaseObject, CacheableData):
     def update(self):
         json = self.get_countdown_info()
         d = json['ret']['cdlist']
+
+        try:
+            existing = self._data['cdlist']
+            previous = set(t['id'] for t in existing)
+            current = set(t['id'] for t in d)
+
+            for _id in previous-current:
+                try:
+                    self.log.debug(_id)
+                    self.bot.events.notify(
+                        Event('countdown.task.expired', city=self.city),
+                        [t for t in existing if t['id'] == _id][0]
+                    )
+                except IndexError as e:
+                    self.log.exception(e)
+        except KeyError:
+            pass
+
         d[:] = self._normalise(d)
         return json
 
@@ -50,7 +68,7 @@ class CountdownManager(EmrossBaseObject, CacheableData):
         """
         tainted = False
         for task in tasks:
-            if task['secs'] > time.time():
+            if task['secs'] < time.time():
                 tainted = True
                 self.log.debug('Tainted task list (time={0}): {1}'.format(time.time(), task))
                 event = Event('countdown.task.expired', city=self.city)
