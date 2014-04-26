@@ -15,7 +15,7 @@ class ChatEvent:
     NEW_MAIL = 2
     RELOAD_CITY = 3
     RESYNC_USER = 4
-    RECEIEVED_TEXT = 5
+    RECEIVED_TEXT = 5
     GIFT_AVAILABLE = 6
     COUNTDOWN_RELOAD = 7
     SYSTEM_UPDATE = 8
@@ -113,7 +113,7 @@ class Chat(Task):
                     # update userinfo on next data access
                     self.bot.expire()
 
-                elif event_type == ChatEvent.RECEIEVED_TEXT:
+                elif event_type == ChatEvent.RECEIVED_TEXT:
                     self.log.info(msg['txt'])
 
         except Exception as e:
