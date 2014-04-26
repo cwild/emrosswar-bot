@@ -65,3 +65,10 @@ class Unit(object):
         ratings = range(6, 0, -1) + range(7, 9)
         raise ValueError('No NPC Unit named "{0}" ({1}* {2}) found.'.format(name,
             ratings[rating-1], EmrossWar.LANG.get('MONSTER', 'DevilArmy')))
+
+
+    def __repr__(self):
+        return '{0}(name={1}, rating={2})'.format(self.__class__.__name__,
+            self._name or '"{0}"*'.format(self.alias),
+            self.rating
+        )

@@ -1,9 +1,11 @@
+import logging
 import re
 
 from emross import mobs
 
 HERO_SEARCH_TEXT = 'Hero'
 
+logger = logging.getLogger(__name__)
 
 class MailParser:
     def __init__(self, troops=mobs.units, heroes=()):
@@ -12,8 +14,11 @@ class MailParser:
             try:
                 search, count = troop
             except TypeError:
-                # name attr or the direct value of troop
-                search, count = getattr(troop, 'name', troop), 0
+                """
+                _name attr (we don't want the name alias here!) or
+                the direct value of `troop`
+                """
+                search, count = getattr(troop, '_name', troop), 0
 
             self.troops[search] = {
                 'count': count,
@@ -51,6 +56,10 @@ class MailParser:
         """
         limits = troop_limits or self.troops
         for troop, qty in troops.iteritems():
-            if limits.get(troop, {}).get('count', 0) < qty:
+            permitted = limits.get(troop, {}).get('count', 0)
+            logger.debug('Permitted: {0}'.format(permitted))
+
+            if permitted < qty:
                 return False
+
         return True
