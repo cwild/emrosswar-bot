@@ -167,11 +167,12 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
                     break
 
-    def action_search(self, event, level=None, *args, **kwargs):
+    def action_search(self, event, level=None, exact=0, *args, **kwargs):
         """
         Find heroes of the given "level"
         """
         event.propagate = False
+        exact = int(exact)
         try:
             level = int(level)
 
@@ -196,9 +197,14 @@ class ArenaFighter(FilterableCityTask, Controllable):
             messages = ['Following your request, here are some of the heroes found in the arena:', '']
 
             for lvl in sorted(opponents.iterkeys(), reverse=True):
+                if exact and lvl != level:
+                    continue
+                messages.append('LEVEL {0}'.format(lvl))
+                messages.append('='*20)
+
                 for opponent in opponents[lvl].itervalues():
-                    messages.append(u'Level {0}: {1} ({2}). id={id}, wins={streak}'.format(
-                        opponent[Hero.LEVEL], Hero(opponent), opponent['u'],
+                    messages.append(u'{0} ({1}). id={id}, wins={streak}'.format(
+                        Hero(opponent), opponent['u'],
                         id=opponent['id'], streak=opponent[Hero.WINS]
                     ))
 
