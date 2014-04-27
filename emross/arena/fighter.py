@@ -273,6 +273,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 tainted = False
                 losses = 0
                 for _ in range(remaining + below - max_vigor):
+                    if int(hero.data['id']) in self.currently_fighting:
+                        self.log.info('Stop currently fighting hero, {0}'.format(hero))
+                        break
+
                     level = hero.data.get(Hero.LEVEL)
                     opponent = opponents.find_arena_opponent(hero, level, **kwargs)
 
