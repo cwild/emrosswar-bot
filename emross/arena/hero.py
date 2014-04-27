@@ -109,6 +109,9 @@ class Hero(EmrossBaseObject):
     WAR = 4
     WORKING = 5
 
+    MIN_LEVEL = 1
+    MAX_LEVEL = 38
+
     def __init__(self, data={}, gear={}, **kwargs):
         self.data = data
         self._gear = gear

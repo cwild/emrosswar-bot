@@ -7,6 +7,7 @@ from lib.cacheable import CacheableData
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 from emross.arena.hero import Gear, Hero
+from emross.arena.fighter import ArenaFighter
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.controllable import Controllable
@@ -24,6 +25,10 @@ class HeroManager(Controllable, CacheableData):
     def heroes(self):
         _ = self.data
         return self._heroes
+
+    def action_fighter(self, event, *args, **kwargs):
+        event.propagate = False
+        self.bot.builder.task(ArenaFighter)._controller(event, *args, **kwargs)
 
     def action_status(self, event, *args, **kwargs):
         """
@@ -114,7 +119,7 @@ class HeroManager(Controllable, CacheableData):
         if json['code'] == EmrossWar.SUCCESS:
             heroes = set()
             for hero_data in json['ret']['hero']:
-                hero_id = hero_data['id']
+                hero_id = int(hero_data['id'])
                 heroes.add(hero_id)
                 try:
                     self._heroes[hero_id].update(hero_data)

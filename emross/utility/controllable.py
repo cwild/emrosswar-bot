@@ -35,6 +35,7 @@ class Controllable(EmrossBaseObject):
         """
         Provide basic usage info on the specified command.
         """
+        event.propagate = False
 
         # Help should reflect our aliased commands as well
         for_method = self.SUB_COMMAND_OVERRIDES.get(for_method) or for_method

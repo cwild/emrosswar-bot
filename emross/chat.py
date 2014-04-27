@@ -1,5 +1,6 @@
 import time
 
+from emross.api import EmrossWar
 from emross.utility.events import Event
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
@@ -9,6 +10,12 @@ class Channel:
     ALLIANCE = 1
     PRIVATE = 2
     WORLD = 0
+
+CHANNELS = {
+    EmrossWar.LANG['CHATCHANNEL']['0'].lower(): Channel.WORLD,
+    EmrossWar.LANG['CHATCHANNEL']['1'].lower(): Channel.ALLIANCE,
+    EmrossWar.LANG['CHATCHANNEL']['2'].lower(): Channel.PRIVATE,
+}
 
 class ChatEvent:
     NEW_CASTLE = 1
@@ -71,6 +78,7 @@ class Chat(Task):
                 data = {
                     'player_id': msg.get('from_id'),
                     'player_name': msg.get('from_name'),
+                    'channel': msg.get('target_type'),
                     'time': time.time()
                 }
 
@@ -121,15 +129,28 @@ class Chat(Task):
 
 
     def ping(self, event, *args, **kwargs):
-        self.send_message('pong')
+        self.send_message('pong', event=event)
 
-    def send_message(self, message, channel=Channel.ALLIANCE, prefix='', **kwargs):
+    def send_message(self, message, channel=Channel.ALLIANCE, prefix='', event=None, **kwargs):
         can_send = False
+
+        try:
+            if event:
+                channel = event.channel
+            else:
+                channel = int(channel)
+        except ValueError:
+            channel = CHANNELS.get(channel.lower(), Channel.ALLIANCE)
 
         if channel == Channel.ALLIANCE:
             guild_id = self.bot.userinfo.get('guildid')
             if guild_id:
                 target, can_send = guild_id, True
+
+        elif channel == Channel.PRIVATE:
+            if event:
+                target, can_send = event.player_id, True
+
 
         if can_send:
             """
