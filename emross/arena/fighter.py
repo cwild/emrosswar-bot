@@ -161,11 +161,17 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
             if hero.data.get(Hero.EXPERIENCE) > hero.data.get(Hero.TARGET_EXPERIENCE):
                 city.hero_manager.expire()
+                self.chat.send_message('My {0} is now level {1}'.format(hero, hero.data[Hero.LEVEL]+1), event=event)
+                break
 
             if json['ret']['win'] <= self.LOSS:
                 if stoponlose:
                     self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
                     break
+
+
+        self.chat.send_message('{0} has {1} {2} left'.format(hero, \
+            hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
 
     def action_search(self, event, level=None, exact=0, *args, **kwargs):
         """
