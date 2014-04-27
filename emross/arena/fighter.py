@@ -117,9 +117,9 @@ class ArenaFighter(FilterableCityTask, Controllable):
     WIN = 1
 
     def action_attack(self, event, hero, target,
-                    stoponlose=1, *args, **kwargs):
+                    stoponlose=1, sleep=(), *args, **kwargs):
         """
-        Specify a "hero" and a "target" for it to attack.
+        Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
         """
 
         stoponlose = int(stoponlose)
@@ -143,32 +143,40 @@ class ArenaFighter(FilterableCityTask, Controllable):
             self.send_message('Could not find the specified hero', event=event)
             return
 
+        if sleep:
+            sleep = bool(int(sleep))
+
         self.chat.send_message('{0} has {1} {2} for fighting'.format(hero, \
             hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
 
-        while hero.data.get(Hero.VIGOR, 0) > 0:
-            json = self.attack(hero_id, int(target))
-            if json['code'] != EmrossWar.SUCCESS:
-                try:
-                    msg = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
-                except KeyError:
-                    msg = 'Stopping after error {0} occurred!'.format(json['code'])
-                self.chat.send_message(msg, event=event)
-                break
 
-            hero.data[Hero.VIGOR] -= 1
-            hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
+        try:
+            self.currently_fighting.add(hero_id)
 
-            if hero.data.get(Hero.EXPERIENCE) > hero.data.get(Hero.TARGET_EXPERIENCE):
-                city.hero_manager.expire()
-                self.chat.send_message('My {0} is now level {1}'.format(hero, hero.data[Hero.LEVEL]+1), event=event)
-                break
-
-            if json['ret']['win'] <= self.LOSS:
-                if stoponlose:
-                    self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
+            while hero.data.get(Hero.VIGOR, 0) > 0:
+                json = self.attack(hero_id, int(target), sleep=sleep)
+                if json['code'] != EmrossWar.SUCCESS:
+                    try:
+                        msg = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
+                    except KeyError:
+                        msg = 'Stopping after error {0} occurred!'.format(json['code'])
+                    self.chat.send_message(msg, event=event)
                     break
 
+                hero.data[Hero.VIGOR] -= 1
+                hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
+
+                if hero.data.get(Hero.EXPERIENCE) >= hero.data.get(Hero.TARGET_EXPERIENCE):
+                    city.hero_manager.expire()
+                    self.chat.send_message('My {0} is now level {1}'.format(hero, hero.data[Hero.LEVEL]+1), event=event)
+                    break
+
+                if json['ret']['win'] <= self.LOSS:
+                    if stoponlose:
+                        self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
+                        break
+        finally:
+            self.currently_fighting.remove(hero_id)
 
         self.chat.send_message('{0} has {1} {2} left'.format(hero, \
             hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
@@ -216,14 +224,16 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
         mailer.send_mail(event.player_name, title, EmrossWar.safe_text('\n'.join(messages)))
 
-    def attack(self, hero, target):
+    def attack(self, hero, target, **kwargs):
         """
         {"code":0,"ret":{"exp":985,"win":-3}}
 
         win>0, draw=0, loss<0
         """
-        return self.bot.api.call(CONSCRIPT_URL, gid=hero, tgid=target)
+        return self.bot.api.call(CONSCRIPT_URL, gid=hero, tgid=target, **kwargs)
 
+    def setup(self):
+        self.currently_fighting = set()
 
     def process(self, below=1, loss_limit=1, *args, **kwargs):
         """
@@ -251,6 +261,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     loss=hero.data.get(Hero.TOTAL_LOSSES, 0)
                     )
                 )
+
+                if int(hero.data['id']) in self.currently_fighting:
+                    self.log.info('Skip currently fighting hero, {0}'.format(hero))
+                    continue
 
                 """
                 Iterate the appropriate number of times to reduce remaining
