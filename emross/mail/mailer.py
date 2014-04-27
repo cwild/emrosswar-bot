@@ -7,7 +7,7 @@ class Mailer(Controllable):
     CATEGORY = 0
     URL = 'game/inter_message_api.php'
 
-    def action_send(self, *args, **kwargs):
+    def action_send(self, event, *args, **kwargs):
         """
         Send a mailing to another player
         """
