@@ -55,7 +55,7 @@ class Controllable(EmrossBaseObject):
                 ]))
 
         if message:
-            self.chat.send_message(message, **kwargs)
+            self.chat.send_message(message, event=event, **kwargs)
 
     @classmethod
     def restricted(cls, method=None, password=True, **outer):

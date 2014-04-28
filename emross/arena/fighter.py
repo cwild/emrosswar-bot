@@ -122,25 +122,28 @@ class ArenaFighter(FilterableCityTask, Controllable):
         Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
         """
 
+        event.propagate = False
         stoponlose = int(stoponlose)
         _hero = Hero.find(hero, *args, **kwargs)
 
         if not _hero:
             return
 
-        hero_id = None
+        hero_id, found = None, False
         for city in self.cities(**kwargs):
             try:
                 for _id, h in city.hero_manager.heroes.iteritems():
                     if int(h.data.get('gid')) == _hero['hero_id']:
                         hero_id, hero = _id, h
+                        found = True
                         break
-                break
+                if found:
+                    break
             except KeyError:
                 pass
 
         if not hero_id:
-            self.send_message('Could not find the specified hero', event=event)
+            self.chat.send_message('Could not find the specified hero', event=event)
             return
 
         if sleep:

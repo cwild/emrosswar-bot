@@ -37,6 +37,7 @@ class HeroManager(Controllable, CacheableData):
         hero = Hero.find(*args, **kwargs)
 
         if hero:
+            event.propagate = False
             find_id = hero['hero_id']
 
             for h in self.heroes.itervalues():
