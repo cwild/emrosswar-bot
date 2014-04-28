@@ -34,6 +34,7 @@ class SkipMessage(MessageParsingError):
 class MessageParser(object):
     COMMAND_OPERATOR = '!'
     NAME_OPERATOR = '@'
+    SELF_OPERATOR = '/'
 
     @classmethod
     def parse_message(cls, message, targets=[]):
@@ -41,6 +42,7 @@ class MessageParser(object):
         if message.startswith(cls.COMMAND_OPERATOR):
             parts = message[len(cls.COMMAND_OPERATOR):].split(' ', 1)
             method_name, arg_strs = parts[0], parts[1:]
+
         elif message.startswith(cls.NAME_OPERATOR):
             parts = message[len(cls.NAME_OPERATOR):].split(' ', 2)
             target, method_name, arg_strs = parts[0], parts[1], parts[2:]
@@ -54,6 +56,11 @@ class MessageParser(object):
 
             if not for_us:
                 raise SkipMessage('We are not the intended recipient of this message')
+
+        elif message.startswith(cls.SELF_OPERATOR):
+            parts = message[len(cls.SELF_OPERATOR):].split(' ', 1)
+            method_name, arg_strs = parts[0], parts[1:]
+
         else:
             raise MessageParsingError('No message parsed from here')
 

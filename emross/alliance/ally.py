@@ -28,6 +28,9 @@ class Alliance(Controllable, CacheableData):
 
         return guildid > 0
 
+    def info(self, **kwargs):
+        return self.bot.api.call(ALLIANCE_INFO_URL, **kwargs)
+
     @property
     def hall_tech(self):
         return self.data[5]
@@ -61,6 +64,20 @@ class Alliance(Controllable, CacheableData):
         self.log.debug('Update alliance hall info')
         return self.bot.api.call(ALLIANCE_INFO_URL, op='info')
 
+    def action_cooldown(self, event, *args, **kwargs):
+        """
+        How much longer before I can receive troops?
+        """
+
+        if not self.in_ally:
+            return
+
+        json = self.info()
+        if json['code'] == EmrossWar.SUCCESS:
+            moved, quota, cooldown = json['ret'].get('quota', [0,0,0])
+            msg = 'Quota: {0}/{1}, Cooldown: {2}'.format(moved, quota, \
+                self.bot.human_friendly_time(cooldown))
+            self.chat.send_message(msg, event=event)
 
     def action_join(self, event, *args, **kwargs):
         """

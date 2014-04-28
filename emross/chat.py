@@ -72,8 +72,6 @@ class Chat(Task):
             try:
                 _lineid = msg['line_id']
                 text = msg.get('line_txt')
-                if msg.get('from_name') == self.bot.userinfo.get('nick'):
-                    continue
 
                 data = {
                     'player_id': msg.get('from_id'),
@@ -82,13 +80,17 @@ class Chat(Task):
                     'time': time.time()
                 }
 
-                if text and msg.get('from_name') in self.bot.operators:
+                if text and (msg.get('from_name') in self.bot.operators or \
+                    msg.get('from_name') == self.bot.userinfo.get('nick')):
+
                     method, args, kwargs = MessageParser.parse_message(text, targets)
                     event = Event(method, **data)
                     self.bot.events.notify(event, *args, **kwargs)
-                elif msg.get('from_name'):
+
+                elif msg.get('from_name') not in (None, self.bot.userinfo.get('nick')):
                     event = Event('chat_message', **data)
                     self.bot.events.notify(event, text)
+
                 else:
                     event = Event('scroll_activity', **data)
                     self.bot.events.notify(event, text)
