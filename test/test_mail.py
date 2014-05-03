@@ -2,12 +2,19 @@ import logging
 import unittest
 
 from emross import mail, mobs
-from test import bot
+del mobs.Unit.UNITS[:]
 
 mobs.units = [
+    mobs.Unit('Horror', mobs.DevilArmy.FIVE_STAR),
+    mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR),
+    mobs.Unit('Nightmare', mobs.DevilArmy.SIX_STAR),
+    mobs.Unit('Inferno', mobs.DevilArmy.SEVEN_STAR),
     mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR),
+    mobs.Unit('', mobs.DevilArmy.SEVEN_STAR, alias='Inferno'),
     mobs.Unit('', mobs.DevilArmy.EIGHT_STAR, alias='Inferno'),
 ]
+from test import bot
+
 
 ENEMY_HEROES = ['ChaosLord', 'ChaosDevourer']
 ENEMY_TROOPS = [
@@ -22,7 +29,7 @@ class TestMail(unittest.TestCase):
     def setUp(self):
         self.bot = bot
         self.messages = [
-            (True, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5351)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br><br>"""),
+            (True, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5340)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br><br>"""),
             (False, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Horror(5351)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>Nightmare(1337)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
             (True, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Nightmare(1000)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
             (False, 'ChaosLord', """<b>[Hero]<\/b><br\/>ChaosLord (Lvl.15)<br\/><br\/><b>[Troops]<\/b><br\/>Nightmare(1337)<br>Attack(15)&nbsp;&nbsp;Defense(8)&nbsp;&nbsp;Health(80)<br>"""),
@@ -50,12 +57,16 @@ class TestMail(unittest.TestCase):
             self.assertEqual(attackable, mail_parser.is_attackable(troops), 'Attackable result does not match')
             self.assertEqual(hero, mail_parser.find_hero(message))
 
+    def test_mob_type_cache(self):
+        self.assertEqual(len(mobs.Unit.UNITS), len(mobs.units))
+
     def test_parsing_mobs_units(self):
         mail_parser = mail.MailParser(heroes=ENEMY_HEROES)
 
         for attackable, hero, message in self.messages:
             logger.debug((attackable, hero, message))
             troops = mail_parser.find_troops(message)
+            logger.debug(troops)
             self.assertNotEqual({}, troops)
 
 

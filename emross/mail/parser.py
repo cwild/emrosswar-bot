@@ -8,7 +8,9 @@ HERO_SEARCH_TEXT = 'Hero'
 logger = logging.getLogger(__name__)
 
 class MailParser:
-    def __init__(self, troops=mobs.units, heroes=()):
+    def __init__(self, troops=None, heroes=()):
+        if not troops:
+            troops = mobs.units
         self.troops = {}
         for troop in troops:
             try:
