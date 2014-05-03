@@ -201,6 +201,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 Hero.MIN_LEVEL, Hero.MAX_LEVEL),
                 event=event
             )
+            return
 
         self.chat.send_message('I will have a look and send you a mail shortly', event=event)
 
