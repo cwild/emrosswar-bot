@@ -68,13 +68,13 @@ class EmrossWarApi(object):
     def create_headers(self):
         return make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
 
-    def call(self, *args, **kargs):
+    def call(self, *args, **kwargs):
         for i in xrange(1, 6):
             try:
-                json = self._call(*args, **kargs)
+                json = self._call(*args, **kwargs)
 
                 if json['code'] in handlers:
-                    handler = handlers[json['code']](self.bot)
+                    handler = handlers[json['code']](self.bot, *args, **kwargs)
                     result = handler.process(json)
                     if result is not None:
                         return result
@@ -101,7 +101,7 @@ class EmrossWarApi(object):
     def _call(self, method, server=None,
         sleep=(),
         handle_errors=True,
-        **kargs):
+        **kwargs):
         """Call API and return result"""
         server = server or self.game_server
 
@@ -112,14 +112,14 @@ class EmrossWarApi(object):
         except AttributeError:
             key = self.api_key
 
-        if handle_errors and (key is None or key.strip() == '') and 'key' not in kargs:
+        if handle_errors and (key is None or key.strip() == '') and 'key' not in kwargs:
             logger.debug('API key is missing, send dummy InvalidKey error')
             return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
 
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', key), ('_l', lang), ('_p', device)])
 
-        params.update(kargs)
+        params.update(kwargs)
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
 
         try:
