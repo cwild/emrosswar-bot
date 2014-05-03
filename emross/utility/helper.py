@@ -1,6 +1,8 @@
 from __future__ import division
 
 import locale
+locale.setlocale(locale.LC_ALL, '')
+
 import logging
 import math
 import re
@@ -34,9 +36,6 @@ from emross.utility.pushover import Pushover
 from emross.utility import events
 from emross.world import World
 
-import settings
-
-locale.setlocale(locale.LC_ALL, '')
 logger = logging.getLogger(__name__)
 
 class EmrossWarBot(CacheableData):
@@ -49,7 +48,7 @@ class EmrossWarBot(CacheableData):
     UPTIME_COMMAND = 'uptime'
     WEALTH_COMMAND = 'wealth'
 
-    def __init__(self, api, socket_writer=None, *args, **kwargs):
+    def __init__(self, api, socket_writer=None, settings=None, *args, **kwargs):
         super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
         self.lock = RLock()
         self.is_initialised = False
@@ -60,6 +59,7 @@ class EmrossWarBot(CacheableData):
         self.api = api
         api.bot = self
         self._socket_writer = socket_writer
+        self.settings = settings
         self.errors = Queue.Queue()
 
         self.session = Session(self)
@@ -132,10 +132,10 @@ class EmrossWarBot(CacheableData):
         )
 
         if self.api.player:
-            if hasattr(settings, 'build_path') and \
+            if hasattr(self.settings, 'build_path') and \
                 self.api.player.disable_global_build == False:
 
-                self.tasks['build_path'] = settings.build_path
+                self.tasks['build_path'] = self.settings.build_path
 
             if self.api.player.custom_build:
                 self.tasks['custom'] = self.api.player.custom_build
@@ -215,7 +215,7 @@ class EmrossWarBot(CacheableData):
         userinfo = json['ret']['user']
 
         skip = set([city.id for city in self.cities])
-        skip.update(settings.ignore_cities)
+        skip.update(getattr(self.settings, 'ignore_cities', []))
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
         for city in cities:
@@ -478,7 +478,7 @@ class EmrossWarBot(CacheableData):
         if self.api.player and self.api.player.minimum_food > 0:
             return self.api.player.minimum_food
 
-        return getattr(settings, 'minimum_food', 0)
+        return getattr(self.settings, 'minimum_food', 0)
 
     @property
     def operators(self):

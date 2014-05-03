@@ -136,12 +136,13 @@ def _handle_worker_errors(worker, error, *args, **kwargs):
 
 class BotManager(object):
 
-    def __init__(self, console=False, **kwargs):
+    def __init__(self, console=False, settings={}, **kwargs):
         self.players = []
         self.bots = []
         self.console = console
         self.kwargs = kwargs
         self.socket = None
+        self.settings = settings
 
     def bot(self, nickname=None, *args, **kwargs):
         """A helper function to locate a running bot"""
@@ -174,7 +175,8 @@ class BotManager(object):
 
 
         self.initialise_bots(
-            socket_writer=getattr(self.socket, 'queue_out', None)
+            socket_writer=getattr(self.socket, 'queue_out', None),
+            settings=self.settings
         )
 
         workers = []

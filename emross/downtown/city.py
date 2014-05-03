@@ -14,7 +14,6 @@ from emross.utility.countdown import CountdownManager
 
 from lib.cacheable import CacheableData
 
-import settings
 
 class City(EmrossBaseObject, CacheableData):
     GET_CITY_INFO = 'game/get_cityinfo_api.php'
@@ -199,7 +198,7 @@ class City(EmrossBaseObject, CacheableData):
 
         for data in heroes:
             try:
-                if exclude and data['gid'] in settings.exclude_heroes:
+                if exclude and data['gid'] in getattr(self.bot.settings, 'exclude_heroes', ()):
                     continue
             except AttributeError:
                 pass

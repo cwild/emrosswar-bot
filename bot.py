@@ -42,7 +42,8 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--socket', help='Establish a bi-directional server socket', action='store_true', default=False)
     args = parser.parse_args()
 
-    manager = BotManager(console=args.console, processes=args.poolsize, socket=args.socket)
+    manager = BotManager(console=args.console, processes=args.poolsize, \
+                        socket=args.socket, settings=settings)
 
     try:
         if not args.multi:
