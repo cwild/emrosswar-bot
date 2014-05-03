@@ -83,7 +83,8 @@ class Chat(Task):
                 if text and (msg.get('from_name') in self.bot.operators or \
                     msg.get('from_name') == self.bot.userinfo.get('nick')):
 
-                    method, args, kwargs = MessageParser.parse_message(text, targets)
+                    method, args, kwargs = MessageParser.parse_message(text, targets,
+                        myself=msg.get('from_name') == self.bot.userinfo.get('nick'))
                     event = Event(method, **data)
                     self.bot.events.notify(event, *args, **kwargs)
 

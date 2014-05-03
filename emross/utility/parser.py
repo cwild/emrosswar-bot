@@ -37,9 +37,15 @@ class MessageParser(object):
     SELF_OPERATOR = '/'
 
     @classmethod
-    def parse_message(cls, message, targets=[]):
+    def parse_message(cls, message, targets=[], myself=False):
 
-        if message.startswith(cls.COMMAND_OPERATOR):
+        if myself:
+            # Talking to yourself again huh?
+            if message.startswith(cls.SELF_OPERATOR):
+                parts = message[len(cls.SELF_OPERATOR):].split(' ', 1)
+                method_name, arg_strs = parts[0], parts[1:]
+
+        elif message.startswith(cls.COMMAND_OPERATOR):
             parts = message[len(cls.COMMAND_OPERATOR):].split(' ', 1)
             method_name, arg_strs = parts[0], parts[1:]
 
@@ -56,10 +62,6 @@ class MessageParser(object):
 
             if not for_us:
                 raise SkipMessage('We are not the intended recipient of this message')
-
-        elif message.startswith(cls.SELF_OPERATOR):
-            parts = message[len(cls.SELF_OPERATOR):].split(' ', 1)
-            method_name, arg_strs = parts[0], parts[1:]
 
         else:
             raise MessageParsingError('No message parsed from here')
