@@ -44,6 +44,8 @@ class MessageParser(object):
             if message.startswith(cls.SELF_OPERATOR):
                 parts = message[len(cls.SELF_OPERATOR):].split(' ', 1)
                 method_name, arg_strs = parts[0], parts[1:]
+            else:
+                return
 
         elif message.startswith(cls.COMMAND_OPERATOR):
             parts = message[len(cls.COMMAND_OPERATOR):].split(' ', 1)
