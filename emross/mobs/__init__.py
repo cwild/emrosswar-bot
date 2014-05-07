@@ -17,6 +17,8 @@ class DevilArmy:
     SIX_STAR = 1
     SEVEN_STAR = 7
     EIGHT_STAR = 8
+    NINE_STAR = 9
+    TEN_STAR = 10
 
 
 class Hero(BaseHero):
