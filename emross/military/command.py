@@ -66,10 +66,32 @@ class CommandCenter(Task, Controllable):
         launched = 0
         times = int(kwargs.get('times', 1))
         attack_type = int(kwargs.get('attack_type', Barracks.LOOT))
+        hero, custom_hero = None, None
+
+        if kwargs.get('needs_hero') and 'hero' in kwargs:
+            custom_hero = Hero.find(kwargs['hero'])
+            if not custom_hero:
+                self.log.debug('No such hero found')
+                return
 
         for city in self.bot.cities:
             if launched == times:
                 break
+
+            if custom_hero:
+                # We have found one already, no good to continue!
+                if hero:
+                    self.log.debug('We have already visited the city with this hero, cannot continue')
+                    break
+
+                # Looking for a user-defined hero!
+                for _id, h in city.hero_manager.heroes.iteritems():
+                    if int(h.data.get('gid')) == custom_hero['hero_id']:
+                        hero = h
+                        break
+
+                if not hero:
+                    continue
 
             try:
                 city.barracks.expire()
@@ -107,8 +129,14 @@ class CommandCenter(Task, Controllable):
                         finished_city = True
                         break
 
-                    if kwargs.get('hero'):
-                        hero = city.choose_hero(sum(army.values()))
+                    if kwargs.get('needs_hero'):
+                        if custom_hero:
+                            # User specified and can therefore only be used once!
+                            finished_city = True
+                        else:
+                            hero = city.choose_hero(sum(army.values()))
+
+                        # Still a no-go!
                         if not hero:
                             self.log.debug('Cannot find a hero to command this army')
                             finished_city = True
@@ -172,14 +200,14 @@ class CommandCenter(Task, Controllable):
         """
         Who have I looted that I can now conquer?
         """
-        kwargs.update({'action':'Conquer', 'attack_type': Barracks.CONQUER, 'hero':True})
+        kwargs.update({'action':'Conquer', 'attack_type': Barracks.CONQUER, 'needs_hero':True})
         self._barracks_action(*args, **kwargs)
 
     def action_loot(self, event, *args, **kwargs):
         """
         Send a hero to lead an army to attack another player
         """
-        kwargs.update({'action':'Loot', 'attack_type':Barracks.LOOT, 'hero':True})
+        kwargs.update({'action':'Loot', 'attack_type':Barracks.LOOT, 'needs_hero':True})
         self._barracks_action(*args, **kwargs)
 
     def action_scout(self, event, *args, **kwargs):
