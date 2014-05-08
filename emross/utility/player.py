@@ -18,32 +18,33 @@ class Player(object):
     def __init__(self,
         server,
         key=None,
-        pushid=None,
-        user_agent=None,
         username=None,
         password=None,
         custom_build = None,
         disable_global_build = False,
         disable_modules = [],
-        minimum_food=0,
-        operators=[],
-        playtimes=[(-1, 25)],
         *args,
         **kwargs):
 
         self.server = server
         self.key = key
-        self.pushid = pushid
-        self.user_agent = user_agent
         self.username = username
         self.password = password
+
         self.custom_build = custom_build
         self.disable_global_build = disable_global_build
         self.disable_modules = set(disable_modules)
-        self.minimum_food = minimum_food
-        self.operators = operators
-        self.playtimes = playtimes
+        self.playtimes = [(-1, 25)]
         self._remote = None
+
+        # Magic to update dict with whatever kwargs we receive
+        self.__dict__.update(kwargs)
+
+    def get(self, name, default=None):
+        return self.__dict__.get(name, default)
+
+    def __getattr__(self, name):
+        return self.get(name)
 
     def __repr__(self):
         parts = []
