@@ -45,7 +45,7 @@ class MessageParser(object):
                 parts = message[len(cls.SELF_OPERATOR):].split(' ', 1)
                 method_name, arg_strs = parts[0], parts[1:]
             else:
-                return
+                raise SkipMessage('Talking to ourself requires the SELF_OPERATOR')
 
         elif message.startswith(cls.COMMAND_OPERATOR):
             parts = message[len(cls.COMMAND_OPERATOR):].split(' ', 1)

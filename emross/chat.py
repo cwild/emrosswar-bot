@@ -66,6 +66,7 @@ class Chat(Task):
         targets = [self.bot.userinfo.get('nick', '')]
         if self.bot.api.player:
             targets.append(self.bot.api.player.username)
+            targets.extend(self.bot.api.player.groups or [])
 
         _lineid = self.lineid
         for msg in messages[::-1]:
@@ -95,8 +96,8 @@ class Chat(Task):
                 else:
                     event = Event('scroll_activity', **data)
                     self.bot.events.notify(event, text)
-            except SkipMessage:
-                pass
+            except SkipMessage as e:
+                self.log.debug(e)
             except MessageParsingError:
                 event = Event('chat_message', **data)
                 self.bot.events.notify(event, text)
