@@ -19,7 +19,7 @@ class Session(object):
     @property
     def filename(self):
         server = self.bot.api.game_server
-        userid = self.bot.userinfo['id']
+        userid = self.bot._data.get('id') or self.bot.userinfo['id']
         filename = self.PATH.format(server=server, userid=userid)
         logger.debug(filename)
         return filename
