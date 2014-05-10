@@ -3,7 +3,6 @@ from __future__ import division
 import locale
 locale.setlocale(locale.LC_ALL, '')
 
-import logging
 import math
 import re
 import time
@@ -31,14 +30,14 @@ from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.resources import Resource
 from emross.shop import Shop
 from emross.utility.about import AboutHelper
+from emross.utility.base import EmrossBaseObject
 from emross.utility.builder import BuildManager
 from emross.utility.pushover import Pushover
 from emross.utility import events
 from emross.world import World
 
-logger = logging.getLogger(__name__)
 
-class EmrossWarBot(CacheableData):
+class EmrossWarBot(EmrossBaseObject, CacheableData):
     PVP_MODE_RE = re.compile('^p\d+\.')
     USERINFO_URL = 'game/get_userinfo_api.php'
     OTHER_USERINFO_URL = 'game/api_get_userinfo2.php'
@@ -49,7 +48,7 @@ class EmrossWarBot(CacheableData):
     WEALTH_COMMAND = 'wealth'
 
     def __init__(self, api, socket_writer=None, settings=None, *args, **kwargs):
-        super(EmrossWarBot, self).__init__(time_to_live=60, *args, **kwargs)
+        super(EmrossWarBot, self).__init__(bot=self, time_to_live=60, *args, **kwargs)
         self.lock = RLock()
         self.is_initialised = False
         self._closing = False
@@ -86,13 +85,13 @@ class EmrossWarBot(CacheableData):
 
 
     def __del__(self):
-        logger.debug('Clean up bot instance')
+        self.log.debug('Clean up bot instance')
 
     def __repr__(self):
         try:
             return EmrossWar.safe_text(self._data.get('nick') or str(self.api.player))
         except Exception as e:
-            logger.exception(e)
+            self.log.exception(e)
             return ''
 
     def disconnect(self):
@@ -105,7 +104,7 @@ class EmrossWarBot(CacheableData):
         try:
             self.session.save()
         except IOError:
-            logger.warning('Error saving session')
+            self.log.warning('Error saving session')
 
     @property
     def userinfo(self):
@@ -117,7 +116,7 @@ class EmrossWarBot(CacheableData):
         try:
             self._socket_writer.put(data)
         except Exception as e:
-            logger.exception(e)
+            self.log.exception(e)
 
     @property
     def cities(self):
@@ -214,9 +213,8 @@ class EmrossWarBot(CacheableData):
         """
         Setup bot with player account data
         """
-        nick = self._data.get('nick', getattr(self.api, 'player', '*UNKNOWN*'))
 
-        logger.info('Updating player info', extra={'bot': nick})
+        self.log.debug('Updating player info')
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         userinfo = json['ret']['user']
@@ -227,7 +225,7 @@ class EmrossWarBot(CacheableData):
 
         for city in cities:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
-            logger.debug('Adding "{0}" ({1}) to city list'.format(city.name, city.id))
+            self.log.debug('Adding "{0}" ({1}) to city list'.format(city.name, city.id))
             self._cities.append(city)
 
         if not self.is_initialised:
@@ -246,7 +244,7 @@ class EmrossWarBot(CacheableData):
         except KeyError:
             gift_item = gid
 
-        logger.info('Collecting gift "{0}"'.format(gift_item))
+        self.log.info('Collecting gift "{0}"'.format(gift_item))
         json = self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
         if int(gid) == inventory.DAILY_GIFT[0]:
@@ -256,7 +254,7 @@ class EmrossWarBot(CacheableData):
         return json
 
     def scout_map(self, **kwargs):
-        logger.info('Trying to find more targets to attack')
+        self.log.info('Trying to find more targets to attack')
 
         try:
             last_scan = self.session.last_scan
@@ -265,19 +263,19 @@ class EmrossWarBot(CacheableData):
 
         hours = kwargs.get('scouting_interval', 72)
         if time.time() < last_scan + hours*3600:
-            logger.info('The world was scanned less than {0} hours ago'.format(hours))
+            self.log.info('The world was scanned less than {0} hours ago'.format(hours))
         else:
             try:
                 self.world.search(**kwargs)
                 self.session.last_scan = time.time()
             except OutOfSpies as e:
                 self.session.last_scan = 0
-                logger.info(e)
+                self.log.info(e)
             finally:
                 self.session.save()
 
         try:
-            logger.info('Look at scout reports to try to locate devil armies')
+            self.log.info('Look at scout reports to try to locate devil armies')
             self.scout_mail.process(**kwargs)
         except MailException:
             pass
@@ -300,7 +298,7 @@ class EmrossWarBot(CacheableData):
 
     def _city_wealth(self, func=max, text='most'):
         city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        logger.debug('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
+        self.log.debug('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
             resource=EmrossWar.LANG.get('COIN', 'gold'),
             city=city.name, amount=city.resource_manager.get_amount_of(Resource.GOLD))
         )
@@ -319,14 +317,14 @@ class EmrossWarBot(CacheableData):
             pass
 
     def clearout_inventory(self, city=None, use_items=False, sell_items=False, **kwargs):
-        logger.info('Clear the item inventories')
+        self.log.info('Clear the item inventories')
 
         it = item.ItemType
         for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
             page = 1
             sale_list = []
 
-            logger.info('Find items of type {0}'.format(itype))
+            self.log.info('Find items of type {0}'.format(itype))
             while True:
                 json = self.item_manager.list(page=page, type=itype)
 
@@ -340,11 +338,11 @@ class EmrossWarBot(CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.debug('Last page of item type {0}'.format(itype))
+                    self.log.debug('Last page of item type {0}'.format(itype))
                     break
 
             if sale_list:
-                logger.info('Sell {0} item/s of type {1}'.format(len(sale_list), itype))
+                self.log.info('Sell {0} item/s of type {1}'.format(len(sale_list), itype))
                 city = city or self.poorest_city()
 
                 for item_id in sale_list:
@@ -394,13 +392,13 @@ class EmrossWarBot(CacheableData):
         for id in items:
             try:
                 i = EmrossWar.ITEM[str(id)]
-                logger.debug('Searching for item {0}: "{1}"'.format(id, i.get('name')))
+                self.log.debug('Searching for item {0}: "{1}"'.format(id, i.get('name')))
                 item_type = item_types.get(i['type'], it.ITEM)
                 search_items.setdefault(item_type, {})[int(id)] = False
             except KeyError:
                 pass
 
-        logger.debug(search_items)
+        self.log.debug(search_items)
 
         for item_type, search in search_items.iteritems():
             page = 1
@@ -418,7 +416,7 @@ class EmrossWarBot(CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    logger.debug('Last page of item type {0}'.format(item_type))
+                    self.log.debug('Last page of item type {0}'.format(item_type))
                     break
 
         return result
