@@ -66,6 +66,8 @@ class Item(EmrossBaseObject):
     def upgrade(self, city, id):
         return self.bot.api.call(self.ITEM_LIST, action='upgrade', city=city.id, id=id)
 
+    def downgrade(self, city, id):
+        return self.bot.api.call(self.ITEM_LIST, action='degrade', city=city.id, id=id)
 
 
 ITEMS = dict([(int(sid), item) for sid, item in EmrossWar.ITEM.iteritems()])
