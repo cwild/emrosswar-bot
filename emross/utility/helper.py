@@ -88,6 +88,13 @@ class EmrossWarBot(CacheableData):
     def __del__(self):
         logger.debug('Clean up bot instance')
 
+    def __repr__(self):
+        try:
+            return EmrossWar.safe_text(self._data.get('nick') or str(self.api.player))
+        except Exception as e:
+            logger.exception(e)
+            return ''
+
     def disconnect(self):
         self.runnable = False
         self.blocked = True
