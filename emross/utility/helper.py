@@ -358,7 +358,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         for sid in items:
             try:
                 self.log.debug('Searching for item {0}: "{1}"'.format(\
-                    sid, i.get('name')
+                    sid, EmrossWar.ITEM[str(sid)].get('name')
                 ))
 
                 result[sid] = [
