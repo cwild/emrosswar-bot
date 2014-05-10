@@ -1,4 +1,5 @@
 from emross.api import EmrossWar
+from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 
 
@@ -58,16 +59,27 @@ class Item(EmrossBaseObject):
             'wood': 0, 'rumor': 0,
             'iron': 0, 'ep': 0, 'gem': 0, 'buff': ''}}
         """
-        return self.bot.api.call(self.ITEM_OP, action='use', city=city, id=id, num=num)
+        json = self.bot.api.call(self.ITEM_OP, action='use', city=city.id, id=id, num=num)
+        if json['code'] == EmrossWar.SUCCESS:
+            self.bot.inventory.adjust_item_stock(id, -num)
+        return json
 
     def sell(self, city, id, **kwargs):
-        return self.bot.api.call(self.ITEM_OP, action='sale', city=city, id=id, **kwargs)
+        json = self.bot.api.call(self.ITEM_OP, action='sale', city=city.id, id=id, **kwargs)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            self.bot.inventory.adjust_item_stock(id, -kwargs.get('num', 0))
+
+        return json
 
     def upgrade(self, city, id):
         return self.bot.api.call(self.ITEM_LIST, action='upgrade', city=city.id, id=id)
 
     def downgrade(self, city, id):
-        return self.bot.api.call(self.ITEM_LIST, action='degrade', city=city.id, id=id)
+        json = self.bot.api.call(self.ITEM_LIST, action='degrade', city=city.id, id=id)
+        if json['code'] == EmrossWar.SUCCESS:
+            city.resource_manager.set_amount_of(Resource.GOLD, json['ret'][1])
+        return json
 
 
 ITEMS = dict([(int(sid), item) for sid, item in EmrossWar.ITEM.iteritems()])

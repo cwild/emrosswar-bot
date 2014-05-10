@@ -24,7 +24,7 @@ from emross.downtown import City
 from emross.exceptions import *
 from emross.favourites import Favourites
 from emross.gift import GiftCollector, GiftEvents
-from emross.item import inventory, item
+from emross.item import inventory, item, manager
 from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.resources import Resource
@@ -42,7 +42,6 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
     USERINFO_URL = 'game/get_userinfo_api.php'
     OTHER_USERINFO_URL = 'game/api_get_userinfo2.php'
 
-    INVENTORY_COMMAND = 'inventory'
     STATUS_COMMAND = 'status'
     UPTIME_COMMAND = 'uptime'
     WEALTH_COMMAND = 'wealth'
@@ -76,6 +75,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         self.alliance = self.builder.task(Alliance)
         self.favourites = self.builder.task(Favourites)
         self.item_manager = self.builder.task(item.Item)
+        self.inventory = self.builder.task(manager.InventoryManager)
         self.shop = self.builder.task(Shop)
         self.world = self.builder.task(World)
 
@@ -146,29 +146,6 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             if self.api.player.custom_build:
                 self.tasks['custom'] = self.api.player.custom_build
 
-
-        def inventory(event, *args, **kwargs):
-            chat = self.builder.task(Chat)
-
-            search_items = []
-            for _search in args:
-                for _id, _item in EmrossWar.ITEM.iteritems():
-                    try:
-                        if re.search(_search, _item.get('name'), re.IGNORECASE):
-                            search_items.append(_id)
-                    except re.error:
-                        pass
-
-            found = self.find_inventory_items(search_items)
-            result = []
-            for item_id, values in found.iteritems():
-                name = EmrossWar.ITEM[str(item_id)].get('name')
-                vals = [qty for uniqid, qty, sellable in values]
-                result.append('{0}={1}'.format(name, sum(vals)))
-
-            chat.send_message(', '.join(result))
-
-        self.events.subscribe(self.INVENTORY_COMMAND, inventory)
 
         def status(event, precision=3, *args, **kwargs):
             chat = self.builder.task(Chat)
@@ -347,7 +324,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
                 for item_id in sale_list:
                     try:
-                        json = self.item_manager.sell(city=city.id, id=item_id)
+                        json = self.item_manager.sell(city=city, id=item_id)
                         city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                     except (KeyError, TypeError):
                         pass
@@ -376,48 +353,20 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         return self.find_inventory_items([item_id]).get(item_id)
 
     def find_inventory_items(self, items):
-        it = item.ItemType
+        result = {}
 
-        # item type and the tab it is listed under
-        item_types = {
-            1: it.WEAPON,
-            2: it.ARMOR,
-            3: it.MOUNT,
-            4: it.BOOK,
-            5: it.BOOK,
-            6: it.RING
-        }
-        search_items, result = dict(), dict()
-
-        for id in items:
+        for sid in items:
             try:
-                i = EmrossWar.ITEM[str(id)]
-                self.log.debug('Searching for item {0}: "{1}"'.format(id, i.get('name')))
-                item_type = item_types.get(i['type'], it.ITEM)
-                search_items.setdefault(item_type, {})[int(id)] = False
+                self.log.debug('Searching for item {0}: "{1}"'.format(\
+                    sid, i.get('name')
+                ))
+
+                result[sid] = [
+                    [_item['item']['id'], _item['item']['num'], _item['sale']]
+                    for _item in self.inventory.data[sid].itervalues()
+                ]
             except KeyError:
                 pass
-
-        self.log.debug(search_items)
-
-        for item_type, search in search_items.iteritems():
-            page = 1
-            while False in search.values():
-                json = self.item_manager.list(page=page, type=item_type)
-
-                for _item in json['ret']['item']:
-                    try:
-                        if _item['item']['sid'] in search.keys():
-                            res = [_item['item']['id'], _item['item']['num'], _item['sale']]
-                            result.setdefault(_item['item']['sid'], []).append(res)
-                            search[int(_item['item']['sid'])] = True
-                    except KeyError:
-                        pass
-
-                page += 1
-                if page > json['ret']['max']:
-                    self.log.debug('Last page of item type {0}'.format(item_type))
-                    break
 
         return result
 
@@ -448,7 +397,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             if num > 1:
                 kwargs['num'] = num
 
-            json = self.item_manager.sell(city = city.id, id = item_id, **kwargs)
+            json = self.item_manager.sell(city=city.id, id=item_id, **kwargs)
 
             if json['code'] == EmrossWar.SUCCESS:
                 city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])

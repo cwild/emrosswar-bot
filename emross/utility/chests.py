@@ -92,7 +92,7 @@ class ChestOpener(Task):
                     idx = [i for i in items.get(key) if i[1] > 0].pop()
                     idx[1] -= 1
                     opened += 1
-                    json = self.bot.item_manager.use(city.id, idx[0])
+                    json = self.bot.item_manager.use(city, idx[0])
                     if json['code'] != EmrossWar.SUCCESS:
                         break
 

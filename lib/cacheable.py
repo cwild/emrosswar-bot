@@ -51,7 +51,10 @@ class CacheableData(object):
             if self.LOCKED:
                 self.log.debug('Data is locked from auto-updating')
             elif time.time() > self._expires or should_update:
-                self.data = self.update(*self.args, **self.kwargs)
+                try:
+                    self.data = self.update(*self.args, **self.kwargs)
+                except Exception as e:
+                    logger.exception(e)
 
         return self._data
 

@@ -78,7 +78,7 @@ class Construct(FilterableCityTask):
                         for item_id, qty, price in vals:
 
                             self.log.info('Open another build slot by using a "{0}"'.format(EmrossWar.ITEM[str(sid)].get('name')))
-                            json = self.bot.item_manager.use(city=city.id, id=item_id, num=1)
+                            json = self.bot.item_manager.use(city=city, id=item_id, num=1)
 
                             if json['code'] == EmrossWar.SUCCESS:
                                 capacity += 1
@@ -86,6 +86,7 @@ class Construct(FilterableCityTask):
                                 for _city in self.bot.cities:
                                     _city.expire()
                                 done = True
+                                self.bot.inventory.adjust_item_stock(id=item_id, num=-1)
                                 break
 
                         if done:

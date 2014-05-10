@@ -144,7 +144,12 @@ class CountdownManager(EmrossBaseObject, CacheableData):
             task['secs'] = remaining + time.time()
 
     def _reduce_with_item(self, tid, action, item_id):
-        return self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id, tid=tid, action=action, iid=item_id)
+        json = self.bot.api.call(self.GET_COUNTDOWN_INFO, city=self.city.id, tid=tid, action=action, iid=item_id)
+
+        if json['code'] == EmrossWar.SUCCESS:
+            self.bot.inventory.adjust_item_stock(item_id)
+
+        return json
 
     def use_gems_for_task(self, task, gems=0, **kwargs):
         """
