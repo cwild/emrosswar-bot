@@ -5,7 +5,7 @@ class AutoLottery(Task):
     LOTTERY_API = 'game/lottery_api.php'
 
     def process(self):
-        if self.bot.userinfo and self.bot.userinfo['lottery']:
+        if self.bot.userinfo.get('lottery'):
 
             while True:
                 self.log.info('List the lottery items')

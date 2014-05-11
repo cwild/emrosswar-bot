@@ -45,10 +45,13 @@ def _bot_runner(queue, bots, **kwargs):
                     def _bot_init(_bot):
                         # Let's get the ball rolling!
                         with _bot.lock:
-                            if _bot.is_initialised:
+                            if _bot.is_initialised or _bot.closing:
                                 return
-                            logger.debug('init id={0}'.format(_bot.userinfo['id']))
-                            _bot.is_initialised = True
+                            try:
+                                logger.debug('init id={0}'.format(_bot.userinfo['id']))
+                                _bot.is_initialised = True
+                            except KeyError as e:
+                                logger.debug(e)
 
                     # Delegate to a worker
                     queue.put((_bot_init, (bot,)))

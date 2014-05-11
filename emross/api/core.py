@@ -49,6 +49,7 @@ class EmrossWarApi(object):
         self.errors = []
         self.error_timer = 0
         self.lock = threading.Lock()
+        self.shutdown = False
 
     @classmethod
     def init_pool(cls, connections=10, timeout=15, **kwargs):
@@ -70,6 +71,8 @@ class EmrossWarApi(object):
 
     def call(self, *args, **kwargs):
         for i in xrange(1, 6):
+            if self.shutdown:
+                raise EmrossWarApiException('No further API calls permitted for {0}'.format(self.player))
             try:
                 json = self._call(*args, **kwargs)
 

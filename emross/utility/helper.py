@@ -50,7 +50,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         super(EmrossWarBot, self).__init__(bot=self, time_to_live=60, *args, **kwargs)
         self.lock = RLock()
         self.is_initialised = False
-        self._closing = False
+        self.closing = False
         self.blocked = False
         self.runnable = True
 
@@ -94,12 +94,15 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             self.log.exception(e)
             return ''
 
-    def disconnect(self):
+    def disconnect(self, *args, **kwargs):
+        self.log.debug('Disconnecting')
+        self.api.shutdown = True
         self.runnable = False
         self.blocked = True
+        self.closing = True
 
     def shutdown(self):
-        self._closing = True
+        self.closing = True
         self.session.end_time = time.time()
         try:
             self.session.save()
@@ -108,7 +111,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     @property
     def userinfo(self):
-        if not self.is_initialised and self._closing:
+        if not self.is_initialised and self.closing:
             raise BotException('userinfo unavailable and marked for shutdown')
         return self.data
 

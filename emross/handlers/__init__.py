@@ -5,6 +5,7 @@ import http_errors
 
 handlers = {
     2: client_errors.InvalidKeyHandler,
+    401: client_errors.PlayerRaceSelection,
     2541: client_errors.DevilArmyGone,
     7415: client_errors.PvPEliminationHandler,
     8903: client_errors.CoolDownHandler,

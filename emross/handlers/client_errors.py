@@ -1,8 +1,10 @@
-import handler
+import hashlib
 import logging
+import random
 import time
 
 from emross import exceptions
+from emross.handlers import handler
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,35 @@ class InvalidKeyHandler(handler.EmrossHandler):
         self.bot.errors.join()
         logger.debug('Finished handling InvalidKey exception')
 
+
+class PlayerRaceSelection(handler.EmrossHandler):
+    AUTOMATIC = False
+
+    def process(self, json):
+        self.log.warning('No player race has been selected!')
+        result = {}
+
+        def race_selection(result, *args, **kwargs):
+            if self.AUTOMATIC:
+                try:
+                    # Ordinal value of first char of username hash
+                    race = 1 + ord(hashlib.sha1(self.bot.api.player.username).hexdigext()[0])
+                except AttributeError:
+                    race = random.randint(1, 3)
+                self.log.debug('Selected race: {0}'.format(race))
+
+                _json = self.bot.api.call('game/init/create_role_api.php', txtrolename='', txtcityname='', country=race)
+                # Did we get an EmrossWar.SUCCESS code?
+                if _json['code'] == 0:
+                    result.update(_json)
+                self.bot.errors.task_done()
+            else:
+                self.bot.disconnect()
+                raise exceptions.BotException('Cannot continue without a chosen race')
+
+        self.bot.errors.put((race_selection, (result,)+self.args, self.kwargs))
+        self.bot.errors.join()
+        return result
 
 class PvPEliminationHandler(handler.EmrossHandler):
     def process(self, json):

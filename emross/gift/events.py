@@ -8,7 +8,7 @@ class GiftEvents(Task):
     ACTIVITY_URL = 'game/api_interior_activity.php'
 
     def process(self):
-        if self.bot.userinfo['logintrack'] == 0:
+        if self.bot.userinfo.get('logintrack', 0) == 0:
             return
     
         self.log.info('Check for in-game events')
