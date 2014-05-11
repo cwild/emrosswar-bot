@@ -400,7 +400,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             if num > 1:
                 kwargs['num'] = num
 
-            json = self.item_manager.sell(city=city.id, id=item_id, **kwargs)
+            json = self.item_manager.sell(city=city, id=item_id, **kwargs)
 
             if json['code'] == EmrossWar.SUCCESS:
                 city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
