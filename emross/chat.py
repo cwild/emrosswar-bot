@@ -89,7 +89,7 @@ class Chat(Task):
                     event = Event(method, **data)
                     self.bot.events.notify(event, *args, **kwargs)
 
-                elif msg.get('from_name') not in (None, self.bot.userinfo.get('nick')):
+                elif msg.get('from_name') not in ('', self.bot.userinfo.get('nick')):
                     event = Event('chat_message', **data)
                     self.bot.events.notify(event, text)
 
