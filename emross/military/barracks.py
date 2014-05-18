@@ -3,6 +3,7 @@ from lib.cacheable import CacheableData
 from emross.api import EmrossWar
 from emross.exceptions import ResourceException
 from emross.utility.base import EmrossBaseObject
+from emross.utility.events import Event
 
 
 class Barracks(EmrossBaseObject, CacheableData):
@@ -56,6 +57,10 @@ class Barracks(EmrossBaseObject, CacheableData):
     def soldiers(self):
         return self.data.get('soldiers', [])
 
+    @property
+    def strategy(self):
+        return self.data.get('def', self.PROTECT_CASTLE)
+
     def update(self):
         """
         {'code': 0, 'ret': {'head': 17922, 'f': -372749, 'space': 1877, 'next': [0, 0],
@@ -81,11 +86,24 @@ class Barracks(EmrossBaseObject, CacheableData):
 
         return json
 
-    def defense_strategy(self, strategy=DO_NOT_ENGAGE):
+    def defense_strategy(self, strategy=DO_NOT_ENGAGE, **kwargs):
         """
         action=def&city=12345&defense=3
         """
-        self.bot.api.call(self.SOLDIER_EDUCATE_URL, action='def', city=self.city.id, defense=strategy)
+
+        if strategy == self.strategy:
+            self.log.debug(u'{0} is already on this defense strategy'.format(self.city))
+            return
+
+        self.log.info(u'Changing defense strategy from {0} to {1} at {2}'.format(self.strategy, strategy, self.city))
+        json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, action='def', city=self.city.id, defense=strategy, **kwargs)
+        if json['code'] == EmrossWar.SUCCESS:
+            try:
+                self.data['def'] = strategy
+            except KeyError:
+                pass
+
+        return json
 
     def transport(self):
         """
@@ -97,7 +115,7 @@ class Barracks(EmrossBaseObject, CacheableData):
         """
         pass
 
-    def war_room(self):
+    def war_room(self, **kwargs):
         """
         bot.api.call('game/armament_action_do_api.php', act='warinfo', city=92832)
         {'code': 0, 'ret': [
@@ -106,7 +124,10 @@ class Barracks(EmrossBaseObject, CacheableData):
             [6035227, 5, 7, 150, '17/47', [15], [600], 172]],
         13]}
         """
-        return self.bot.api.call(self.ACTION_CONFIRM_URL, act='warinfo', city=self.city.id)
+        json = self.bot.api.call(self.ACTION_CONFIRM_URL, act='warinfo', city=self.city.id, **kwargs)
+        if json['code'] == EmrossWar.SUCCESS:
+            self.bot.events.notify(Event('barracks.war.info'))
+        return json
 
     def total_troops(self):
         troop_tally = {}
