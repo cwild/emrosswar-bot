@@ -30,7 +30,8 @@ class Aggressor(object):
         self.permit_unknown = permit_unknown
         self.maximum_troops = maximum_troops
 
-    def defendable(self, incoming, available=[], maximum_troops=None):
+    def defendable(self, incoming, available=[], maximum_troops=None, \
+        minimum_defensive_units={}):
         """
         Should we try to defend against this attack?
         """
@@ -42,6 +43,7 @@ class Aggressor(object):
         if maximum and sum(incoming.values()) > maximum:
             return False
 
+        check_minimum_defensive_units = False
         for troop, qty in incoming.iteritems():
             if troop not in self.army:
                 if self.permit_unknown:
@@ -51,18 +53,24 @@ class Aggressor(object):
 
             min_troops, max_troops = self.army.get(troop)
             if min_troops <= qty <= max_troops:
+                check_minimum_defensive_units = True
+
                 if not self.defend:
                     return False
             else:
                 return False
 
-        # Create a dict of soldiers and quantities
-        soldiers = dict([(s[0], s[1]) for s in available])
+        if check_minimum_defensive_units:
+            # Create a dict of soldiers and quantities
+            soldiers = dict([(s[0], s[1]) for s in available])
 
-        for troop, qty in self.minimum_defensive_units.iteritems():
-            # Not enough of our specified defensive troops to defend this attack
-            if soldiers.get(troop) < qty:
-                return False
+            # Use the most sppecific setting
+            mdu = self.minimum_defensive_units or minimum_defensive_units
+
+            for troop, qty in mdu.iteritems():
+                # Not enough of our specified defensive troops to defend this attack
+                if soldiers.get(troop) < qty:
+                    return False
 
         return True
 
@@ -88,6 +96,7 @@ class AutoDefense(FilterableCityTask, Controllable):
 
     def process(self,
         armies=[],
+        minimum_defensive_units={},
         interval=INTERVAL,
         maximum_troops=MAXIMUM_TROOPS,
         open_before=OPEN_BEFORE,
@@ -166,7 +175,7 @@ class AutoDefense(FilterableCityTask, Controllable):
             should_defend = True
             for aggressor in armies:
                 try:
-                    if not aggressor.defendable(troops, city.barracks.soldiers, maximum_troops):
+                    if not aggressor.defendable(troops, city.barracks.soldiers, maximum_troops, minimum_defensive_units):
                         should_defend = False
                         city.barracks.defense_strategy(Barracks.DO_NOT_ENGAGE, sleep=False)
                         break
