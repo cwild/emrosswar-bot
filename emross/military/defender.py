@@ -1,6 +1,7 @@
 """
 Automatically defend our cities against incoming attacks.
 """
+import logging
 import threading
 import time
 
@@ -8,13 +9,14 @@ from emross.military.barracks import Barracks
 from emross.utility.controllable import Controllable
 from emross.utility.task import FilterableCityTask, TaskType
 
+logger = logging.getLogger(__name__)
 
 class Aggressor(object):
     """
     Describe a type of army and determine if we should defend against it
     """
     DEFEND = True
-    PERMIT_UNKNOWN = True
+    PERMIT_UNKNOWN = False
 
     def __init__(self,
         army={},
@@ -41,38 +43,47 @@ class Aggressor(object):
 
         # If the incoming army exceeds this then do not defend
         if maximum and sum(incoming.values()) > maximum:
+            logger.debug('Incoming troops exceed the maximum of {0}'.format(maximum))
             return False
 
-        check_minimum_defensive_units = False
-        for troop, qty in incoming.iteritems():
-            if troop not in self.army:
-                if self.permit_unknown:
-                    continue
-                else:
-                    return False
+        applicable_units = 0
 
-            min_troops, max_troops = self.army.get(troop)
-            if min_troops <= qty <= max_troops:
-                check_minimum_defensive_units = True
+        for troop, quantities in self.army.iteritems():
+            incoming_qty = incoming.get(troop, 0)
 
-                if not self.defend:
-                    return False
-            else:
-                return False
+            if not incoming_qty and not self.permit_unknown:
+                logger.debug('Only specified troop types are permitted')
+                return not self.defend
 
-        if check_minimum_defensive_units:
+            min_troops, max_troops = quantities
+
+            if min_troops <= incoming_qty <= max_troops:
+                applicable_units += 1
+
+
+        unrecognised = set(incoming.keys()) - set(self.army.keys())
+        if not self.permit_unknown and unrecognised:
+            logger.debug('Unrecognised incoming units: {0}'.format(unrecognised))
+            return not self.defend
+
+        # We have found each of the types of troop we are looking for
+        if applicable_units == len(self.army.keys()):
+
             # Create a dict of soldiers and quantities
             soldiers = dict([(s[0], s[1]) for s in available])
 
-            # Use the most sppecific setting
+            # Use the most specific setting
             mdu = self.minimum_defensive_units or minimum_defensive_units
 
             for troop, qty in mdu.iteritems():
                 # Not enough of our specified defensive troops to defend this attack
                 if soldiers.get(troop) < qty:
-                    return False
+                    return not self.defend
 
-        return True
+            return self.defend
+
+        logger.debug('Units: applicable {0}, found {1}'.format(applicable_units, len(self.army.keys())))
+        return not self.defend
 
 class AutoDefense(FilterableCityTask, Controllable):
     BLOCK = False
@@ -172,18 +183,19 @@ class AutoDefense(FilterableCityTask, Controllable):
             troops = dict(zip(attack[5], attack[6]))
             self.log.debug(troops)
 
-            should_defend = True
+            should_defend = False
             for aggressor in armies:
                 try:
-                    if not aggressor.defendable(troops, city.barracks.soldiers, maximum_troops, minimum_defensive_units):
-                        should_defend = False
-                        city.barracks.defense_strategy(Barracks.DO_NOT_ENGAGE, sleep=False)
+                    if aggressor.defendable(troops, city.barracks.soldiers, maximum_troops, minimum_defensive_units):
+                        should_defend = True
                         break
                 except Exception as e:
                     self.log.exception(e)
                     continue
 
-            if should_defend:
+            if not should_defend:
+                city.barracks.defense_strategy(Barracks.DO_NOT_ENGAGE, sleep=False)
+            else:
                 defendable_attacks.append((city,attack))
 
                 if earliest_defense_time_per_city.get(city) < attack[3]:
@@ -196,10 +208,6 @@ class AutoDefense(FilterableCityTask, Controllable):
             except IndexError:
                 pass
 
-
-        # Nothing to defend against
-        if not defendable_attacks:
-            return
 
         self.log.debug(all_attacks)
 
