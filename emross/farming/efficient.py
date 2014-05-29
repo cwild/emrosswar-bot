@@ -20,12 +20,15 @@ from emross.utility.calculator import WarCalculator
 
 class EfficientFarmer(BaseFarmer):
     INTERVAL = 600
+    SORT_UNRATED = False
 
     DEFAULT_SCOUT_DEVIL_ARMY_TYPES = [
         mobs.DevilArmy.SIX_STAR
     ]
 
     NPC_RATING_ORDER = [
+        mobs.DevilArmy.TEN_STAR,
+        mobs.DevilArmy.NINE_STAR,
         mobs.DevilArmy.EIGHT_STAR,
         mobs.DevilArmy.SEVEN_STAR,
         mobs.DevilArmy.SIX_STAR,
@@ -186,16 +189,23 @@ class EfficientFarmer(BaseFarmer):
         Sort based on the ratings, as soldier_threshold always did.
         """
         ratings = self.kwargs.get('scout_devil_army_types', self.NPC_RATING_ORDER)
+        sort_unrated = self.kwargs.get('sort_unrated', self.SORT_UNRATED)
         fav_by_rating = {}
+        unrated = []
 
         for fav in targets:
             if fav.rating in ratings:
                 fav_by_rating.setdefault(fav.rating, []).append(fav)
+            elif sort_unrated:
+                unrated.append(fav)
 
 
         targets[:] = []
         for rating in ratings:
             targets.extend(fav_by_rating.get(rating, []))
+
+        # Finally, add the unrated ones
+        targets.extend(unrated)
 
         return targets
 
