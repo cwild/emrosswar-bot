@@ -45,7 +45,8 @@ class EfficientFarmer(BaseFarmer):
         'hero_base': 0,
         'troops': {},
         'ally': mobs.alliance,
-        'soldier_data': mobs.Unit.soldier_data
+        'soldier_data': mobs.Unit.soldier_data,
+        'assume_default_soldier_stats': False
     }
 
     def setup(self):

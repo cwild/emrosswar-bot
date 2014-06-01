@@ -3,7 +3,7 @@ import math
 
 from emross.alliance import AllyTech
 from emross.arena.hero import Gear, Hero
-from emross.military.camp import SoldierStat, SOLDIER_STAT_MODIFIERS
+from emross.military.camp import SoldierStat, DEFAULT_SOLDIER_STAT_MODIFIERS, SOLDIER_STAT_MODIFIERS
 from emross.research.studious import Study
 from emross.utility.base import EmrossBaseObject
 
@@ -17,10 +17,13 @@ HALL_CONTRIBUTIONS = {
 
 
 class WarCalculator(EmrossBaseObject):
+    # If no SOLDIER_STAT_MODIFIERS are set for a given troop, use the default one
+    ASSUME_DEFAULT_SOLDIER_STATS = True
     HERO_BASE_MODIFIER = 200
 
     def defense(self, hero, troops={}, ally=None, soldier_data=None,
-                hero_base=HERO_BASE_MODIFIER, **kwargs):
+                hero_base=HERO_BASE_MODIFIER,
+                assume_default_soldier_stats=None, **kwargs):
         """
         Calculate the precise amount of defense a hero and his troops will have.
 
@@ -29,6 +32,8 @@ class WarCalculator(EmrossBaseObject):
               * (1 + HallToughness/100))
               + HeroChestArmor
         """
+        if assume_default_soldier_stats is None:
+            assume_default_soldier_stats = self.ASSUME_DEFAULT_SOLDIER_STATS
         _ally = ally or self.bot.alliance
         soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
 
@@ -60,7 +65,7 @@ class WarCalculator(EmrossBaseObject):
 
             total *= (1 + _ally.tech(AllyTech.TOUGHNESS) * HALL_CONTRIBUTIONS.get(AllyTech.TOUGHNESS, 0))
 
-            func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.DEFENSE)
+            func = SOLDIER_STAT_MODIFIERS.get(troop, DEFAULT_SOLDIER_STAT_MODIFIERS if assume_default_soldier_stats else {}).get(SoldierStat.DEFENSE)
             if func:
                 total = func(total, research.get_tech_level)
 
@@ -70,7 +75,8 @@ class WarCalculator(EmrossBaseObject):
 
 
     def attack(self, hero, troops={}, ally=None, soldier_data=None,
-                hero_base=HERO_BASE_MODIFIER, **kwargs):
+                hero_base=HERO_BASE_MODIFIER,
+                assume_default_soldier_stats=None, **kwargs):
         """
         Calculate the attack range given the hero and its army.
         From minimum attack to maximum possible.
@@ -79,6 +85,8 @@ class WarCalculator(EmrossBaseObject):
                   * (200+ ROUNDUP(HeroAttk* (1 + 0.05 * HallValor)))
                   * (1 + HallBattleCry/100)
         """
+        if assume_default_soldier_stats is None:
+            assume_default_soldier_stats = self.ASSUME_DEFAULT_SOLDIER_STATS
         _ally = ally or self.bot.alliance
         soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
 
@@ -103,7 +111,7 @@ class WarCalculator(EmrossBaseObject):
             total *= hero_contribution or 1
             total *= (1 + _ally.tech(AllyTech.BATTLECRY) * HALL_CONTRIBUTIONS.get(AllyTech.BATTLECRY, 0))
 
-            func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.ATTACK)
+            func = SOLDIER_STAT_MODIFIERS.get(troop, DEFAULT_SOLDIER_STAT_MODIFIERS if assume_default_soldier_stats else {}).get(SoldierStat.ATTACK)
             if func:
                 total = func(total, research.get_tech_level)
 
@@ -115,11 +123,14 @@ class WarCalculator(EmrossBaseObject):
         return sum(min_attack), sum(max_attack)
 
     def troops_to_defend_attack(self, troop, required_defense, hero, ally=None,
-        soldier_data=None, hero_base=HERO_BASE_MODIFIER, **kwargs):
+        soldier_data=None, hero_base=HERO_BASE_MODIFIER,
+        assume_default_soldier_stats=None, **kwargs):
         """
         Calculate how many of the given soldier type would be required
         to defend the target_attack
         """
+        if assume_default_soldier_stats is None:
+            assume_default_soldier_stats = self.ASSUME_DEFAULT_SOLDIER_STATS
         total = 0
 
         _ally = ally or self.bot.alliance
@@ -151,7 +162,7 @@ class WarCalculator(EmrossBaseObject):
 
         total *= (1 + _ally.tech(AllyTech.TOUGHNESS) * HALL_CONTRIBUTIONS.get(AllyTech.TOUGHNESS, 0))
 
-        func = SOLDIER_STAT_MODIFIERS.get(troop, {}).get(SoldierStat.DEFENSE)
+        func = SOLDIER_STAT_MODIFIERS.get(troop, DEFAULT_SOLDIER_STAT_MODIFIERS if assume_default_soldier_stats else {}).get(SoldierStat.DEFENSE)
         if func:
             total = func(total, research.get_tech_level)
 

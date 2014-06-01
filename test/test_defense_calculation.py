@@ -50,7 +50,8 @@ class TestDefenseCalculation(unittest.TestCase):
                     mobs.Unit.find('Nitemare', mobs.DevilArmy.SIX_STAR): 5000,
                 },
                 'ally': mobs.alliance,
-                'soldier_data': mobs.Unit.soldier_data
+                'soldier_data': mobs.Unit.soldier_data,
+                'assume_default_soldier_stats': False
             }, (64000, 207500, 648500)),
             ({
                 'hero': None,
@@ -59,7 +60,8 @@ class TestDefenseCalculation(unittest.TestCase):
                     mobs.Unit.find('Horror', mobs.DevilArmy.SIX_STAR): 5452,
                 },
                 'ally': mobs.alliance,
-                'soldier_data': mobs.Unit.soldier_data
+                'soldier_data': mobs.Unit.soldier_data,
+                'assume_default_soldier_stats': False
             }, (43616, 81780, 147204)),
         ]
 
@@ -102,5 +104,16 @@ class TestDefenseCalculation(unittest.TestCase):
         finish = time.time()
         duration = finish - start
 
-        self.assertEqual(num, 10495795)
+        self.assertEqual(num, 10495796)
         self.assertTrue(duration < 1, msg='Calculation took a long time')
+
+    def test_unspecified_troops(self):
+        num = self.calculator.troops_to_defend_attack(Soldier.HUNTER, 100000,
+                hero=Hero({
+                        Hero.ATTACK: 172,
+                        Hero.WISDOM: 35,
+                        Hero.DEFENSE: 39
+                    })
+                )
+
+        self.assertEqual(num, 1021)

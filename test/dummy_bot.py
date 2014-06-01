@@ -38,6 +38,7 @@ bot.alliance._data = [5, 1200300400, '?', 1000000, 0,
 
 # troop data
 bot.cities[0].barracks._soldier_data = {
+    Soldier.HUNTER: {'a': 60, 'e': 160, 'd': 25, 'f': 4, 'h': 150, 's': 100},
     Soldier.OVERLORD: {'a': 300, 'e': 280, 'd': 180, 'f': 12, 'h': 450, 's': 350},
     Soldier.KAHKLEH: {'a': 500, 'e': 250, 'd': 240, 'f': 54, 'h': 800, 's': 450},
 }

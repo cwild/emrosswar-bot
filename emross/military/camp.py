@@ -185,17 +185,21 @@ class SoldierStat:
     UPKEEP = 'f'
 
 
-SOLDIER_STAT_MODIFIERS = {
-    Soldier.KAHKLEH: {
-        SoldierStat.ATTACK: lambda total, tech_level: total * (0.005 + \
-                ((tech_level(Tech.ADVANCED_WEAPON) * 0.025) + \
-                tech_level(Tech.ATTACK_FORMATION) * 0.025) / 100),
+DEFAULT_SOLDIER_STAT_MODIFIERS = {
+    SoldierStat.ATTACK: lambda total, tech_level: total * (0.005 + \
+            ((tech_level(Tech.ADVANCED_WEAPON) * 0.025) + \
+            tech_level(Tech.ATTACK_FORMATION) * 0.025) / 100),
 
-        SoldierStat.DEFENSE: lambda total, tech_level: total * (0.005 + \
-                ((tech_level(Tech.ADVANCED_ARMOUR) * 0.025) + \
-                tech_level(Tech.DEFENSE_FORMATION) * 0.025) / 100)
-    }
+    SoldierStat.DEFENSE: lambda total, tech_level: total * (0.005 + \
+            ((tech_level(Tech.ADVANCED_ARMOUR) * 0.025) + \
+            tech_level(Tech.DEFENSE_FORMATION) * 0.025) / 100)
 }
+
+SOLDIER_STAT_MODIFIERS = {
+    # Use DEFAULT formulae for this
+    Soldier.KAHKLEH: DEFAULT_SOLDIER_STAT_MODIFIERS
+}
+
 SOLDIER_STAT_MODIFIERS[Soldier.BERSERKER] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
 SOLDIER_STAT_MODIFIERS[Soldier.MASTER] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
 SOLDIER_STAT_MODIFIERS[Soldier.OVERLORD] = SOLDIER_STAT_MODIFIERS[Soldier.KAHKLEH]
