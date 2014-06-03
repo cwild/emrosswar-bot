@@ -130,10 +130,11 @@ class Barracks(EmrossBaseObject, CacheableData):
         return json
 
     def total_troops(self):
+        """
+        Don't depend on cached troops as this value can be skewed depending
+        on the state of troops in the war room
+        """
         troop_tally = {}
-
-        for soldier, qty, unlocked in self.soldiers:
-            troop_tally[soldier] = qty
 
         away = self.war_room()
         for troop in away['ret'][0]:
@@ -142,6 +143,13 @@ class Barracks(EmrossBaseObject, CacheableData):
                     troop_tally[soldier] += qty
                 except KeyError:
                     troop_tally[soldier] = qty
+
+        self.expire()
+        for soldier, qty, unlocked in self.soldiers:
+            try:
+                troop_tally[soldier] += qty
+            except KeyError:
+                troop_tally[soldier] = qty
 
         return troop_tally
 

@@ -36,14 +36,14 @@ class Trainer(FilterableCityTask):
         delays = []
         for city in cities:
             if construction.structure_level(city, Building.BARRACKS) < 1:
-                self.log.info('There is no Barracks at castle "{0}"'.format(city.name))
+                self.log.debug(u'There is no Barracks at {0}'.format(city))
                 continue
 
             delay = None
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
                 delays.append(int(tasks[0]['secs'])-time.time())
-                self.log.debug('Already training troops at castle "{0}"'.format(city.name))
+                self.log.debug(u'Already training troops at {0}'.format(city))
                 continue
 
             troops = city.barracks.total_troops()
@@ -52,12 +52,12 @@ class Trainer(FilterableCityTask):
             for cavalry in cavalries:
                 try:
                     if not city.barracks.can_train(cavalry.troop):
-                        self.log.debug('Cannot train troop type {0} at city "{1}"'.format(cavalry.troop, city.name))
+                        self.log.debug(u'Cannot train troop type {0} at {1}'.format(cavalry.troop, city))
                         continue
 
                     if cavalry.quantity > troops[cavalry.troop]:
                         desired = cavalry.quantity - troops[cavalry.troop]
-                        self.log.debug('Shortfall of {0} troops of type {1} at city "{2}"'.format(desired, cavalry.troop, city.name))
+                        self.log.debug(u'Shortfall of {0} troops of type {1} at {2}'.format(desired, cavalry.troop, city))
 
                         qty = 0
                         maximum = min(camp_space, desired)
@@ -72,7 +72,7 @@ class Trainer(FilterableCityTask):
                                 hero = city.hero_manager.highest_stat_hero(Hero.ATTACK)
                                 if hero and hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                                     hero_id = hero.data.get('gid', 0)
-                                    self.log.info('Chosen to train troops with "{0}" at {1}'.format(hero, city.name))
+                                    self.log.info(u'Chosen to train troops with "{0}" at {1}'.format(hero, city))
                                 elif cavalry.wait_for_hero:
                                     continue
 
@@ -81,7 +81,7 @@ class Trainer(FilterableCityTask):
                             if json['code'] == EmrossWar.SUCCESS:
                                 delay = int(json['ret']['cdlist'][0]['secs'])
                                 city.countdown_manager.add_tasks(json['ret']['cdlist'])
-                                self.log.info('Stop processing the rest of the cavalries list at city "{0}"'.format(city.name))
+                                self.log.debug(u'Stop processing the rest of the cavalries list at {0}'.format(city))
                                 break
                 except KeyError:
                     pass
