@@ -64,7 +64,7 @@ class Aggressor(object):
         unrecognised = set(incoming.keys()) - set(self.army.keys())
         if not self.permit_unknown and unrecognised:
             logger.debug('Unrecognised incoming units: {0}'.format(unrecognised))
-            return not self.defend
+            return False
 
         # We have found each of the types of troop we are looking for
         if applicable_units == len(self.army.keys()):
@@ -78,7 +78,7 @@ class Aggressor(object):
             for troop, qty in mdu.iteritems():
                 # Not enough of our specified defensive troops to defend this attack
                 if soldiers.get(troop) < qty:
-                    return not self.defend
+                    return False
 
             return self.defend
 
@@ -108,16 +108,28 @@ class AutoDefense(FilterableCityTask, Controllable):
     def process(self,
         armies=[],
         minimum_defensive_units={},
-        interval=INTERVAL,
-        maximum_troops=MAXIMUM_TROOPS,
-        open_before=OPEN_BEFORE,
-        close_after=CLOSE_AFTER,
-        preparation_time=PREPARATION_TIME,
-        strategy=Barracks.DO_NOT_ENGAGE,
-        block=BLOCK,
-        report=REPORT,
-        pushover=PUSHOVER,
+        interval=None,
+        maximum_troops=None,
+        open_before=None,
+        close_after=None,
+        preparation_time=None,
+        strategy=None,
+        block=None,
+        report=None,
+        pushover=None,
         *args, **kwargs):
+
+        # Allow these to all be overridden at class level
+        interval = interval or self.INTERVAL
+        maximum_troops = maximum_troops or self.MAXIMUM_TROOPS
+        open_before = open_before or self.OPEN_BEFORE
+        close_after = close_after or self.CLOSE_AFTER
+        preparation_time = preparation_time or self.PREPARATION_TIME
+        strategy = strategy or Barracks.DO_NOT_ENGAGE
+        block = self.BLOCK if block is None else block
+        report = self.REPORT if report is None else report
+        pushover = self.PUSHOVER if pushover is None else pushover
+
         """
         {'code': 0, 'ret': [
             [
@@ -230,11 +242,11 @@ class AutoDefense(FilterableCityTask, Controllable):
 
                 def _worker(workers, wait_periods, city, attack):
                     try:
-                        self.log.debug('Begin handling {0}, start sleep'.format(attack))
+                        self.log.debug(u'Begin handling {0}, start sleep'.format(attack))
                         time.sleep(max(wait_periods))
 
                         city.barracks.defense_strategy(Barracks.PROTECT_CASTLE, sleep=False)
-                        self.log.debug('Engaged for attack, restore defense strategy after {0} seconds'.format(close_after))
+                        self.log.debug(u'Engaged for attack, restore defense strategy after {0} seconds'.format(close_after))
                         time.sleep(max(0, impact_time-time.time() + close_after))
 
                         # Restore to the previous strategy
