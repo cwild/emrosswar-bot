@@ -24,7 +24,7 @@ class Study(FilterableCityTask):
 
     def tech_levels(self, city):
         def _updater(*args, **kwargs):
-            self.log.debug('Find tech levels for city, "{0}"'.format(city.name))
+            self.log.debug(u'Find tech levels for {0}'.format(city))
             return self.bot.api.call(*args, **kwargs)
 
         return self._cities.setdefault(city, CacheableData(
@@ -59,22 +59,29 @@ class Study(FilterableCityTask):
         """
         json = self.bot.api.call(self.STUDY_MOD_URL, city=city.id, tech=tech, owner=owner)
         name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH {0}'.format(tech))
+
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('Started research "{0}" at "{1}". Time until completion: {2} seconds.'.format(name, city.name,
-                                                                                                        json['ret']['cdlist'][0]['secs']))
+            self.log.info(u'Started research "{0}" at {1}. Time until completion: {2} seconds.'.format(\
+                name, city, json['ret']['cdlist'][0]['secs'])
+            )
         else:
-            self.log.debug('Failed to start "{0}" at city "{1}"'.format(name, city.name))
+            self.log.debug(u'Failed to start "{0}" at {1}'.format(name, city))
+
         return json
 
     def can_study(self, city, tech, level):
         try:
             return 0 <= self.tech_level(city, tech) < level
         except IndexError:
-            self.log.debug('The university at "{0}" is not high enough to study tech {1} yet.'.format(city.name, tech))
+            self.log.debug(u'The university at {0} is not high enough to study tech {1} yet.'.format(city, tech))
             return False
 
     def process(self, tech, level, university=1,
         use_hero=False, use_scrolls=False, ordered=False, *args, **kwargs):
+
+        if self.get_tech_level(tech) == level:
+            self.log.debug(u'Tech {0} is already at target level {1}'.format(tech, level))
+            return
 
         # Copy the cities so ordering doesn't affect the real order
         cities = list(self.cities(**kwargs))
@@ -95,7 +102,7 @@ class Study(FilterableCityTask):
         if ordered:
             # Descending order
             cities.sort(key = lambda city: construction.structure_level(city, Building.UNIVERSITY), reverse=True)
-            self.log.debug('Ordered cities: {0}'.format([(city.name, construction.structure_level(city, Building.UNIVERSITY)) for city in cities]))
+            self.log.debug(u'Ordered cities: {0}'.format([(city, construction.structure_level(city, Building.UNIVERSITY)) for city in cities]))
 
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
@@ -105,12 +112,15 @@ class Study(FilterableCityTask):
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks):
                 if tasks[0]['target'] == tech:
-                    self.log.debug('{hero} is already researching {tech} at {city}'.format(\
+                    self.log.debug(u'{hero} is already researching {tech} at {city}'.format(\
                         hero=city.hero_manager.heroes.get(tasks[0]['owner'], 'N/A'),
                         tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
-                        city=city.name))
+                        city=city))
 
                 # Already a research in-progress at this city
+                continue
+
+            if not self.can_study(city, tech, level):
                 continue
 
             owner = 0
@@ -128,12 +138,11 @@ class Study(FilterableCityTask):
                     self.log.info('{0} needs to rest before starting research'.format(hero))
                     continue
 
-            if self.can_study(city, tech, level) and \
-                city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1), **kwargs):
-                    ctdwn = self.upgrade(city, tech, owner)
-                    if ctdwn['code'] == EmrossWar.SUCCESS:
-                        city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
-                        break
+            if city.resource_manager.meet_requirements(Tech.cost(tech, self.tech_level(city, tech)+1), **kwargs):
+                ctdwn = self.upgrade(city, tech, owner)
+                if ctdwn['code'] == EmrossWar.SUCCESS:
+                    city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
+                    break
 
 
 if __name__ == "__main__":
