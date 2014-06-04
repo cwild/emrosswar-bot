@@ -3,13 +3,15 @@ from emross.arena.hero import Hero
 from emross.item import inventory
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
+from emross.utility.controllable import Controllable
 from emross.utility.task import FilterableCityTask, TaskType
 from tech import Tech
 
 from lib.cacheable import CacheableData
 
 
-class Study(FilterableCityTask):
+class Study(FilterableCityTask, Controllable):
+    COMMAND = 'tech'
     STUDY_URL = 'game/study_api.php'
     STUDY_MOD_URL = 'game/study_mod_api.php'
 
@@ -27,6 +29,24 @@ class Study(FilterableCityTask):
         if task['cdtype'] == TaskType.RESEARCH:
             for techs in self._cities.itervalues():
                 techs.expire()
+
+    def action_levels(self, event, *args, **kwargs):
+        """
+        Find out what my tech levels are!
+        """
+        message = []
+
+        for tid, data in EmrossWar.TECHNOLOGY.iteritems():
+            for arg in args:
+                if arg not in data['name'].lower():
+                    continue
+
+                message.append(u'{0}={1}'.format(data['name'], \
+                    self.get_tech_level(int(tid))
+                ))
+
+        if message:
+            self.chat.send_message(u', '.join(message), event=event)
 
     def tech_levels(self, city):
         def _updater(*args, **kwargs):
