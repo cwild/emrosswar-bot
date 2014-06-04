@@ -14,6 +14,13 @@ class Construct(FilterableCityTask):
         (inventory.FAST_BUILDING_III[0], 3600*8)
     ]
 
+    def setup(self):
+        self.bot.events.subscribe('countdown.task.expired', self._expire_building)
+
+    def _expire_building(self, event, task, *args, **kwargs):
+        if task['cdtype'] == TaskType.BUILDING:
+            event.city.expire()
+
     def upgrade(self, city, build_type):
         """
         {"code":0,"ret":{"cdlist":[{"id":1234567,"cdtype":1,"target":"5","owner":0,"secs":90}]}}

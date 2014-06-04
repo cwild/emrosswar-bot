@@ -21,6 +21,12 @@ class Study(FilterableCityTask):
 
     def setup(self):
         self._cities = {}
+        self.bot.events.subscribe('countdown.task.expired', self._expire_research)
+
+    def _expire_research(self, event, task, *args, **kwargs):
+        if task['cdtype'] == TaskType.RESEARCH:
+            for techs in self._cities.itervalues():
+                techs.expire()
 
     def tech_levels(self, city):
         def _updater(*args, **kwargs):
