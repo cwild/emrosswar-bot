@@ -4,12 +4,12 @@ import logging
 If logging hasn't already been configured, setup our own from logging.conf files
 """
 if len(logging.root.handlers) == 0:
-    from ConfigParser import NoSectionError
+    from lib import six
     import logging.config
 
     try:
         logging.config.fileConfig('build/logging.conf')
-    except NoSectionError:
+    except six.configparser.NoSectionError:
         logging.config.fileConfig('logging.conf')
 
 

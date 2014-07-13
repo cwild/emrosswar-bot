@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.item import inventory
 from emross.structures.buildings import Building
@@ -28,9 +30,9 @@ class Construct(FilterableCityTask):
         json = self.bot.api.call(self.CREATE_TASK_URL, city=city.id, build_type=build_type)
         name = EmrossWar.BUILDING[str(build_type)].get('name', 'BUILD_TYPE {0}'.format(build_type))
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('Started building "{0}" at "{1}". Time until completion: {2} seconds.'.format(name, city.name, json['ret']['cdlist'][0]['secs']))
+            self.log.info(six.u('Started building "{0}" at {1}. Time until completion: {2} seconds').format(name, city, json['ret']['cdlist'][0]['secs']))
         else:
-            self.log.debug('Failed to upgrade "{0}" at city "{1}"'.format(name, city.name))
+            self.log.debug(six.u('Failed to upgrade "{0}" at {1}').format(name, city))
         return json
 
     def downgrade(self, city, build_type):
@@ -53,7 +55,7 @@ class Construct(FilterableCityTask):
         for city in self.cities(**kwargs):
 
             if city.data[0] == 0:
-                self.log.debug('City "{0}" is out of free land. Unable to build.'.format(city.name))
+                self.log.debug(six.u('{0} is out of free land. Unable to build.').format(city))
                 continue
 
             current_level = self.structure_level(city, structure)
@@ -62,7 +64,7 @@ class Construct(FilterableCityTask):
 
                 buffs = city.data[23]
                 capacity = 1 + len([b for b in buffs if b['itemid'] in self.EXTRA_SLOT_ITEMS])
-                self.log.debug('Build capacity at castle "{0}" is {1}'.format(city.name, capacity))
+                self.log.debug(six.u('Build capacity at {0} is {1}').format(city, capacity))
 
                 current_build = dict([(int(t['target']), t) for t in tasks])
 

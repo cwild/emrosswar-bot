@@ -1,4 +1,5 @@
 from __future__ import division
+from lib import six
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
@@ -6,7 +7,6 @@ locale.setlocale(locale.LC_ALL, '')
 import math
 import re
 import time
-import Queue
 import sys
 sys.path.extend(['lib/urllib3/'])
 
@@ -58,7 +58,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         api.bot = self
         self._socket_writer = socket_writer
         self.settings = settings
-        self.errors = Queue.Queue()
+        self.errors = six.moves.queue.Queue()
 
         self.session = Session(self)
 
@@ -205,7 +205,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         for city in cities:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
-            self.log.debug('Adding "{0}" ({1}) to city list'.format(city.name, city.id))
+            self.log.debug(six.u('Adding "{0}" ({1}) to city list').format(city.name, city.id))
             self._cities.append(city)
 
         if not self.is_initialised:

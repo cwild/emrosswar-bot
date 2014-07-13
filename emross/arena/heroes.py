@@ -1,4 +1,5 @@
 from __future__ import division
+from lib import six
 
 import math
 
@@ -113,7 +114,7 @@ class HeroManager(Controllable, CacheableData):
             city=self.city.id)
 
     def update(self):
-        self.log.debug('Update heroes at city "{0}"'.format(self.city.name))
+        self.log.debug(six.u('Update heroes at {0}').format(self.city))
 
         json = self.bot.api.call(CONSCRIPT_URL, city=self.city.id, action='gen_list')
 
@@ -179,18 +180,18 @@ class HeroManager(Controllable, CacheableData):
         arena = self.bot.builder.task(Construct).structure_level(self.city, Building.ARENA)
         capacity = math.ceil(arena / 2)
         remaining = int(capacity - len(self.heroes))
-        self.log.debug('{0} remaining hero slots at "{1}"'.format(remaining, self.city.name))
+        self.log.debug(six.u('{0} remaining hero slots at {1}').format(remaining, self.city))
         return remaining
 
     def revive_hero(self, hero):
         """
         Given a hero, try reviving it from the dead!
         """
-        self.log.debug('Try to revive {0} at "{1}"'.format(hero, self.city.name))
+        self.log.debug(six.u('Try to revive {0} at {1}').format(hero, self.city))
         json = self.bot.api.call(CONSCRIPT_GEAR_URL, id=hero.data['id'], action='relive', city=self.city.id)
 
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('Revived {0} at "{1}"'.format(hero, self.city.name))
+            self.log.info(six.u('Revived {0} at {1}').format(hero, self.city))
             hero.data[Hero.STATE] = Hero.AVAILABLE
 
         return json

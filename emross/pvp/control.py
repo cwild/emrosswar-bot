@@ -1,5 +1,6 @@
 import random
-import Queue
+from lib.six.moves import queue
+
 
 from emross.api import EmrossWar
 from emross.utility.controllable import Controllable
@@ -10,7 +11,7 @@ class Control(Task, Controllable):
     COMMAND = 'pvp'
 
     def setup(self):
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
 
     def action_enter(self, event, *args, **kwargs):
         """I will attempt to join the PvP world in the next {delay|30} seconds."""
@@ -44,5 +45,5 @@ class Control(Task, Controllable):
             job = self.queue.get_nowait()
             method, _args, _kwargs = job
             method(*_args, **_kwargs)
-        except Queue.Empty:
+        except queue.Empty:
             pass

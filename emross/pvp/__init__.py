@@ -7,5 +7,5 @@ from emross import pvp
 pvp.Durability etc.
 """
 
-from control import Control
-from durability import AutoDurability as Durability
+from emross.pvp.control import Control
+from emross.pvp.durability import AutoDurability as Durability

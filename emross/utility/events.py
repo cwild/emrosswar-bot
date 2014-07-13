@@ -1,4 +1,5 @@
 import functools
+from lib import six
 
 from emross.utility.base import EmrossBaseObject
 
@@ -47,7 +48,7 @@ class EventManager(EmrossBaseObject):
         """
         Raise the given "event" with all of its subscribers
         """
-        self.log.debug('Process event "{0}" with {1} and {2} (meta-data={meta})'.format(\
+        self.log.debug(six.u('Process event "{0}" with {1} and {2} (meta-data={meta})').format(\
             event.name, args, kwargs, meta=event.data))
 
         for action in self.events.get(event.name, []):

@@ -1,4 +1,5 @@
 import math
+from lib import six
 
 from emross.api import EmrossWar
 from emross.exceptions import EmrossWarException
@@ -47,12 +48,12 @@ class ResourceManager(EmrossBaseObject):
 
 
     def _convert(self, **kwargs):
-        self.log.debug('Exchanging resources {0} at "{1}"'.format(kwargs, self.city.name))
+        self.log.debug(six.u('Exchanging resources {0} at {1}').format(kwargs, self.city))
         json = self.bot.api.call(self.LOCAL_MARKET_URL, city=self.city.id, reso_put='giveput', **kwargs)
 
         if json['code'] == EmrossWar.SUCCESS:
             for res, amt in json['ret'].iteritems():
-                self.log.debug('Setting {0} resource to {1} at "{2}"'.format(res, amt, self.city.name))
+                self.log.debug(six.u('Setting {0} resource to {1} at {2}').format(res, amt, self.city))
                 self.set_amount_of(res, amt)
 
         return json

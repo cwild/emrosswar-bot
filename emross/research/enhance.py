@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.item.item import ItemRank, ItemType
 from emross.research.studious import Study
@@ -48,7 +50,7 @@ class AutoEnhance(Task):
         enhance = int(study.tech_level(city, Tech.ENHANCEMENT) / 3)
         max_level = level_uni + max(0, enhance)
 
-        self.log.debug('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}'.format(
+        self.log.debug(six.u('Highest level {0} ({1}) is at "{2}" and can enhance to +{3}').format(
             EmrossWar.BUILDING[str(Building.UNIVERSITY)].get('name'),
             level_uni,
             city.name,

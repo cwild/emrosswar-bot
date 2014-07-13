@@ -1,7 +1,7 @@
-from client_errors import VisitTooOftenHandler
+from .client_errors import VisitTooOftenHandler
 
-import client_errors
-import http_errors
+from emross.handlers import client_errors
+from emross.handlers import http_errors
 
 handlers = {
     2: client_errors.InvalidKeyHandler,

@@ -221,7 +221,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 messages.append('='*20)
 
                 for opponent in opponents[lvl].itervalues():
-                    messages.append(u'{0} ({1}). id={id}, wins={streak}'.format(
+                    messages.append(six.u('{0} ({1}). id={id}, wins={streak}').format(
                         Hero(opponent), opponent['u'],
                         id=opponent['id'], streak=opponent[Hero.WINS]
                     ))

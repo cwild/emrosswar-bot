@@ -13,6 +13,7 @@ from emross.utility.base import EmrossBaseObject
 from emross.utility.countdown import CountdownManager
 
 from lib.cacheable import CacheableData
+from lib import six
 
 
 class City(EmrossBaseObject, CacheableData):
@@ -24,7 +25,7 @@ class City(EmrossBaseObject, CacheableData):
         self.name = EmrossWar.safe_text(name)
         self.x = x
         self.y = y
-        self.log.debug('Created new city: name="{name}", id={id}, x={x}, y={y}'.format(\
+        self.log.debug(six.u('Created new city: name="{name}", id={id}, x={x}, y={y}').format(\
                 name=self.name, id=self.id, x=x, y=y)
         )
 
@@ -35,8 +36,8 @@ class City(EmrossBaseObject, CacheableData):
         self.resource_manager = ResourceManager(bot, city=self)
         self.countdown_manager = CountdownManager(bot, city=self)
 
-    def __repr__(self):
-        return u'City("{0.name}", x={0.x}, y={0.y})'.format(self)
+    def __str__(self):
+        return six.u('City("{0.name}", x={0.x}, y={0.y})').format(self)
 
     def update(self):
         """Get castle info"""
@@ -65,7 +66,7 @@ class City(EmrossBaseObject, CacheableData):
                 [{"id":11659,"itemid":166,"secs":532417}],0],"grade":53,"money":40}}
         """
 
-        self.log.debug('Updating city "{0}"'.format(self.name))
+        self.log.debug(six.u('Updating city "{0}"').format(self.name))
         json = self.bot.api.call(self.GET_CITY_INFO, city=self.id)
 
         self.bot.userinfo['level'] = json['ret']['grade']

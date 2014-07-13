@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.arena.hero import Hero
 from emross.item import inventory
@@ -50,7 +52,7 @@ class Study(FilterableCityTask, Controllable):
 
     def tech_levels(self, city):
         def _updater(*args, **kwargs):
-            self.log.debug(u'Find tech levels for {0}'.format(city))
+            self.log.debug(six.u('Find tech levels for {0}').format(city))
             return self.bot.api.call(*args, **kwargs)
 
         return self._cities.setdefault(city, CacheableData(

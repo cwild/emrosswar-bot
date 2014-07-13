@@ -22,7 +22,7 @@ def json_decoder(data):
     s = data[ data.find('{') : data.rfind('}')+1 ]
     try:
         return simplejson.loads(s)
-    except ValueError, e:
+    except ValueError as e:
         logger.debug(e)
         return {}
 

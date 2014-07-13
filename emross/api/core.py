@@ -3,6 +3,7 @@ import random
 import sys
 import threading
 import time
+from lib import six
 
 try:
     import simplejson
@@ -14,7 +15,11 @@ try:
 except ImportError:
     class JSONDecodeError(ValueError): pass
 
-from lib.ordered_dict import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from lib.ordered_dict import OrderedDict
+
 
 sys.path.extend(['lib/urllib3/'])
 from urllib3 import PoolManager, make_headers, exceptions
@@ -178,8 +183,7 @@ class EmrossWarApi(object):
 
 
 
-class EmrossWar(object):
-    __metaclass__ = EmrossCache
+class EmrossWar(six.with_metaclass(EmrossCache)):
 
     SUCCESS = 0
     ERROR_UNKNOWN = -1
@@ -197,14 +201,9 @@ class EmrossWar(object):
 
     @staticmethod
     def safe_text(s):
-        if isinstance(s, unicode):
-            return s.encode('utf-8')
-        elif isinstance(s, str):
-            # Must be encoded in UTF-8
-            return s.decode('utf-8')
-        return s
+        return s if isinstance(s, unicode) else six.u(s)
 
 if __name__ == "__main__":
     import emross
-    print emross.lang
+    print(emross.lang)
 
