@@ -9,7 +9,7 @@ if len(logging.root.handlers) == 0:
 
     try:
         logging.config.fileConfig('build/logging.conf')
-    except six.configparser.NoSectionError:
+    except six.moves.configparser.NoSectionError:
         logging.config.fileConfig('logging.conf')
 
 
