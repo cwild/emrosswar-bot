@@ -89,11 +89,11 @@ class Study(FilterableCityTask, Controllable):
         name = EmrossWar.TECHNOLOGY[str(tech)].get('name', 'TECH {0}'.format(tech))
 
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info(u'Started research "{0}" at {1}. Time until completion: {2} seconds.'.format(\
+            self.log.info(six.u('Started research "{0}" at {1}. Time until completion: {2} seconds.').format(\
                 name, city, json['ret']['cdlist'][0]['secs'])
             )
         else:
-            self.log.debug(u'Failed to start "{0}" at {1}'.format(name, city))
+            self.log.debug(six.u('Failed to start "{0}" at {1}').format(name, city))
 
         return json
 
@@ -101,14 +101,14 @@ class Study(FilterableCityTask, Controllable):
         try:
             return 0 <= self.tech_level(city, tech) < level
         except IndexError:
-            self.log.debug(u'The university at {0} is not high enough to study tech {1} yet.'.format(city, tech))
+            self.log.debug(six.u('The university at {0} is not high enough to study tech {1} yet.').format(city, tech))
             return False
 
     def process(self, tech, level, university=1,
         use_hero=False, use_scrolls=False, ordered=False, *args, **kwargs):
 
         if self.get_tech_level(tech) == level:
-            self.log.debug(u'Tech {0} is already at target level {1}'.format(tech, level))
+            self.log.debug(six.u('Tech {0} is already at target level {1}').format(tech, level))
             return
 
         # Copy the cities so ordering doesn't affect the real order
@@ -130,17 +130,17 @@ class Study(FilterableCityTask, Controllable):
         if ordered:
             # Descending order
             cities.sort(key = lambda city: construction.structure_level(city, Building.UNIVERSITY), reverse=True)
-            self.log.debug(u'Ordered cities: {0}'.format([(city, construction.structure_level(city, Building.UNIVERSITY)) for city in cities]))
+            self.log.debug(six.u('Ordered cities: {0}').format([(city.name, construction.structure_level(city, Building.UNIVERSITY)) for city in cities]))
 
         for city in cities:
             if construction.structure_level(city, Building.UNIVERSITY) < university:
-                self.log.debug('The university at city "{0}" does not meet the specified minimum of {1}'.format(city.name, university))
+                self.log.debug(six.u('The university at {0} does not meet the specified minimum of {1}').format(city, university))
                 continue
 
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.RESEARCH)
             if len(tasks):
                 if tasks[0]['target'] == tech:
-                    self.log.debug(u'{hero} is already researching {tech} at {city}'.format(\
+                    self.log.debug(six.u('{hero} is already researching {tech} at {city}').format(\
                         hero=city.hero_manager.heroes.get(tasks[0]['owner'], 'N/A'),
                         tech=EmrossWar.TECHNOLOGY[str(tasks[0]['target'])].get('name', '?'),
                         city=city))
@@ -159,7 +159,7 @@ class Study(FilterableCityTask, Controllable):
                     continue
                 elif hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                     owner = hero.data.get('id', 0)
-                    self.log.info('{0} chosen to research {1} at {2}'.format(hero,
+                    self.log.info(six.u('{0} chosen to research {1} at {2}').format(hero,
                         EmrossWar.TECHNOLOGY[str(tech)].get('name', '?'),
                         city.name))
                 else:

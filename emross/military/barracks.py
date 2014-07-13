@@ -1,4 +1,5 @@
 from lib.cacheable import CacheableData
+from lib import six
 
 from emross.api import EmrossWar
 from emross.exceptions import ResourceException
@@ -71,7 +72,7 @@ class Barracks(EmrossBaseObject, CacheableData):
             [15, 126, True], [16, 0, True], [17, 7163, True], [18, 200, True]],
         'def': 2}}
         """
-        self.log.debug('Update soldier listing for the camp at "{0}"'.format(self.city.name))
+        self.log.debug(six.u('Update soldier listing for the camp at {0}').format(self.city))
         return self.bot.api.call(self.SOLDIER_EDUCATE_URL, city=self.city.id)
 
     def train_troops(self, soldier, quantity, hero=0):
@@ -82,7 +83,7 @@ class Barracks(EmrossBaseObject, CacheableData):
         json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, action='soldier_educate', city=self.city.id, soldier=soldier, num=quantity, gen=hero)
 
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('Train {0} troops of type {1} at city "{2}"'.format(quantity, soldier, self.city.name))
+            self.log.info(six.u('Train {0} troops of type {1} at {2}').format(quantity, soldier, self.city))
 
         return json
 
@@ -92,10 +93,10 @@ class Barracks(EmrossBaseObject, CacheableData):
         """
 
         if strategy == self.strategy:
-            self.log.debug(u'{0} is already on this defense strategy'.format(self.city))
+            self.log.debug(six.u('{0} is already on this defense strategy').format(self.city))
             return
 
-        self.log.info(u'Changing defense strategy from {0} to {1} at {2}'.format(self.strategy, strategy, self.city))
+        self.log.info(six.u('Changing defense strategy from {0} to {1} at {2}').format(self.strategy, strategy, self.city))
         json = self.bot.api.call(self.SOLDIER_EDUCATE_URL, action='def', city=self.city.id, defense=strategy, **kwargs)
         if json['code'] == EmrossWar.SUCCESS:
             try:
