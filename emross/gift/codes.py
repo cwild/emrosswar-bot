@@ -1,11 +1,22 @@
+from emross import master as MASTER
 from emross.api import EmrossWar
+from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
 
-class GiftCollector(Task):
+class GiftCollector(Task, Controllable):
+    COMMAND = 'gift'
     INTERVAL = 3600*2
     ENFORCED_INTERVAL = True
     GIFT_URL = 'game/gift_api.php'
+    MASTER_GIFT_URL = 'gift.php'
+
+    def action_collect(self, event, code, *args, **kwargs):
+        """
+        Retrieve a gift `code`
+        """
+        self.bot.api.call(self.MASTER_GIFT_URL, server=MASTER, \
+            user=self.bot.api.player.username, code=code, **kwargs)
 
     def process(self):
         if self.bot.pvp:
