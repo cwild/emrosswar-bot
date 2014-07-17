@@ -9,6 +9,8 @@ if types.MethodType not in copy._deepcopy_dispatch:
     copy._deepcopy_dispatch[types.MethodType] = _deepcopy_method
 
 
+from lib import six
+
 from emross import exceptions
 from emross import mobs
 from emross.api import EmrossWar
@@ -162,8 +164,8 @@ class EfficientFarmer(BaseFarmer):
         army = city.create_army(army, heroes=[hero], mixed=True)
 
 
-        self.log.info('Sending calculated attack: [{0}/{1}] {2} from "{3}" with {4}'.format(\
-            target.y, target.x, hero, city.name, army_text))
+        self.log.info(six.u('Sending calculated attack: [{0}/{1}] {2} from {3} with {4}').format(\
+            target.y, target.x, hero, city, army_text))
 
         # send troops to attack
         params = {
