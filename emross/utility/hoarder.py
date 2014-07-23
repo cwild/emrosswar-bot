@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.item import inventory
 from emross.resources import Resource
@@ -35,11 +37,11 @@ class GoldHoarder(Task):
                     qty += 1
 
                 if qty:
-                    self.log.info('Try to convert {0} into {1}*"{2}" at "{city}"'.format(\
+                    self.log.info(six.u('Try to convert {0} into {1}*"{2}" at {city}').format(\
                         EmrossWar.LANG.get('COIN', 'gold'),
                         qty,
                         EmrossWar.ITEM[str(gold_id)].get('name'),
-                        city=city.name)
+                        city=city)
                     )
 
                     json = self.bot.api.call(GOLD_CONVERSION_URL, city=city.id, type=gold_type, num=qty)

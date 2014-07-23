@@ -278,9 +278,9 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     def _city_wealth(self, func=max, text='most'):
         city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        self.log.debug('Chosen the city with the {0} {resource}, {city} ({amount})'.format(text,
+        self.log.debug(six.u('Chosen the city with the {0} {resource}, {city} ({amount})').format(text,
             resource=EmrossWar.LANG.get('COIN', 'gold'),
-            city=city.name, amount=city.resource_manager.get_amount_of(Resource.GOLD))
+            city=city, amount=city.resource_manager.get_amount_of(Resource.GOLD))
         )
         return city
 
