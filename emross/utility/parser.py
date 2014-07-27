@@ -1,7 +1,12 @@
 import logging
 import re
 
-from lib.ordered_dict import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from lib.ordered_dict import OrderedDict
+
+from lib import six
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +63,7 @@ class MessageParser(object):
             for_us = False
             for t in targets:
                 if re.match(target, t):
-                    logger.debug('Matched target "{0}" with regex "{1}"'.format(t, target))
+                    logger.debug(six.u('Matched target "{0}" with regex "{1}"').format(t, target))
                     for_us = True
                     break
 

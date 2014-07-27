@@ -1,5 +1,7 @@
 import time
 
+from lib import six
+
 from emross.alliance import Alliance, ALLIANCE_INFO_URL
 from emross.api import EmrossWar
 from emross.resources import Resource
@@ -102,12 +104,12 @@ class Donator(Task):
 
         if city.resource_manager.meet_requirements({Resource.GOLD: gold}, convert=False):
 
-            self.log.info('{donate} {amount} {currency} to {hall} from "{city}"'.format(
+            self.log.info(six.u('{donate} {amount} {currency} to {hall} from {city}').format(
                 donate=EmrossWar.TRANSLATE.get('f_ally')['34'],
                 amount=gold,
                 currency=EmrossWar.LANG.get('COIN', 'gold'),
                 hall=EmrossWar.TRANSLATE.get('f_ally')['31'],
-                city=city.name)
+                city=city)
             )
 
             try:
