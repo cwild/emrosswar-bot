@@ -4,6 +4,7 @@ import sys
 import time
 
 from lib.goslate import goslate
+from lib import six
 
 from emross.api import EmrossWar
 from emross.utility.controllable import Controllable
@@ -41,9 +42,14 @@ class AutoTranslate(Task, Controllable):
 
             if name:
                 self.translate_for[name] = lang
-                self.chat.send_message(EmrossWar.safe_text(
-                    u'Translating "{0}" to "{1}"!'.format(name, lang)
-                ))
+
+                self.log.info(
+                    six.u('Translating "{0}" to "{1}"!').format(name, lang)
+                )
+
+                self.chat.send_message(six.u(
+                    'Translating "{0}" to "{1}"!').format(name, lang),
+                    event=event)
 
     def action_list(self, event, *args, **kwargs):
         """
@@ -93,6 +99,7 @@ class AutoTranslate(Task, Controllable):
         node = world.get_point(x, y)
 
         if node and node[2] == World.PLAYER_NODE:
+            self.log.debug(node)
             return node[3][1]
 
     def translate(self, event, text, *args, **kwargs):

@@ -163,7 +163,10 @@ class Chat(Task):
             size = self.MAX_MESSAGE_LENGTH - len(prefix)
             for letters in map(None, *(iter(message),) * size):
                 chunk = ''.join([l for l in letters if l is not None])
-                self.bot.api.call(self.URL, txt=prefix+chunk, targettype=channel, targetid=target)
+
+                self.bot.api.call(self.URL,
+                    txt=(prefix+chunk).encode('utf-8'),
+                    targettype=channel, targetid=target)
 
     def spam(self, event, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
