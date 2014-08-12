@@ -62,7 +62,7 @@ class MessageParser(object):
 
             for_us = False
             for t in targets:
-                if re.match(target, t):
+                if re.match(target, t, re.IGNORECASE):
                     logger.debug(six.u('Matched target "{0}" with regex "{1}"').format(t, target))
                     for_us = True
                     break
