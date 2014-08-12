@@ -1,6 +1,8 @@
 import re
 import time
 
+from lib import six
+
 from emross.api import EmrossWar
 from emross.utility.controllable import Controllable
 from emross.utility.task import Task
@@ -12,7 +14,7 @@ class FarmMonitor(Controllable, Task):
 
     DEFAULT_MINUTE_WINDOW = 30
     EXPIRY_PERIOD = 86400
-    NPC = 'DevilArmy'
+    NPC = EmrossWar.LANG.get('MONSTER', 'DevilArmy')
     PATTERN = '<b>(.*)</b>'
 
     def setup(self):
@@ -38,8 +40,8 @@ class FarmMonitor(Controllable, Task):
         r = self.regex.match(message)
         if r:
             player = r.groups()[0]
-            self.log.debug('Farm activity for "{0}"'.format(EmrossWar.safe_text(player)))
             self.store.setdefault(player, {}).setdefault('activity', []).append(time.time())
+            self.log.debug(six.u('Farm activity for "{0}"').format(player))
 
     def action_activity(self, event, minutes=DEFAULT_MINUTE_WINDOW, *args, **kwargs):
         """
@@ -54,12 +56,13 @@ class FarmMonitor(Controllable, Task):
                 total += 1
 
         if total == 0:
-            self.chat.send_message('Not many active farmers, eh!')
+            self.chat.send_message('Not many active farmers, eh!', event=event)
             return
 
         self.chat.send_message(
             'Farming activity: {0} players in the last {1} {2}'.format(\
-                total, minutes, 'minute' if minutes == 1 else 'minutes')
+                total, minutes, 'minute' if minutes == 1 else 'minutes'),
+            event=event
         )
 
     def action_busiest(self, event, n=5, minutes=DEFAULT_MINUTE_WINDOW, *args, **kwargs):
@@ -80,9 +83,9 @@ class FarmMonitor(Controllable, Task):
         parts = []
         for player, times in busiest[0:n]:
             if times:
-                parts.append(u'{0}({1})'.format(player, times))
+                parts.append(six.u('{0}({1})').format(player, times))
 
-        self.chat.send_message('{0} busiest farmers in last {1} {2}: {3}'.format(\
+        self.chat.send_message(six.u('{0} busiest farmers in last {1} {2}: {3}').format(\
             n, minutes, 'minute' if minutes == 1 else 'minutes',
-            EmrossWar.safe_text(', '.join(parts))
-        ))
+            six.u(', ').join(parts)
+        ), event=event)
