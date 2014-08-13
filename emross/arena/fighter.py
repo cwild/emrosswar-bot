@@ -11,6 +11,8 @@ from emross.utility.base import EmrossBaseObject
 from emross.utility.controllable import Controllable
 from emross.utility.task import FilterableCityTask
 
+from lib import six
+
 VIGOR = EmrossWar.TRANSLATE['f_city_hero'].get('16', 'Vigor:')[:-1]
 
 
@@ -105,7 +107,7 @@ class OpponentFinder(EmrossBaseObject):
         oppid = opponent['id']
         del self.opponents[lvl][oppid]
         self.opponent_victors.add(oppid)
-        self.log.info(u'Removed hero "{0}" from "{1}"'.format(Hero(opponent), opponent['u']))
+        self.log.info(six.u('Removed hero "{0}" from "{1}"').format(Hero(opponent), opponent['u']))
 
 
 class ArenaFighter(FilterableCityTask, Controllable):
@@ -226,7 +228,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         id=opponent['id'], streak=opponent[Hero.WINS]
                     ))
 
-        mailer.send_mail(event.player_name, title, EmrossWar.safe_text('\n'.join(messages)))
+        mailer.send_mail(event.player_name, title, six.u('\n').join(messages))
 
     def attack(self, hero, target, **kwargs):
         """

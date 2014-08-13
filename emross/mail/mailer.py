@@ -26,8 +26,10 @@ class Mailer(Controllable):
         if not message:
             raise ValueError('No message body provided, unable to send mail')
 
-        return self.bot.api.call(self.URL, nick=recipient, title=title,
-            body=message, category=category, **kwargs)
+        return self.bot.api.call(self.URL,
+            nick=recipient.encode('utf-8'),
+            title=title.encode('utf-8'),
+            body=message.encode('utf-8'), category=category, **kwargs)
 
 
 
