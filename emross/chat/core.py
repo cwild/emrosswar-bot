@@ -1,6 +1,7 @@
 import time
 
 from emross.api import EmrossWar
+from emross.chat.filter import PlayerFilter
 from emross.utility.events import Event
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
@@ -34,6 +35,7 @@ class Chat(Task):
     URL = 'game/api_chat2.php'
 
     def setup(self):
+        self.player_filter = PlayerFilter(self.bot)
         self.parsers = (
             ('evt', self.parse_events),
             ('msg', self.parse_messages),
@@ -85,7 +87,8 @@ class Chat(Task):
                     msg.get('from_name') == self.bot.userinfo.get('nick')):
 
                     method, args, kwargs = MessageParser.parse_message(text, targets,
-                        myself=msg.get('from_name') == self.bot.userinfo.get('nick'))
+                        myself=msg.get('from_name') == self.bot.userinfo.get('nick'),
+                        filter=self.player_filter.filter)
                     event = Event(method, **data)
                     self.bot.events.notify(event, *args, **kwargs)
 
