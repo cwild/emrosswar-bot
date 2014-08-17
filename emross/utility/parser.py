@@ -41,8 +41,10 @@ class MessageParser(object):
     NAME_OPERATOR = '@'
     SELF_OPERATOR = '/'
 
+    FILTER_REGEX = re.compile('({(?P<args>.*)})?(?P<method_name>.*)')
+
     @classmethod
-    def parse_message(cls, message, targets=[], myself=False):
+    def parse_message(cls, message, targets=[], myself=False, filter=None):
 
         if myself:
             # Talking to yourself again huh?
@@ -80,6 +82,20 @@ class MessageParser(object):
             arg_strs = ''
 
         args, kwargs = _parse_args(arg_strs)
+
+        try:
+            r = cls.FILTER_REGEX.match(method_name)
+            method_name = r.group('method_name')
+
+            # If <args> is None then shlex tries to read from stdin
+            _args, _kwargs = _parse_args(r.group('args') or '')
+
+            # filter should raise SkipMessage if there's a problem
+            filter(*_args, **_kwargs)
+        except SkipMessage:
+            raise
+        except Exception:
+            pass
 
         return method_name, args, kwargs
 
