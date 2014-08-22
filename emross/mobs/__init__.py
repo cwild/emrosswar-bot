@@ -20,6 +20,19 @@ class DevilArmy:
     NINE_STAR = 9
     TEN_STAR = 10
 
+class Colony:
+    SMALL_FARM = 101
+    MEDIUM_FARM = 102
+    LARGE_FARM = 103
+    HUGE_FARM = 104
+    SMALL_FOREST = 111
+    MEDIUM_FOREST = 112
+    LARGE_FOREST = 113
+    HUGE_FOREST = 114
+    SMALL_IRON = 121
+    MEDIUM_IRON = 122
+    LARGE_IRON = 123
+    HUGE_IRON = 124
 
 class Hero(BaseHero):
     BASE_ATTACK = 50
@@ -64,9 +77,12 @@ class Unit(object):
             if name == unit._name and rating == unit.rating:
                 return unit
 
-        ratings = range(6, 0, -1) + range(7, 9)
-        raise ValueError('No NPC Unit named "{0}" ({1}* {2}) found.'.format(name,
-            ratings[rating-1], EmrossWar.LANG.get('MONSTER', 'DevilArmy')))
+        try:
+            ratings = range(6, 0, -1) + range(7, 9)
+            raise ValueError('No NPC Unit named "{0}" ({1}* {2}) found.'.format(name,
+                ratings[rating-1], EmrossWar.LANG.get('MONSTER', 'DevilArmy')))
+        except IndexError:
+            raise ValueError('No NPC Unit named "{0}" found.'.format(name))
 
 
     def __repr__(self):

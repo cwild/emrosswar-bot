@@ -86,7 +86,7 @@ class BaseFarmer(FilterableCityTask):
                 """
                 visited_cities = set()
                 while True:
-                    if getattr(target, 'attack', 0) == self.bot.npc_attack_limit:
+                    if not self.is_target_attackable(target):
                         break
 
                     if self.current_city in visited_cities:
@@ -126,6 +126,9 @@ class BaseFarmer(FilterableCityTask):
         except Exception as e:
             self.log.debug('Error encountered during utilities')
             self.log.exception(e)
+
+    def is_target_attackable(self, target):
+        return getattr(target, 'attack', 0) < self.bot.npc_attack_limit
 
     def process_city_with_target(self, city, target):
         pass

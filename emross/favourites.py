@@ -8,12 +8,19 @@ from emross.api import EmrossWar
 from emross.mobs.npc import NPC
 from emross.utility.controllable import Controllable
 
+class GenericFavourite(object):
+    def __init__(self, data, bot):
+        self.data = data
+        self.id = data[0]
+        self.x = data[1]
+        self.y = data[2]
+
 
 class Favourites(Controllable):
     COMMAND = 'favs'
-    LORD = 1
+    LORD = None
     DEVIL_ARMY = 2
-    COLONY = 3
+    COLONY = 1
 
     TYPES = {
         DEVIL_ARMY: NPC
@@ -55,7 +62,7 @@ class Favourites(Controllable):
 
         self.favs[cat][:] = []
         for data in favs:
-            fav = self.TYPES[cat](data, self.bot)
+            fav = self.TYPES.get(cat, GenericFavourite)(data, self.bot)
             self.favs[cat].append(fav)
 
     def sort_favs(self, city, cat=DEVIL_ARMY):
