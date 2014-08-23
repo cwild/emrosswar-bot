@@ -10,6 +10,7 @@ _with = _DummyWith()
 
 class CacheableData(object):
     LOCKED = False
+    SUPPRESS_LOCKED_LOGS = set()
 
     def __init__(self, time_to_live=120, update=None, cache_data_type=dict, *args, **kwargs):
         super(CacheableData, self).__init__()
@@ -49,7 +50,10 @@ class CacheableData(object):
                 should_update = False
 
             if self.LOCKED:
-                self.log.debug('Data is locked from auto-updating')
+                if self.__class__ not in self.SUPPRESS_LOCKED_LOGS:
+                    self.log.debug('Data is locked from auto-updating')
+
+                self.SUPPRESS_LOCKED_LOGS.add(self.__class__)
             elif time.time() > self._expires or should_update:
                 try:
                     self.data = self.update(*self.args, **self.kwargs)
