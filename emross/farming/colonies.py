@@ -144,7 +144,7 @@ Favourites.TYPES[Favourites.COLONY] = ColonyFavourite
 
 class ColonyFarmer(BaseFarmer, Controllable):
     COMMAND = 'colony'
-    INTERVAL = 15
+    INTERVAL = 300
 
     FAVOURITES_TYPE = Favourites.COLONY
     OCCUPY_TASK = 6
@@ -253,6 +253,7 @@ class ColonyFarmer(BaseFarmer, Controllable):
 
         npc_defense = self.calculator.defense(**data)
         npc_min_attack, npc_max_attack = self.calculator.attack(**data)
+        npc_total_health = self.calculator.health(**data)
 
         self.log.debug('Calculations for {0}, defense={1}, min_attack={2}, max_attack={3}'.format(\
             target.mobs, npc_defense, npc_min_attack, npc_max_attack))
@@ -302,6 +303,11 @@ class ColonyFarmer(BaseFarmer, Controllable):
                         min_attack, max_attack = self.calculator.attack(hero, army)
                     except ValueError as e:
                         raise exceptions.TargetException(e.message)
+
+                    if npc_total_health > 0 and (npc_total_health / (min_attack - npc_defense)) > self.calculator.BATTLE_ROUNDS:
+                        self.log.debug(six.u('Inadequate attack to kill all troops at {0}({1}) in {2} rounds using {3}.').format(\
+                            target, target.mobs, self.calculator.BATTLE_ROUNDS, army))
+                        continue
 
                     if defense > npc_max_attack and min_attack > npc_defense:
                         try:

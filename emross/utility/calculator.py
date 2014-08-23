@@ -1,4 +1,5 @@
 from __future__ import division
+import copy
 import math
 
 from emross.alliance import AllyTech
@@ -6,6 +7,8 @@ from emross.arena.hero import Gear, Hero
 from emross.military.camp import SoldierStat, DEFAULT_SOLDIER_STAT_MODIFIERS, SOLDIER_STAT_MODIFIERS
 from emross.research.studious import Study
 from emross.utility.base import EmrossBaseObject
+
+from lib import six
 
 
 HALL_CONTRIBUTIONS = {
@@ -20,6 +23,7 @@ class WarCalculator(EmrossBaseObject):
     # If no SOLDIER_STAT_MODIFIERS are set for a given troop, use the default one
     ASSUME_DEFAULT_SOLDIER_STATS = True
     HERO_BASE_MODIFIER = 200
+    BATTLE_ROUNDS = 3
 
     def defense(self, hero, troops={}, ally=None, soldier_data=None,
                 hero_base=HERO_BASE_MODIFIER,
@@ -122,6 +126,18 @@ class WarCalculator(EmrossBaseObject):
 
         return sum(min_attack), sum(max_attack)
 
+    def health(self, troops, soldier_data=None, **kwargs):
+        soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
+        total = 0
+
+        for troop, qty in troops.iteritems():
+            try:
+                total += qty * soldier_data(troop)[SoldierStat.HEALTH]
+            except TypeError:
+                pass
+
+        return int(math.floor(total))
+
     def troops_to_defend_attack(self, troop, required_defense, hero, ally=None,
         soldier_data=None, hero_base=HERO_BASE_MODIFIER,
         assume_default_soldier_stats=None, **kwargs):
@@ -170,3 +186,61 @@ class WarCalculator(EmrossBaseObject):
 
         # Round-up the number of required units!
         return int(math.ceil((required_defense-hero_armour) / total))
+
+    def battle_simulator(self, contestant1, contestant2, rounds=None, soldier_data=None):
+        soldier_data = soldier_data or self.bot.cities[0].barracks.soldier_data
+
+        c1 = copy.deepcopy(contestant1)
+        c2 = copy.deepcopy(contestant2)
+
+        _rounds = 0
+        while True:
+            if rounds and  _rounds >= (rounds or self.BATTLE_ROUNDS):
+                break
+
+            _rounds += 1
+
+            c1_attack, c1_max_attack = self.attack(**c1)
+            c1_defense = self.defense(**c1)
+            self.log.debug(six.u('contestant1: defense={0}, min_attack={1}, max_attack={2}').format(
+                c1_defense, c1_attack, c1_max_attack
+            ))
+
+            c2_attack, c2_max_attack = self.attack(**c2)
+            c2_defense = self.defense(**c2)
+            self.log.debug(six.u('contestant2: defense={0}, min_attack={1}, max_attack={2}').format(
+                c2_defense, c2_attack, c2_max_attack
+            ))
+
+            armies = [
+                (c1_attack, c2_defense, c2['troops'], c2.get('soldier_data')),
+                (c2_attack, c1_defense, c1['troops'], c1.get('soldier_data'))
+            ]
+
+            for catt, odef, otroops, opp_data in armies:
+                delta = catt - odef
+                if delta <= 0:
+                    continue
+
+                _soldier_data = opp_data or soldier_data
+
+                for troop, qty in otroops.iteritems():
+                    defense = _soldier_data(troop)[SoldierStat.DEFENSE]
+                    health = _soldier_data(troop)[SoldierStat.HEALTH]
+
+                    try:
+                        killed = math.floor(delta / health)
+                    except TypeError:
+                        # Seems better than nothing..
+                        killed = math.floor(delta / defense)
+
+                    otroops[troop] -= killed
+
+                for k in list(otroops.keys()):
+                    if otroops[k] < 1:
+                        del otroops[k]
+
+            yield _rounds, c1['troops'], c2['troops']
+
+            if not all([c1['troops'], c2['troops']]):
+                break

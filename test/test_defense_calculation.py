@@ -1,3 +1,4 @@
+import logging
 import time
 import unittest
 
@@ -10,14 +11,19 @@ from emross.utility.calculator import WarCalculator
 mobs.commanders = [
     mobs.Hero('ChaosLord', attack=30, defense=15)
 ]
+del mobs.Unit.UNITS[:]
 mobs.units = [
     mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR, attack=15, defense=8, critical=180),
     mobs.Unit('Nitemare', mobs.DevilArmy.SIX_STAR, attack=40, defense=12, critical=317.5),
     mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR, attack=120, defense=40, critical=120),
     mobs.Unit('Inferno', mobs.DevilArmy.SEVEN_STAR, attack=120, defense=40, critical=362.5),
+
+    mobs.Unit('Infantry', mobs.Colony.LARGE_FARM, attack=15, defense=10, health=100),
 ]
 
 from test import bot
+
+logger = logging.getLogger(__name__)
 
 
 class TestDefenseCalculation(unittest.TestCase):
@@ -117,3 +123,39 @@ class TestDefenseCalculation(unittest.TestCase):
                 )
 
         self.assertEqual(num, 1021)
+
+    def test_hit_points(self):
+        hero = Hero({
+            Hero.ATTACK: 31,
+            Hero.WISDOM: 70,
+            Hero.DEFENSE: 40
+        })
+        army = {Soldier.OVERLORD: 11}
+
+        num = self.calculator.troops_to_defend_attack(Soldier.OVERLORD, 7500,
+                hero=hero)
+
+        self.assertEqual(self.calculator.defense(**{
+            'hero': hero,
+            'troops': army
+        }), 7796)
+
+        self.assertEqual(num, 11)
+
+        player = {'hero':hero, 'troops':army}
+        hostile = {
+            'hero': None,
+            'hero_base': 0,
+            'troops': {mobs.Unit.find('Infantry', mobs.Colony.LARGE_FARM): 500},
+            'assume_default_soldier_stats': False,
+            'ally': mobs.alliance,
+            'soldier_data': mobs.Unit.soldier_data,
+        }
+
+        for round, c1, c2 in self.calculator.battle_simulator(player, hostile):
+            logger.debug((round, c1, c2))
+
+        self.assertEqual(round, 6)
+
+        # 500 infantry, 100 health each
+        self.assertEqual(self.calculator.health(**hostile), 50000)

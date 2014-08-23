@@ -49,6 +49,7 @@ class Unit(object):
     BASE_ATTACK = 200
     BASE_DEFENSE = 100
     BASE_CRITICAL = 100
+    BASE_HEALTH = None
 
     UNITS = []
 
@@ -60,6 +61,7 @@ class Unit(object):
         self.attack = self.data[SoldierStat.ATTACK] = kwargs.get('attack', self.BASE_ATTACK)
         self.defense = self.data[SoldierStat.DEFENSE] = kwargs.get('defense', self.BASE_DEFENSE)
         self.critical = self.data[SoldierStat.CRITICAL] = kwargs.get('critical', self.BASE_CRITICAL)
+        self.health = self.data[SoldierStat.HEALTH] = kwargs.get('health', self.BASE_HEALTH)
 
         self.__class__.UNITS.append(self)
 
