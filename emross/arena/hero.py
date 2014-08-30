@@ -6,6 +6,7 @@ import re
 from emross.api import EmrossWar
 from emross.utility.base import EmrossBaseObject
 
+from lib import six
 
 class Gear:
     WEAPON = 1
@@ -70,10 +71,10 @@ class Hero(EmrossBaseObject):
     }
 
     FACE_SYMBOLS = {
-        CLUBS: u'\u2660',
-        DIAMONDS: u'\u2666',
-        HEARTS: u'\u2665',
-        SPADES: u'\u2663'
+        CLUBS: six.u('\u2660'),
+        DIAMONDS: six.u('\u2666'),
+        HEARTS: six.u('\u2665'),
+        SPADES: six.u('\u2663')
     }
 
     # Attributes
