@@ -1,23 +1,19 @@
 from emross.item import item
+from emross.utility.base import EmrossBaseObject
 from emross.resources import Resource
 
-import logging
-logger = logging.getLogger(__name__)
 
-class Shop:
+class Shop(EmrossBaseObject):
     SHOP_URL = 'game/sys_shop_api.php'
 
     GOLD_ITEMS = 'list_goldshopitems'
-
-    def __init__(self, bot):
-        self.bot = bot
 
     def list(self, city, action=GOLD_ITEMS, type=item.ItemType.WEAPON):
         """
         {"code":0,"ret":{"item":[113,190],"price":[10000,100000],"attr":[[0,0,0,0,0,0],[0,0,0,0,0,0]]}}
         """
         type = self._item_type(type)
-        logger.info('Listing shop items, %s of type %d' % (action, type))
+        self.log.debug('Listing shop items, {0} of type {1}'.format(action, type))
         res = self.bot.api.call(self.SHOP_URL, action=action, type=type, city=city.id)
         return res
 
@@ -37,7 +33,7 @@ class Shop:
 
     def find_item(self, city, search_item):
         item_id, item_type, item_rank = search_item
-        logger.info('Find item %d in shop' % item_id)
+        self.log.debug('Find item {0} in shop'.format(item_id))
 
         shop_items = self.list(city, type=item_type)
 
@@ -47,7 +43,7 @@ class Shop:
             shop_price = items['price'][pos]
             attributes = items['attr'][pos]
         except ValueError:
-            logger.info('Cannot find item %d in the shop.' % item_id)
+            self.log.info('Cannot find item {0} in the shop'.format(item_id))
 
         return (item_id, shop_price, attributes)
 

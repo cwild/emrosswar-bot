@@ -7,9 +7,11 @@ from emross.api import EmrossWar
 from emross.exceptions import TradeException
 from emross.item import inventory
 from emross.resources import Resource
+from emross.trade.trader import Trade
 from emross.utility.task import Task
 from emross.utility.remote_api import RemoteApi
-from trader import Trade
+
+from lib import six
 
 
 import settings
@@ -22,17 +24,14 @@ class RemoteTrade(RemoteApi):
 
     def delete(self, trade_ids, *args, **kwargs):
         ids = ','.join(trade_ids)
-        json = self.call(self.DELETE, method='DELETE', id=ids, *args, **kwargs)
-        return json
+        return self.call(self.DELETE, method='DELETE', id=ids, *args, **kwargs)
 
     def list(self, *args, **kwargs):
-        json = self.call(self.LIST, *args, **kwargs)
-        return json
+        return self.call(self.LIST, *args, **kwargs)
 
     def sync(self, items, *args, **kwargs):
         items = self.json_encode(items)
-        json = self.call(self.SYNC, method='POST', trading=items, *args, **kwargs)
-        return json
+        return self.call(self.SYNC, method='POST', trading=items, *args, **kwargs)
 
 class AutoTrade(Task):
     INTERVAL = 5
@@ -44,21 +43,14 @@ class AutoTrade(Task):
         self.trade = Trade(self.bot)
 
     def process(self, mode=BUYER, *args, **kwargs):
-        if mode == AutoTrade.SELLER:
-            _process = self.seller_process
-        elif mode == AutoTrade.BUYER:
-            _process = self.buyer_process
-        else:
-            return None
-
         try:
+            _process = getattr(self, 'process_{0}'.format(mode))
             return _process(*args, **kwargs)
-        except ValueError as e:
-            self.log.debug(e)
-            return None
+        except (AttributeError, ValueError) as e:
+            self.log.error(e)
 
 
-    def buyer_process(self, interval=900, team=False, sleep=(4,5), delay=(0,15), *args, **kwargs):
+    def process_buyer(self, interval=900, team=False, sleep=(4,5), delay=(0,15), *args, **kwargs):
         """Buy items specified by a remote api"""
 
         available = self.remote.list(method='GET',
@@ -80,7 +72,7 @@ class AutoTrade(Task):
                         city.resource_manager.modify_amount_of(Resource.GOLD, -int(item['price']))
                         purchased.append(item['id'])
                     elif json['code'] == EmrossWar.INSUFFICIENT_GOLD:
-                        self.log.info('Not enough gold at city "{0}" to purchase item {1}'.format(city.name, item['id']))
+                        self.log.info(six.u('Not enough gold at {0} to purchase item {1}').format(city, item['id']))
                         break
                     elif json['code'] == EmrossWar.ITEM_DOES_NOT_EXIST:
                         unavailable.append(item['id'])
@@ -103,7 +95,7 @@ class AutoTrade(Task):
         self.sleep(interval + _delay)
 
 
-    def seller_process(self,
+    def process_seller(self,
         items=[inventory.ALLIANCE_TOKEN],
         price=1000000,
         vary=1000,
@@ -157,6 +149,7 @@ class AutoTrade(Task):
             self.log.debug('There are {0} sellable items'.format(sellable_items))
 
             shortfall = remaining - sellable_items
+            item_price = None
             if shortfall > 0:
                 self.log.info('Buy {0} items to sell'.format(shortfall))
                 item_id, item_price, item_attr = self.bot.shop.find_item(city, search_item)
@@ -164,7 +157,7 @@ class AutoTrade(Task):
 
                 for _ in xrange(shortfall):
                     if gold < item_price:
-                        self.log.info('Not enough gold at city "{0}" to buy {1} from shop at cost {2}'.format(city.name, item_id, item_price))
+                        self.log.info(six.u('Not enough gold at {0} to buy {1} from shop at cost {2}').format(city, item_id, item_price))
                         break
 
                     try:
@@ -192,6 +185,14 @@ class AutoTrade(Task):
                         city.expire()
                         gold = city.resource_manager.get_amount_of(Resource.GOLD)
                         total = min(total, gold*Trade.SELLING_FEE)
+
+                        if not item_price:
+                            item_id, item_price, item_attr = self.bot.shop.find_item(city, search_item)
+
+                        # Only actually sell if we will make at least 10%
+                        if total < (item_price * (1+(100/Trade.SELLING_FEE))):
+                            self.log.debug('No point selling as we would not make a profit!')
+                            break
                     else:
                         self.log.info('Not enough gold to cover the cost of posting an item')
                         self.sleep(600)
