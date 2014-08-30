@@ -1,4 +1,3 @@
-import logging
 import time
 
 from collections import deque
@@ -17,8 +16,7 @@ from emross.scenario.scene import Scenario
 from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
-logger = logging.getLogger(__name__)
-
+from lib import six
 
 class ScenarioWalker(Task, Controllable):
     INTERVAL = 10
@@ -45,15 +43,18 @@ class ScenarioWalker(Task, Controllable):
 
             for army in info['ret'].get('army_data', {}).itervalues():
                 hero = EmrossWar.HERO[str(army['hero'])]['name']
-                troops = ','.join(['{0}x{1}'.format(qty, \
+                troops = six.u(',').join([six.u('{0}x{1}').format(qty, \
                                 SOLDIER_DATA[soldier]['name'])
                                 for soldier, qty in army['soldier'].iteritems()])
 
-                self.chat.send_message('"{0}" leads {1}.'.format(hero, troops))
+                self.chat.send_message(six.u('"{0}" leads {1}.').format(hero, troops), event=event)
         else:
-            self.chat.send_message('Scenario status: remaining={0}, highest={1}, lottery={2}'.format(\
-                info['ret']['times'], int(info['ret'].get('highest_fb',0))+1, \
-                info['ret'].get('hasLottery',False))
+            highest = int(info['ret'].get('highest_fb', 0))
+            self.chat.send_message(six.u('Scenario status: remaining={0}, highest={map}({1}), lottery={lottery}').format(\
+                info['ret']['times'], highest+1,
+                map=EmrossWar.SCENARIO_TEXT.map_name(highest),
+                lottery=info['ret'].get('hasLottery',False)),
+                event=event
             )
 
     def process(self, scenario, armies, times=[], resume=True,
@@ -64,6 +65,7 @@ class ScenarioWalker(Task, Controllable):
             (Hero.WISDOM, 0.8),
             (Hero.COMMAND, 1)
             ],
+        hero_max_wait=3600,
         *args, **kwargs):
 
         if self.bot.pvp:
@@ -164,24 +166,29 @@ class ScenarioWalker(Task, Controllable):
                     for c in cities:
                         self.log.debug('Minimum troop carry is {0}'.format(army_min_carry))
                         commands = [dict((h.data['gid'], h) for h in c.hero_manager.ordered_by_stats([Hero.COMMAND], exclude=generals)
-                            if h.stat(Hero.COMMAND) >= carry)
-                            for carry in army_min_carry]
+                            if h.stat(Hero.COMMAND) >= min(army_min_carry))]
 
                         self.log.debug(commands)
                         exclude = []
                         champion_heroes_by_city[c] = []
+
+                        hero_tasks = dict([(int(t['owner']), t['secs']-time.time()) \
+                            for t in c.countdown_manager.get_tasks() if t['owner']])
+
                         for command in commands:
                             scored = c.hero_manager.ordered_by_scored_stats(scoring, command, exclude)
-                            try:
-                                hero, score = scored[0]
 
+                            for hero, score in scored:
                                 if hero.stat(Hero.GUARDING):
                                     self.log.debug('Skip guardian: {0}'.format(hero))
                                     continue
+
+                                if hero_tasks.get(hero.data['id'], 0) > hero_max_wait:
+                                    self.log.debug(six.u('Skip {0} as it is busy for longer than hero_max_wait({1} secs)').format(hero, hero_max_wait))
+                                    continue
+
                                 exclude.append(hero.data['gid'])
-                                champion_heroes_by_city[c].append(scored[0])
-                            except IndexError:
-                                pass
+                                champion_heroes_by_city[c].append((hero, score))
 
                     self.log.debug(champion_heroes_by_city)
 
@@ -193,7 +200,7 @@ class ScenarioWalker(Task, Controllable):
                             city = champion_city
 
                     if city:
-                        self.log.info('Chosen city "{0}" with strongest heroes'.format(city.name))
+                        self.log.info(six.u('Chosen {0} with strongest heroes').format(city))
                         generals = [hero.data['gid'] for hero, score in champion_heroes_by_city[city]]
                         self.log.debug(generals)
 
@@ -272,7 +279,7 @@ class ScenarioWalker(Task, Controllable):
             city.get_available_heroes(exclude=False, **kwargs)
             available = set([int(h.data.get('gid')) for h in city.heroes])
             if heroes.issubset(available):
-                self.log.info('"{0}" has these heroes!'.format(city.name))
+                self.log.info(six.u('{0} has these heroes!').format(city))
                 return city
 
         self.log.warning('Cannot find these generals in a single city.')
@@ -423,8 +430,10 @@ class ScenarioWalker(Task, Controllable):
 
 
 if __name__ == "__main__":
+    import logging
     logging.basicConfig(level=logging.DEBUG)
-    walker = ScenarioWalker(None)
+    from test import bot
+    walker = ScenarioWalker(bot)
 
     now = time.localtime()
     daybreak = (now.tm_year, now.tm_mon, now.tm_mday, 17, 30, 0, now.tm_wday, now.tm_yday, now.tm_isdst)
@@ -435,5 +444,5 @@ if __name__ == "__main__":
     print walker.can_start([], time.mktime(daybreak))
     print walker.can_start([(2,30), (17,15), (23,30)], time.mktime(daybreak))
 
-    logger.info(EmrossWar.SCENARIO_TEXT.map_name(Scenario.ROSTER_BOG))
-    logger.info(EmrossWar.SCENARIO_TEXT.point_name(Scenario.ROSTER_BOG, 1))
+    logging.info(EmrossWar.SCENARIO_TEXT.map_name(Scenario.ROSTER_BOG))
+    logging.info(EmrossWar.SCENARIO_TEXT.point_name(Scenario.ROSTER_BOG, 1))
