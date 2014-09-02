@@ -2,6 +2,7 @@ from emross.api import EmrossWar
 from emross.exceptions import TradeException
 from emross.utility.base import EmrossBaseObject
 
+from lib import six
 
 class Trade(EmrossBaseObject):
     TRADE_URL = 'game/safe_goods_api.php'
@@ -49,7 +50,7 @@ class Trade(EmrossBaseObject):
             raise TradeException('Maximum number of trade items has been reached')
 
         if json['code'] != EmrossWar.SUCCESS:
-            self.log.warning('Problem selling item {0} at city {1} for {2} gold'.format(id, city.name, price))
+            self.log.warning(six.u('Problem selling item {0} at {1} for {2} gold').format(id, city, price))
             raise TradeException
 
         return EmrossWar.SUCCESS
@@ -58,5 +59,5 @@ class Trade(EmrossBaseObject):
         """
         Purchase an item from trade.
         """
-        self.log.info('Attempting to buy item {0} from city "{1}"'.format(id, city.name))
+        self.log.info(six.u('Attempting to buy item {0} from {1}').format(id, city.name))
         return self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)
