@@ -95,7 +95,7 @@ class Construct(FilterableCityTask):
                                 for _city in self.bot.cities:
                                     _city.expire()
                                 done = True
-                                self.bot.inventory.adjust_item_stock(id=item_id, num=-1)
+                                self.bot.inventory.adjust_item_stock(item_id=item_id, num=-1)
                                 break
 
                         if done:
