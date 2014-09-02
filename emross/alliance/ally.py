@@ -46,7 +46,7 @@ class Alliance(Controllable, CacheableData):
         guildid = self.bot.userinfo.get('guildid', 0)
 
         if guildid == 0:
-            return
+            return {}
 
         if guildid != self.id:
             # Only log if our alliance membership has changed
@@ -60,6 +60,11 @@ class Alliance(Controllable, CacheableData):
                 EmrossWar.safe_text(self.bot.userinfo.get('guild', ''))
             ))
 
+        # If there is still some cooldown, do not cache the result
+        elif self._data and set([(self.MAX_TECH_LEVEL, 0)]) == \
+            set([(level, cooldown) for state, level, cooldown in self._data[5]]):
+                self.log.debug('Maxed Alliance hall, reuse cached data')
+                return self._data
 
         self.log.debug('Update alliance hall info')
         return self.bot.api.call(ALLIANCE_INFO_URL, op='info')
