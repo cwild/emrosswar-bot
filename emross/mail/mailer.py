@@ -1,4 +1,5 @@
 from emross.api import EmrossWar
+from emross.mail.mailman import MailMan
 from emross.utility.controllable import Controllable
 
 
@@ -14,23 +15,28 @@ class Mailer(Controllable):
         self.send_mail(*args, **kwargs)
 
 
-    def send_mail(self, recipient, title, message, category=CATEGORY, **kwargs):
+    def send_mail(self, title, message, recipient=None, group=None, category=CATEGORY, **kwargs):
         """
         Actually handle the sending of mail. We might need to send the message
         in chunks
         """
 
-        if recipient == self.bot.userinfo['nick']:
-            return
-
         if not message:
             raise ValueError('No message body provided, unable to send mail')
 
-        return self.bot.api.call(self.URL,
-            nick=recipient.encode('utf-8'),
-            title=title.encode('utf-8'),
-            body=message.encode('utf-8'), category=category, **kwargs)
+        if group:
+            usergroup = self.bot.builder.task(MailMan).groups.get(group, set())
+        else:
+            usergroup = set([recipient])
 
+        for user in usergroup:
+            if user == self.bot.userinfo['nick']:
+                continue
+
+            self.bot.api.call(self.URL,
+                nick=user.encode('utf-8'),
+                title=title.encode('utf-8'),
+                body=message.encode('utf-8'), category=category, **kwargs)
 
 
 if __name__ == "__main__":

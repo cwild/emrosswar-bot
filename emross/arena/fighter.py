@@ -228,7 +228,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         id=opponent['id'], streak=opponent[Hero.WINS]
                     ))
 
-        mailer.send_mail(event.player_name, title, six.u('\n').join(messages))
+        mailer.send_mail(title, six.u('\n').join(messages), recipient=event.player_name, **kwargs)
 
     def attack(self, hero, target, **kwargs):
         """

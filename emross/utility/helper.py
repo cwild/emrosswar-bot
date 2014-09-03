@@ -27,6 +27,7 @@ from emross.gift import GiftCollector, GiftEvents
 from emross.item import inventory, item, manager
 from emross.lottery import AutoLottery
 from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
+from emross.mail.mailer import Mailer, MailMan
 from emross.resources import Resource
 from emross.shop import Shop
 from emross.utility.about import AboutHelper
@@ -139,6 +140,10 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                 (GiftEvents,),
             ),
         )
+
+        # Register Controllable modules
+        self.builder.task(Mailer)
+        self.builder.task(MailMan)
 
         if self.api.player:
             if hasattr(self.settings, 'build_path') and \
