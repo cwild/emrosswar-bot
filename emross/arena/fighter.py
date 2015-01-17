@@ -117,8 +117,9 @@ class ArenaFighter(FilterableCityTask, Controllable):
     LOSS = -1
     DRAW = 0
     WIN = 1
+    MULTI_HITS = 5
 
-    def action_attack(self, event, hero, target,
+    def action_attack(self, event, hero, target, multi=None,
                     stoponlose=1, sleep=(), *args, **kwargs):
         """
         Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
@@ -159,7 +160,9 @@ class ArenaFighter(FilterableCityTask, Controllable):
             self.currently_fighting.add(hero_id)
 
             while hero.data.get(Hero.VIGOR, 0) > 0:
-                json = self.attack(hero_id, int(target), sleep=sleep)
+                times = self.MULTI_HITS if multi and hero.data.get(Hero.VIGOR, 0) >= self.MULTI_HITS else None
+
+                json = self.attack(hero_id, int(target), sleep=sleep, times=times)
                 if json['code'] != EmrossWar.SUCCESS:
                     try:
                         msg = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
@@ -168,7 +171,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     self.chat.send_message(msg, event=event)
                     break
 
-                hero.data[Hero.VIGOR] -= 1
+                hero.data[Hero.VIGOR] -= max(times, 1)
                 hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
 
                 if hero.data.get(Hero.EXPERIENCE) >= hero.data.get(Hero.TARGET_EXPERIENCE):
