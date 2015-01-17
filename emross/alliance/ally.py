@@ -39,7 +39,7 @@ class Alliance(Controllable, CacheableData):
         try:
             state, level, cooldown = self.hall_tech[tech-1]
             return level
-        except (IndexError, ValueError):
+        except (IndexError, KeyError, ValueError):
             return 0
 
     def update(self):
