@@ -365,8 +365,16 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         for sid in items:
             try:
+                _search = EmrossWar.ITEM[str(sid)]
+            except AttributeError:
+                _search = self.inventory.data[sid].values()
+                self.log.debug(_search)
+                # Choose the first one
+                _search = _search.pop(0)['item']
+
+            try:
                 self.log.debug('Searching for item {0}: "{1}"'.format(\
-                    sid, EmrossWar.ITEM[str(sid)].get('name')
+                    sid, _search.get('name', 'Unknown')
                 ))
 
                 result[sid] = [

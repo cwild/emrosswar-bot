@@ -1,6 +1,8 @@
+import copy
 import re
 
 from lib.cacheable import CacheableData
+from lib import six
 
 from emross.api import EmrossWar
 from emross.item import item
@@ -69,9 +71,22 @@ class InventoryManager(Controllable, CacheableData):
         """
         Locate items from the inventory
         """
+        all_items = copy.deepcopy(EmrossWar.ITEM.data)
+        for _type in self.data.itervalues():
+            for _data in _type.itervalues():
+                _item = _data['item']
+                new_data = {
+                    'name': _item.get('name'),
+                    'desc': _item.get('desc'),
+                    'img': _item.get('img'),
+                    'sid': str(_item.get('sid')),
+                }
+                all_items.setdefault(new_data['sid'], {}).update(new_data)
+
+
         search_items = []
         for _search in args:
-            for _id, _item in EmrossWar.ITEM.iteritems():
+            for _id, _item in all_items.iteritems():
                 try:
                     if re.search(_search, _item.get('name'), re.IGNORECASE):
                         search_items.append(int(_id))
@@ -81,13 +96,13 @@ class InventoryManager(Controllable, CacheableData):
         found = self.bot.find_inventory_items(search_items)
         result = []
         for item_id, values in found.iteritems():
-            name = EmrossWar.ITEM[str(item_id)].get('name')
+            name = all_items[str(item_id)].get('name')
             vals = [qty for uniqid, qty, sellable in values]
-            result.append(u'{0}={1}'.format(name, sum(vals)))
+            result.append(six.u('{0}={1}').format(name, sum(vals)))
 
         if result:
             self.chat.send_message(
-                u'Cache: {0}'.format(', '.join(result)), event=event
+                six.u('Cache: {0}').format(', '.join(result)), event=event
             )
-        else:
+        elif 'quiet' not in kwargs:
             self.chat.send_message('Sorry, I do not have any of those items!')
