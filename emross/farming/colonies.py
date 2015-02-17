@@ -9,6 +9,7 @@ from emross.arena.hero import Hero
 from emross.farming.base import BaseFarmer
 from emross.farming.efficient import EfficientFarmer
 from emross.favourites import Favourites, FAVOURITES_URL
+from emross.mail.system import SystemMail
 from emross.military.barracks import Barracks
 from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
@@ -156,8 +157,11 @@ class ColonyFarmer(BaseFarmer, Controllable):
         Resource.WOOD
     ]
 
+    MAIL_CLEANUP_PATTERNS = set(['^Resource Colony'])
+
     def setup(self):
         super(ColonyFarmer, self).setup()
+        self.system_mail = self.bot.builder.task(SystemMail)
         self.calculator = WarCalculator(self.bot)
         self._war_rooms = {}
 
@@ -398,3 +402,16 @@ class ColonyFarmer(BaseFarmer, Controllable):
             targets.extend(colonies)
 
         return targets
+
+    def utilities(self, *args, **kwargs):
+        self.log.debug('Clean up the Resource Colony reports from system mail')
+
+        messages = self.system_mail.filter_messages(\
+            patterns=self.MAIL_CLEANUP_PATTERNS,
+            senders=SystemMail.SYSTEM_USERS,
+            **kwargs)
+
+        self.log.debug(messages)
+
+        # Pass the list of message ids we wish to delete
+        self.system_mail.delete([m['id'] for m in messages])
