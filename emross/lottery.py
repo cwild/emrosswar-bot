@@ -1,11 +1,16 @@
 from emross.utility.task import Task
 
 class AutoLottery(Task):
-    INTERVAL = 5
+    INTERVAL = 1800
     LOTTERY_API = 'game/lottery_api.php'
 
     def process(self):
-        if self.bot.userinfo.get('lottery'):
+
+        # Don't check bot.data as it expires - prevent surplus userinfo updates
+        if not self.bot._data:
+            self.sleep(15)
+
+        elif self.bot._data.get('lottery'):
 
             while True:
                 self.log.info('List the lottery items')

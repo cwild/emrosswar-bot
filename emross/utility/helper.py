@@ -202,7 +202,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         self.log.debug('Updating player info')
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
-        userinfo = json['ret']['user']
+        self._data = userinfo = json['ret']['user']
 
         skip = set([city.id for city in self.cities])
         skip.update(getattr(self.settings, 'ignore_cities', []))
