@@ -163,8 +163,9 @@ class ScenarioWalker(Task, Controllable):
 
                     champion_heroes_by_city = {}
 
+                    self.log.debug('Minimum troop carry is {0}'.format(army_min_carry))
+
                     for c in cities:
-                        self.log.debug('Minimum troop carry is {0}'.format(army_min_carry))
                         commands = [dict((h.data['gid'], h) for h in c.hero_manager.ordered_by_stats([Hero.COMMAND], exclude=generals)
                             if h.stat(Hero.COMMAND) >= min(army_min_carry))]
 
@@ -194,14 +195,17 @@ class ScenarioWalker(Task, Controllable):
 
                     highest = 0
                     for champion_city, champions in champion_heroes_by_city.iteritems():
-                        city_score = sum([score for hero, score in champions])
+                        city_score = sum([score for hero, score in champions[0:remaining]])
+
+                        self.log.debug(six.u('{0} scores {1}').format(champion_city, city_score))
+
                         if city_score > highest:
                             highest = city_score
                             city = champion_city
 
                     if city:
                         self.log.info(six.u('Chosen {0} with strongest heroes').format(city))
-                        generals = [hero.data['gid'] for hero, score in champion_heroes_by_city[city]]
+                        generals.extend([hero.data['gid'] for hero, score in champion_heroes_by_city[city]][0:remaining])
                         self.log.debug(generals)
 
                 if city is not None:
@@ -221,6 +225,8 @@ class ScenarioWalker(Task, Controllable):
 
                         armies = [{'hero':hero, 'troops':[(s.replace('soldier_num',''), qty) for s, qty in troops.iteritems()]}
                                   for hero, troops in zip(generals, gen_armies)]
+
+                        self.log.debug('Try starting scenario')
 
                         if self.scenario.start(city, scenario, armies, mode=mode):
                             # We have started, so let's get going on the next cycle
