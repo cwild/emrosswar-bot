@@ -44,7 +44,7 @@ class AutoLoyalty(FilterableCityTask):
                     continue
 
                 loyalty = int(hero.data.get(Hero.LOYALTY, 0))
-                self.log.info('{0} has {1} {2}.'.format(hero, loyalty, LOYALTY))
+                self.log.debug('{0} has {1} {2}.'.format(hero, loyalty, LOYALTY))
 
                 if loyalty < below:
                     attempts = min([self.LOYALTY_PER_DAY, self.MAX_LOYALTY - loyalty])
