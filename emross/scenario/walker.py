@@ -117,7 +117,7 @@ class ScenarioWalker(Task, Controllable):
                 self.scenario.armies = deepcopy(armies)
                 generals = [int(gen) for gen in json['ret']['army_data'].keys()]
                 city = self.find_city_with_heroes(generals, extra=None)
-                self.log.info('City: "{0}", Heroes: "{1}"'.format(city.name, generals))
+                self.log.info(six.u('City: "{0}", Heroes: "{1}"').format(city.name, generals))
                 heroes = city.hero_manager.ordered_by_scored_stats(scoring, heroes=dict(
                         [(hero.data['id'], hero) for hero in city.hero_manager.heroes.itervalues() if hero.data['gid'] in generals]))
 
@@ -389,14 +389,14 @@ class ScenarioWalker(Task, Controllable):
                         war_result = json['ret']['war_report']['war_result']
 
                         losses = self.html_parser.unescape(war_result['aarmy_loss'])
-                        self.log.info('Troop losses for hero "{0}": {1}'.format(hero_name,losses))
+                        self.log.info(six.u('Troop losses for hero "{0}": {1}').format(hero_name,losses))
 
                         if int(war_result['aflag']) == 1:
-                            self.log.info('"{0}" has moved to "{1}"'.format(hero_name,point_name))
-                            self.log.debug('Hero "{0}" has moved to point {1}'.format(army['hero'],point))
+                            self.log.info(six.u('"{0}" has moved to "{1}"').format(hero_name,point_name))
+                            self.log.debug(six.u('Hero "{0}" has moved to point {1}').format(army['hero'],point))
 
                             resources = self.html_parser.unescape(war_result['resource'])
-                            self.log.info(u'Resources won: {0}'.format(resources or 'Nothing'))
+                            self.log.info(six.u('Resources won: {0}').format(resources or 'Nothing'))
 
                             army['path'].popleft()
 
