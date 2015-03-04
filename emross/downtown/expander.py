@@ -1,5 +1,7 @@
 import math
 
+from lib import six
+
 from emross.api import EmrossWar
 from emross.military.barracks import Barracks
 from emross.military.camp import Soldier
@@ -76,15 +78,15 @@ class CastleBuilder(Task):
                 self.log.debug('No city is currently able to initiate another castle build')
                 return
 
-            self.log.debug('Build from castle: "{0}"'.format(city.name))
+            self.log.debug(six.u('Build from castle: "{0}"').format(city.name))
 
             proposed_name = naming_scheme.format(
                                 nickname=self.bot.userinfo.get('nick'),
                                 number=i
                             )
 
-            self.log.debug('Proposed castle name: "{0}"'.format(
-                EmrossWar.safe_text(proposed_name)
+            self.log.debug(six.u('Proposed castle name: "{0}"').format(
+                proposed_name
             ))
 
             try:

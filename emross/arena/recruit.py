@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
@@ -19,10 +21,10 @@ class HeroRecruit(FilterableCityTask):
 
         for city in self.cities(**kwargs):
             if city.hero_manager.remaining_hero_capacity < 1:
-                self.log.debug('There is no space to recruit any further heroes at "{0}"'.format(city.name))
+                self.log.debug(six.u('There is no space to recruit any further heroes at "{0}"').format(city.name))
                 continue
 
-            self.log.info('Check for heroes at the bar in "{0}"'.format(city.name))
+            self.log.info(six.u('Check for heroes at the bar in "{0}"').format(city.name))
             json = self.bot.api.call(CONSCRIPT_URL, city=city.id)
 
 
@@ -104,7 +106,7 @@ class HeroRecruit(FilterableCityTask):
         json = self.bot.api.call(CONSCRIPT_URL, city=city.id, action='hire_process')
 
         if json['code'] == EmrossWar.SUCCESS:
-            self.log.info('"{0}" recruited at "{1}"!'.format(hero, city.name))
+            self.log.info(six.u('"{0}" recruited at "{1}"!').format(hero, city.name))
             city.hero_manager.expire()
             return True
         else:

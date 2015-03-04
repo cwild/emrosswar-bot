@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.exceptions import WorldException, OutOfSpies
 from emross.favourites import Favourites
@@ -44,7 +46,7 @@ class World(Task):
                 pass
 
         if choice:
-            self.log.info('Sending spies from {0}'.format(choice.name))
+            self.log.info(six.u('Sending spies from {0}').format(choice.name))
             return choice
 
         self.log.info('Unable to locate any available spies.')
@@ -87,7 +89,7 @@ class World(Task):
                                 for tries in xrange(2):
                                     city.barracks.expire()
                                     spies = city.barracks.soldiers[Soldier.SPY-1][1]
-                                    self.log.info('Found {0} spies in the city "{1}"'.format(spies, city.name))
+                                    self.log.info(six.u('Found {0} spies in the city "{1}"').format(spies, city.name))
                                     if spies < 1:
                                         if tries == 0:
                                             self.log.info('Check the war room. Try to trigger spy count to update')
