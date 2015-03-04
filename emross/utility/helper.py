@@ -266,14 +266,17 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             pass
 
 
-    def is_play_time(self):
+    def is_play_time(self, playtimes=None):
         """
         Check if we should be playing at this time of day.
         May not wish to be on 24/7 after all!
         """
 
+        if playtimes is None:
+            playtimes = self.api.player.playtimes
+
         try:
-            for timespan in self.api.player.playtimes:
+            for timespan in playtimes:
                 if timespan[0] <= time.localtime().tm_hour < timespan[1]:
                     return True
         except AttributeError:

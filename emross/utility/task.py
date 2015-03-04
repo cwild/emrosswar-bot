@@ -56,11 +56,12 @@ class Task(EmrossBaseObject):
             if self.can_run_process(cycle_start):
                 self.last_cycle = cycle_start
 
-                self._result[stage] = self.process(*args, **kwargs)
+                if self.bot.is_play_time(kwargs.get('playtimes')):
+                    self._result[stage] = self.process(*args, **kwargs)
 
-                if self._next_run < cycle_start:
-                    delay = self.calculate_delay()
-                    self.sleep(delay)
+                    if self._next_run < cycle_start:
+                        delay = self.calculate_delay()
+                        self.sleep(delay)
 
         return self._result.get(stage, None)
 
