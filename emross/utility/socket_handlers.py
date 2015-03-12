@@ -41,8 +41,8 @@ class JsonSocketHandler(Process):
 
     def bot_finder(self, account):
         return (bot
-            for bot in bots
-            if account in (0, bot.userinfo['id'])
+            for bot in self.bots
+            if account == 0 or account == bot.userinfo['id']
         )
 
     def process(self, data):

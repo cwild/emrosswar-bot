@@ -1,7 +1,7 @@
 import atexit
 import logging
-import sys
-sys.path.extend(['lib/'])
+
+from lib import emross_socket_client
 
 from emross.utility.remote_api import RemoteApi
 
@@ -23,7 +23,6 @@ def establish_connection():
 
     json = remote_api.call('socket/discover')
 
-    import emross_socket_client
     sock = emross_socket_client.connect(**json)
 
     # Try to clean-up when the program is exiting
