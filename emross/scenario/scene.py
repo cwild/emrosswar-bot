@@ -1,3 +1,5 @@
+from lib import six
+
 from emross.api import EmrossWar
 from emross.exceptions import InsufficientSoldiers
 from emross.utility.base import EmrossBaseObject
@@ -221,7 +223,8 @@ class Scenario(EmrossBaseObject):
             avail = city.barracks.soldiers[soldier-1][1]
 
             if avail < total:
-                raise InsufficientSoldiers('"{0}" does not have enough of soldier {1} (needed={2}, available={3})'.format(\
+                raise InsufficientSoldiers(six.u('"{0}" does not have enough of'
+                        ' soldier {1} (needed={2}, available={3})').format(\
                         city.name, soldier, total, avail))
 
 
