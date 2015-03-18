@@ -23,6 +23,7 @@ class Task(EmrossBaseObject):
         self._result = dict()
         self._last_cycle = 0
         self._next_run = 0
+        self._rescheduled = False
         self.setup()
 
     def finish_cycle(self):
@@ -57,7 +58,13 @@ class Task(EmrossBaseObject):
                 self.last_cycle = cycle_start
 
                 if self.bot.is_play_time(kwargs.get('playtimes')):
-                    self._result[stage] = self.process(*args, **kwargs)
+                    while True:
+                        self._rescheduled = False
+                        self._result[stage] = self.process(*args, **kwargs)
+
+                        # Unless the Task just rescheduled itself we will stop
+                        if not self._rescheduled:
+                            break
 
                     if self._next_run < cycle_start:
                         delay = self.calculate_delay()
@@ -84,11 +91,18 @@ class Task(EmrossBaseObject):
     def reschedule(self, delay=-1):
         self._next_run = time.time() + delay
 
+        if delay <= 0:
+            self.log.debug('Run the Task again, immediately')
+            self._rescheduled = True
+
     def setup(self):
         pass
 
-    def sleep(self, seconds=INTERVAL):
-        self.reschedule(seconds or self.INTERVAL)
+    def sleep(self, seconds=None):
+        if seconds is None:
+            seconds = self.INTERVAL
+
+        self.reschedule(seconds)
 
 
 class TaskType:
