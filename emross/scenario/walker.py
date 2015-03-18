@@ -58,7 +58,7 @@ class ScenarioWalker(Task, Controllable):
             )
 
     def process(self, scenario, armies, times=[], resume=True,
-        initial_delay=0.5, mode=Scenario.NORMAL_MODE,
+        initial_delay=0, mode=Scenario.NORMAL_MODE,
         scoring=[
             (Hero.ATTACK, 1.4),
             (Hero.DEFENSE, 1.2),

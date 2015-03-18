@@ -13,6 +13,7 @@ class Scenario(EmrossBaseObject):
     PHILIA_MINES = 7
     ELMOONII_WOODS = 8
     ROSTER_BOG = 9
+    TWILIGHT_FOREST = 10
 
     NORMAL_MODE = 0
     HARD_MODE = 1
