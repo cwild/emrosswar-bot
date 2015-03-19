@@ -57,6 +57,32 @@ class ScenarioWalker(Task, Controllable):
                 event=event
             )
 
+    def action_query(self, event, *args, **kwargs):
+        """Query the current scenario"""
+
+        info = self.scenario.list()
+
+        if 'debug' in kwargs:
+            self.chat.send_message('Debug data: {0}'.format(info), event=event)
+        elif 'fb_label' not in info['ret']:
+            self.chat.send_message('Not currently in a Scenario!', event=event)
+        else:
+            parts = []
+            parts.append(six.u('Scenario="{0}"').format(
+                EmrossWar.SCENARIO_TEXT.map_name(info['ret']['fb_label'])
+            ))
+
+            for army in info['ret'].get('army_data', {}).itervalues():
+                try:
+                    # Try to find our hero's name (data files may be outdated!)
+                    hero = EmrossWar.HERO[str(army['hero'])]['name']
+                except KeyError:
+                    hero = 'Hero({0})'.format(army['hero'])
+
+                parts.append(six.u('"{0}" @ Node({1})').format(hero, army['pos']))
+
+            self.chat.send_message(six.u(', ').join(parts), event=event)
+
     def process(self, scenario, armies, times=[], resume=True,
         initial_delay=0, mode=Scenario.NORMAL_MODE,
         scoring=[
