@@ -7,6 +7,7 @@ from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.task import FilterableCityTask, TaskType
 
+from lib import six
 
 class Cavalry:
     USE_HERO = False
@@ -36,14 +37,14 @@ class Trainer(FilterableCityTask):
         delays = []
         for city in cities:
             if construction.structure_level(city, Building.BARRACKS) < 1:
-                self.log.debug(u'There is no Barracks at {0}'.format(city))
+                self.log.debug(six.u('There is no Barracks at {0}').format(city))
                 continue
 
             delay = None
             tasks = city.countdown_manager.get_tasks(task_type=TaskType.TRAIN)
             if len(tasks) > 0:
                 delays.append(int(tasks[0]['secs'])-time.time())
-                self.log.debug(u'Already training troops at {0}'.format(city))
+                self.log.debug(six.u('Already training troops at {0}').format(city))
                 continue
 
             troops = city.barracks.total_troops()
@@ -52,12 +53,12 @@ class Trainer(FilterableCityTask):
             for cavalry in cavalries:
                 try:
                     if not city.barracks.can_train(cavalry.troop):
-                        self.log.debug(u'Cannot train troop type {0} at {1}'.format(cavalry.troop, city))
+                        self.log.debug(six.u('Cannot train troop type {0} at {1}').format(cavalry.troop, city))
                         continue
 
                     if cavalry.quantity > troops[cavalry.troop]:
                         desired = cavalry.quantity - troops[cavalry.troop]
-                        self.log.debug(u'Shortfall of {0} troops of type {1} at {2}'.format(desired, cavalry.troop, city))
+                        self.log.debug(six.u('Shortfall of {0} troops of type {1} at {2}').format(desired, cavalry.troop, city))
 
                         qty = 0
                         maximum = min(camp_space, desired)
@@ -72,7 +73,7 @@ class Trainer(FilterableCityTask):
                                 hero = city.hero_manager.highest_stat_hero(Hero.ATTACK)
                                 if hero and hero.stat(Hero.VIGOR) and hero.stat(Hero.STATE) == Hero.AVAILABLE:
                                     hero_id = hero.data.get('gid', 0)
-                                    self.log.info(u'Chosen to train troops with "{0}" at {1}'.format(hero, city))
+                                    self.log.info(six.u('Chosen to train troops with "{0}" at {1}').format(hero, city))
                                 elif cavalry.wait_for_hero:
                                     continue
 
@@ -81,7 +82,7 @@ class Trainer(FilterableCityTask):
                             if json['code'] == EmrossWar.SUCCESS:
                                 delay = int(json['ret']['cdlist'][0]['secs'])
                                 city.countdown_manager.add_tasks(json['ret']['cdlist'])
-                                self.log.debug(u'Stop processing the rest of the cavalries list at {0}'.format(city))
+                                self.log.debug(six.u('Stop processing the rest of the cavalries list at {0}').format(city))
                                 break
                 except KeyError:
                     pass
