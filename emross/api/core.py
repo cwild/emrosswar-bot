@@ -176,7 +176,7 @@ class EmrossWarApi(object):
             if sleep:
                 wait += random.randrange(*sleep)
 
-                logger.debug('Wait for %f seconds' % wait)
+                logger.debug('Wait for %f seconds', wait)
                 time.sleep(wait)
 
         return json
