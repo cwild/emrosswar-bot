@@ -1,4 +1,5 @@
 import logging
+import re
 
 """
 If logging hasn't already been configured, setup our own from logging.conf files
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Application settings, configurable
-    settings = emross.utility.settings.load(args.settings)
+    settings = emross.utility.settings.load(re.sub('\.py$', '', args.settings))
 
     try:
         import emross.handlers
