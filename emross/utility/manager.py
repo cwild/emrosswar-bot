@@ -223,8 +223,12 @@ class BotManager(object):
             worker.daemon = True
             worker.start()
 
-            import settings
-            sandbox = {'manager': self, 'settings': settings, 'bot':self.bot}
+            import emross.utility.settings
+            sandbox = dict(
+                manager=self,
+                settings=emross.utility.settings,
+                bot=self.bot
+            )
             code.interact(banner='EmrossWar Bot Management console', local=sandbox)
             raise KeyboardInterrupt
         elif workhorse:

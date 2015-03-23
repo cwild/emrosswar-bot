@@ -5,7 +5,7 @@ from lib import emross_socket_client
 
 from emross.utility.remote_api import RemoteApi
 
-import settings
+from emross.utility import settings
 
 logger = logging.getLogger(__name__)
 

@@ -53,7 +53,7 @@ class _Pushover(RemoteApi):
 
 
 
-import settings
+from emross.utility import settings
 params = getattr(settings, 'plugin_api', {}).get('pushover', {})
 Pushover = _Pushover(**params)
 

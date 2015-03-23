@@ -45,7 +45,8 @@ class RemoteApi(object):
         return json.dumps(obj)
 
 if __name__ == "__main__":
-    import settings
+    import emross.utility.settings
+    settings = emross.utility.settings.load('settings')
     logging.basicConfig(level=logging.DEBUG)
 
     api = RemoteApi(**settings.plugin_api)

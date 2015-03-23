@@ -1,12 +1,12 @@
+import logging
 import pickle
-import settings
 
 from emross import master as MASTER
 from emross.api import EmrossWar
 from emross.exceptions import BotException, EmrossWarApiException
 from emross.utility.remote_api import RemoteApi
+from emross.utility import settings
 
-import logging
 logger = logging.getLogger(__name__)
 
 

@@ -9,7 +9,7 @@ except ImportError:
 import emross
 from emross.utility.events import Event
 
-import settings
+from emross.utility import settings
 
 
 logger = logging.getLogger(__name__)

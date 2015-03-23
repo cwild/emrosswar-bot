@@ -14,7 +14,8 @@ if len(logging.root.handlers) == 0:
 
 
 # Application settings, configurable
-import settings
+import emross.utility.settings
+settings = emross.utility.settings.load('settings')
 
 from emross.utility.manager import BotManager
 from emross.utility.player import Player

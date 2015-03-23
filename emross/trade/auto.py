@@ -14,7 +14,7 @@ from emross.utility.remote_api import RemoteApi
 from lib import six
 
 
-import settings
+from emross.utility import settings
 
 
 class RemoteTrade(RemoteApi):
