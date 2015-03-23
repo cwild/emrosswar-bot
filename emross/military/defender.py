@@ -103,7 +103,8 @@ class AutoDefense(FilterableCityTask, Controllable):
         self.defense_workers = set()
 
     def monitor(self, event, *args, **kwargs):
-        self.reschedule()
+        # Prevent this from running continuously
+        self.reschedule(delay=1)
 
     def process(self,
         armies=[],
