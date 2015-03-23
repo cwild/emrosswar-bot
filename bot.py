@@ -13,18 +13,10 @@ if len(logging.root.handlers) == 0:
         logging.config.fileConfig('logging.conf')
 
 
-# Application settings, configurable
-import emross.utility.settings
-settings = emross.utility.settings.load('settings')
 
+import emross.utility.settings
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
-
-try:
-    import emross.handlers
-    emross.handlers.handlers[settings.TOO_OFTEN_WARNING] = emross.handlers.VisitTooOftenHandler
-except AttributeError:
-    raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +33,17 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--console', help='Interactive console', action='store_true', default=False)
     parser.add_argument('-p', '--poolsize', help='Number of threads to use in the pool', type=int, default=None)
     parser.add_argument('-s', '--socket', help='Establish a bi-directional server socket', action='store_true', default=False)
+    parser.add_argument('--settings', help='Which settings file should we use?', type=str, default='settings')
     args = parser.parse_args()
+
+    # Application settings, configurable
+    settings = emross.utility.settings.load(args.settings)
+
+    try:
+        import emross.handlers
+        emross.handlers.handlers[settings.TOO_OFTEN_WARNING] = emross.handlers.VisitTooOftenHandler
+    except AttributeError:
+        raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
 
     manager = BotManager(console=args.console, processes=args.poolsize, \
                         socket=args.socket, settings=settings)
@@ -69,6 +71,7 @@ if __name__ == "__main__":
 
 else:
     def test_bot():
+        settings = emross.utility.settings.load('settings')
         try:
             player = settings.multi_bot[0]
         except AttributeError:
