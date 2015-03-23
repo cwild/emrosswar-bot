@@ -2,17 +2,6 @@ import logging
 import unittest
 
 from emross import mail, mobs
-del mobs.Unit.UNITS[:]
-
-mobs.units = [
-    mobs.Unit('Horror', mobs.DevilArmy.FIVE_STAR),
-    mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR),
-    mobs.Unit('Nightmare', mobs.DevilArmy.SIX_STAR),
-    mobs.Unit('Inferno', mobs.DevilArmy.SEVEN_STAR),
-    mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR),
-    mobs.Unit('', mobs.DevilArmy.SEVEN_STAR, alias='Inferno'),
-    mobs.Unit('', mobs.DevilArmy.EIGHT_STAR, alias='Inferno'),
-]
 from test import bot
 
 

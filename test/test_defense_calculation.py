@@ -7,20 +7,6 @@ from emross.arena.hero import Gear, Hero
 from emross.military.camp import Soldier
 from emross.utility.calculator import WarCalculator
 
-
-mobs.commanders = [
-    mobs.Hero('ChaosLord', attack=30, defense=15)
-]
-del mobs.Unit.UNITS[:]
-mobs.units = [
-    mobs.Unit('Horror', mobs.DevilArmy.SIX_STAR, attack=15, defense=8, critical=180),
-    mobs.Unit('Nitemare', mobs.DevilArmy.SIX_STAR, attack=40, defense=12, critical=317.5),
-    mobs.Unit('Inferno', mobs.DevilArmy.EIGHT_STAR, attack=120, defense=40, critical=120),
-    mobs.Unit('Inferno', mobs.DevilArmy.SEVEN_STAR, attack=120, defense=40, critical=362.5),
-
-    mobs.Unit('Infantry', mobs.Colony.LARGE_FARM, attack=15, defense=10, health=100),
-]
-
 from test import bot
 
 logger = logging.getLogger(__name__)
