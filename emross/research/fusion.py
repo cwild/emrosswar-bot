@@ -29,6 +29,7 @@ del old, sid, item, vals
 class AutoFusion(Task, Controllable):
     DOWNGRADE_FUSEABLE = False
     FUSION_COST = 1500000
+    FUSE_ITEMS = 3
     INTERVAL = 3600
     COMBINE_URL = 'game/goods_combine.php'
     REPORT = True
@@ -45,15 +46,28 @@ class AutoFusion(Task, Controllable):
                     combos.setdefault(sid, []).append((item_id, enhance))
 
 
-        combos = dict([(sid, sorted(ids, key=lambda i:i[1])[:3])
-                    for sid, ids in combos.iteritems() if len(ids) >= 3])
+        _combos = {}
+        for sid, ids in combos.iteritems():
+            ids.sort(key=lambda i:i[1])
 
-        if combos:
-            self.log.info('Fuseable items: {0}'.format(','.join(
-                ['"{0}" ({1})'.format(EmrossWar.ITEM[str(sid)]['name'], vals)
-                for sid, vals in combos.iteritems()
-                ]
-            )))
+            for combo in map(None, *(iter(ids),) * self.FUSE_ITEMS):
+                """
+                Find batches of 3 of the same item
+                """
+
+                combo = [c for c in combo if c is not None]
+
+                if len(combo) == self.FUSE_ITEMS:
+                    _combos.setdefault(sid, []).append(combo)
+
+        # All sorted now, only batches of 3
+        combos = _combos
+
+        for sid, vals in combos.iteritems():
+            self.log.debug('Fuseable Item: "{0}", {1}'.format(
+                EmrossWar.ITEM[str(sid)]['name'],
+                vals
+            ))
 
         return combos
 
@@ -102,9 +116,15 @@ class AutoFusion(Task, Controllable):
                 self.log.info('Nothing to fuse')
                 break
 
-            for fuseitems in fuseable.itervalues():
-                city = self.bot.richest_city()
-                if city.resource_manager.meet_requirements({Resource.GOLD: self.FUSION_COST}, **kwargs):
+            for combos in fuseable.itervalues():
+
+                for fuseitems in combos:
+                    city = self.bot.richest_city()
+
+                    if not city.resource_manager.meet_requirements({Resource.GOLD: self.FUSION_COST}, **kwargs):
+                        finished = True
+                        break
+
                     json = self.fuse_items(city, *fuseitems)
 
                     if json['code'] == EmrossWar.SUCCESS:
@@ -114,10 +134,10 @@ class AutoFusion(Task, Controllable):
 
                         if report:
                             self.chat.send_message(msg)
-                else:
-                    finished = True
-                    break
 
+                # Can't do any more combos
+                if finished:
+                    break
 
 if __name__ == "__main__":
     import logging
