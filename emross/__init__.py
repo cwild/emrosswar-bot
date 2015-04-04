@@ -1,3 +1,6 @@
+import gettext
+gettext.install('emrosswar-bot', 'resources/locale', unicode=True)
+
 device = 'EW-IPAD'
 lang = 'en'
 master = 'm.emrosswar.com'

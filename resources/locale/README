@@ -1,0 +1,17 @@
+# ==== A short guide on internationalisation ====
+
+# I was interested enough to play with this but not to convert the entire codebase.
+
+# The gettext module automatically uses the loaded locale files. The environment variable
+# can be set and tested such as:
+/usr/bin/env LANGUAGE=de_DE.UTF-8 python bot.py -h
+
+
+# How do we find translations?
+find . -iname "*.py" | xargs xgettext --from-code=UTF-8 -o emrosswar-bot.po -p resources/locale
+
+# Do the necessary translations and then compile the file
+msgfmt -o emrosswar-bot.mo emrosswar-bot.po
+
+# Put the compiled messages into a special directory structure. eg:
+resources/locale/LC_MESSAGES/en_GB/emrosswar-bot.mo
