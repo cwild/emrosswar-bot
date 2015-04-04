@@ -16,7 +16,7 @@ from lib.cacheable import CacheableData
 from lib.session import Session
 
 
-from emross import OPERATORS
+import emross
 from emross.alliance import Alliance
 from emross.api import EmrossWar
 from emross.chat import Chat
@@ -455,7 +455,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     @property
     def operators(self):
-        ops = OPERATORS[:]
+        ops = emross.OPERATORS[:]
         try:
             ops.extend(self.api.player.operators)
         except Exception:
