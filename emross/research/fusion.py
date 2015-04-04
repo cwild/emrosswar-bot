@@ -5,6 +5,7 @@ from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
 RARE_ITEM_TIERS = {}
+ULTRA_ITEMS_START = 3000
 
 for sid, item in ITEMS.iteritems():
     if item['rank'] >= ItemRank.RARE:
@@ -12,11 +13,17 @@ for sid, item in ITEMS.iteritems():
 
 
 for vals in RARE_ITEM_TIERS.itervalues():
-    # Ascending, better items defined first (generally!)
-    vals.sort(reverse=True)
+    """
+    Older items from the base game: decreasing item ID meant lower quality
+    The new Ultra items are the opposite.
+    """
+    vals.sort()
+    old = [sid for sid in vals if sid < ULTRA_ITEMS_START]
+    old.sort(reverse=True)
+    vals[0:len(old)] = old
 
 # Clean up
-del sid, item, vals
+del old, sid, item, vals
 
 
 class AutoFusion(Task, Controllable):
