@@ -2,6 +2,7 @@ import time
 
 from emross.api import EmrossWar
 from emross.chat.filter import PlayerFilter
+from emross.handlers.handler import EmrossHandler
 from emross.utility.events import Event
 from emross.utility.parser import (MessageParser,
     MessageParsingError, SkipMessage)
@@ -28,6 +29,13 @@ class ChatEvent:
     COUNTDOWN_RELOAD = 7
     SYSTEM_UPDATE = 8
 
+class _OldChatApi(EmrossHandler):
+    URL = 'game/api_chat.php'
+
+    def process(self, errors):
+        self.log.debug('Failed to send message, try the old chat API')
+        self.log.debug((self.args, self.kwargs))
+        return self.bot.api.call(self.URL, **self.kwargs)
 
 class Chat(Task):
     INTERVAL = 5
@@ -167,9 +175,18 @@ class Chat(Task):
             for letters in map(None, *(iter(message),) * size):
                 chunk = ''.join([l for l in letters if l is not None])
 
-                self.bot.api.call(self.URL,
+                self._send_message(self.URL,
                     txt=(prefix+chunk).encode('utf-8'),
                     targettype=channel, targetid=target)
+
+    def _send_message(self, *args, **kwargs):
+        """
+        Try to work with the newer chat API, when it works..
+        """
+        handlers = {
+            500: lambda c : _OldChatApi(c, args, kwargs)
+        }
+        return self.bot.api.call(http_handlers=handlers, *args, **kwargs)
 
     def spam(self, event, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)

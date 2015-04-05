@@ -100,6 +100,7 @@ class EmrossWarApi(object):
                 logger.debug('Pause for a second.')
                 time.sleep(1)
             except exceptions.HTTPError as e:
+                logger.debug((args, kwargs))
                 logger.debug(e)
                 wait = 1 + (i % 10)
                 logger.info('Wait %d seconds before retry' % wait)
@@ -109,6 +110,7 @@ class EmrossWarApi(object):
     def _call(self, method, server=None,
         sleep=(),
         handle_errors=True,
+        http_handlers={},
         **kwargs):
         """Call API and return result"""
         server = server or self.game_server
@@ -145,7 +147,12 @@ class EmrossWarApi(object):
 
             if handle_errors:
                 self.errors.append((r.status, r.data))
-                handler = HTTP_handlers.get(r.status, None)
+
+                # Local handlers updated with global ones
+                handlers = HTTP_handlers.copy()
+                handlers.update(http_handlers)
+                handler = handlers.get(r.status)
+
                 if handler:
                     h = handler(self.bot)
                     result = h.process(self.errors)

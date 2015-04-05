@@ -43,6 +43,11 @@ class HeroManager(Controllable, CacheableData):
 
             for h in self.heroes.itervalues():
                 if int(h.data.get('gid')) == find_id:
+                    # Just spit out whatever data we got back
+                    if 'debug' in kwargs:
+                        self.chat.send_message('Hero data: {0}'.format(h.data))
+                        break
+
                     s = str(h.stat(Hero.STATE))
                     state = EmrossWar.LANG['HEROSTATE'].get(s)
                     message = ['{0}'.format(self.city.name)]
