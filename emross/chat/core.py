@@ -39,7 +39,7 @@ class _OldChatApi(EmrossHandler):
 
 class Chat(Task):
     INTERVAL = 5
-    MAX_MESSAGE_LENGTH = 96
+    MAX_MESSAGE_LENGTH = 80
     URL = 'game/api_chat2.php'
 
     def setup(self):
@@ -169,14 +169,15 @@ class Chat(Task):
 
         if can_send:
             """
-            Max message length is 96!
+            After the max message length, the remainder is discarded by the server!
             """
+            prefix = prefix.encode('utf-8')
             size = self.MAX_MESSAGE_LENGTH - len(prefix)
-            for letters in map(None, *(iter(message),) * size):
+            for letters in map(None, *(iter(message.encode('utf-8')),) * size):
                 chunk = ''.join([l for l in letters if l is not None])
 
                 self._send_message(self.URL,
-                    txt=(prefix+chunk).encode('utf-8'),
+                    txt=prefix+chunk,
                     targettype=channel, targetid=target)
 
     def _send_message(self, *args, **kwargs):
