@@ -8,7 +8,7 @@
 
 
 # How do we find translations?
-find . -iname "*.py" | xargs xgettext --from-code=UTF-8 -o emrosswar-bot.po -p resources/locale
+find . -iname "*.py" | xargs xgettext --from-code=UTF-8 -o emrosswar-bot.pot -p resources/locale --no-location
 
 # Do the necessary translations and then compile the file
 msgfmt -o emrosswar-bot.mo emrosswar-bot.po
