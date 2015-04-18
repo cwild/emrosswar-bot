@@ -63,6 +63,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         self.session = Session(self)
 
+        self._world_name = None
         self.pvp = self.PVP_MODE_RE.match(api.game_server) is not None
         self.npc_attack_limit = 3 if not self.pvp else 5
 
@@ -478,3 +479,15 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
     def other_player_info(self, id=None, **kwargs):
         if id:
             return self.api.call(self.OTHER_USERINFO_URL, id=id, **kwargs)
+
+    @property
+    def world_name(self):
+        """
+        Query the game world only once per run
+        """
+        if not self._world_name:
+            json = self.api.call('naming.php', emross.master, s=self.api.game_server)
+            if json['code'] == EmrossWar.SUCCESS:
+                self._world_name = json['ret']
+
+        return self._world_name
