@@ -260,6 +260,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
         cities = self.cities(**kwargs)
         for city in cities:
             for hero in city.hero_manager.heroes.itervalues():
+                if hero.data.get(Hero.LEVEL) == Hero.MAX_LEVEL:
+                    self.log.debug(six.u('Skipping {0}, already MAX level').format(hero))
+                    continue
+
                 remaining = hero.data.get(Hero.VIGOR, 0)
                 self.log.info('{0} has {amt} {vigor}. Current streak: {streak}, Total W/L: {win}/{loss}'.format(\
                     hero,
