@@ -207,7 +207,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     self.chat.send_message('My {0} is now level {1}'.format(hero, hero.data[Hero.LEVEL]+1), event=event)
                     break
 
-                if json['ret']['win'] <= self.LOSS:
+                if int(json['ret'].get('lose', 0)) > 0 or json['ret']['win'] <= self.LOSS:
                     if stoponlose:
                         self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
                         break
