@@ -14,7 +14,16 @@ from emross.utility.task import FilterableCityTask
 from lib import six
 
 VIGOR = EmrossWar.TRANSLATE['f_city_hero'].get('16', 'Vigor:')[:-1]
+USER_SPECIFIED = _('User Specified')
 
+class TargetManager(dict):
+    def __missing__(self, key):
+        """
+        `key` is the world name.
+        So ['world'] should return a dictionary of hero levels
+        """
+        self[key] = value = defaultdict(list)
+        return value
 
 class OpponentFinder(EmrossBaseObject):
     def __init__(self, bot):
@@ -23,9 +32,19 @@ class OpponentFinder(EmrossBaseObject):
         self.opponent_victors = set()
 
     def find_opponents(self, level, searches=3, *args, **kwargs):
-        searches = int(searches)
         opponents = defaultdict(dict)
-        for _ in xrange(searches):
+
+        user_specified = ArenaFighter.TARGETS[self.bot.world_name][level+1]
+        if user_specified:
+            self.log.debug(_('Found user specified heroes: {0}').format(user_specified))
+
+            for targetid in user_specified:
+                opponents[level+1][targetid] = dict(u=USER_SPECIFIED, id=targetid)
+
+            if opponents:
+                return opponents
+
+        for n in xrange(int(searches)):
             heroes = self.get_arena_opponents(level)
 
             for opponent in heroes:
@@ -58,11 +77,15 @@ class OpponentFinder(EmrossBaseObject):
                 opponent = self.select_preferred_opponent(hero, self.opponents[lvl])
 
                 if opponent:
-                    self.log.debug('Found an opponent at level {0}, stop search'.format(lvl))
+                    self.log.debug(_('Found an opponent at level {0}, stop search').format(lvl))
                     break
 
         opp = opponent or last_resort[0]
-        self.log.info('Our {0} will fight an opposing {1}'.format(hero, Hero(opp)))
+        if opp['u'] is USER_SPECIFIED:
+            self.log.info(_('Our {0} will fight Hero {1}').format(hero, opp['id']))
+        else:
+            self.log.info(_('Our {0} will fight an opposing {1}').format(hero, Hero(opp)))
+
         return opp
 
     def get_arena_opponents(self, level=1):
@@ -90,8 +113,11 @@ class OpponentFinder(EmrossBaseObject):
 
         opp = None
         for oppid, opponent in opponents.iteritems():
+            # If the opponent name is the same object as the one we declared
+            if opponent['u'] is USER_SPECIFIED:
+                return opponent
             # <= because hero ranks are ordered strongest first (a-e)
-            if hero.client['rank'] <= rank(opponent['gid']):
+            elif hero.client['rank'] <= rank(opponent['gid']):
                 if opp is None or \
                     (rank(opponent['gid']), opponent[Hero.WINS]) >= (rank(opp['gid']), opp[Hero.WINS]):
                     # Chosen the lower ranked hero or the hero with lowest win-streak
@@ -118,6 +144,8 @@ class ArenaFighter(FilterableCityTask, Controllable):
     DRAW = 0
     WIN = 1
     MULTI_HITS = 5
+
+    TARGETS = TargetManager()
 
     def action_attack(self, event, hero, target, multi=None,
                     stoponlose=1, sleep=(), *args, **kwargs):

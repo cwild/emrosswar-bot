@@ -138,15 +138,15 @@ class Hero(EmrossBaseObject):
         hero_data = self.client
         parts = [hero_data.get('name', 'Unknown')]
 
-        parts.append('(')
-
         if 'rank' in hero_data:
             parts.append('%s' % self.RANKS.get(hero_data['rank']))
 
         if 'race' in hero_data:
             parts.append(' of %s' % self.FACES.get(hero_data['race']))
 
-        parts.append(')')
+        if len(parts) > 1:
+            parts.insert(1, '(')
+            parts.append(')')
 
         return ''.join(parts)
 
