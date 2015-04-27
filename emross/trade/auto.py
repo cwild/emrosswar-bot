@@ -41,6 +41,7 @@ class AutoTrade(Task):
     def setup(self):
         self.remote = RemoteTrade(**settings.plugin_api)
         self.trade = Trade(self.bot)
+        self._synced_items = None
 
     def process(self, mode=BUYER, *args, **kwargs):
         try:
@@ -111,7 +112,7 @@ class AutoTrade(Task):
         except (IndexError, TypeError) as e:
             city = self.bot.poorest_city()
 
-        self.log.debug('Sell trade items from city "{0}"'.format(city.name))
+        self.log.debug(six.u('Sell trade items from {0}').format(city))
 
         waiting = self.trade.list_all(city, funcs=[self.trade.list_waiting])
         trading = self.trade.list_all(city, funcs=[self.trade.list_trading])
@@ -218,8 +219,14 @@ class AutoTrade(Task):
             self.sleep(900)
 
 
-        self.log.debug('Sync trade list to remote api, trading items {0}'.format(trading))
-        self.remote.sync(server=self.bot.api.game_server, user_id=self.bot.userinfo['id'], items=trading)
+        items_to_sync = set([vals[0] for vals in trading])
+        if self._synced_items == items_to_sync:
+            self.log.debug('Synced items are unchanged')
+        else:
+            self.log.debug('Sync trade list to remote api, trading items {0}'.format(trading))
+            self.remote.sync(server=self.bot.api.game_server, user_id=self.bot.userinfo['id'], items=trading)
+            self._synced_items = items_to_sync
+
         self.sleep(300)
 
 
