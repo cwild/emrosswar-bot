@@ -152,6 +152,17 @@ class InventoryManager(Controllable, CacheableData):
 
                    if json['code'] == EmrossWar.SUCCESS:
                        used += 1
+
+                       feedback = []
+                       feedback.append((json['ret'].get('ep'), EmrossWar.LANG['EMRONOR']))
+                       feedback.append((json['ret'].get('gem'), EmrossWar.LANG['MONEY']))
+
+                       for _item in json['ret'].get('item', []):
+                           feedback.append((_item['num'], _item['name']))
+
+                       msg = ['{0}*{1}'.format(qty, name) for qty, name in feedback if qty]
+                       if msg:
+                           self.chat.send_message(', '.join(msg), event=event)
                    else:
                        # Something wrong, stop using items
                        work = False
