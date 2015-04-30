@@ -68,11 +68,13 @@ class InventoryManager(Controllable, CacheableData):
             except KeyError:
                 pass
 
-    def action_search(self, event, *args, **kwargs):
+    def _get_all_items(self):
         """
-        Locate items from the inventory
+        Load the cached client item dict but update with other items from
+        our inventory where necessary
         """
         all_items = copy.deepcopy(EmrossWar.ITEM.data)
+
         for _type in self.data.itervalues():
             for _data in _type.itervalues():
                 _item = _data['item']
@@ -83,7 +85,28 @@ class InventoryManager(Controllable, CacheableData):
                     'sid': str(_item.get('sid')),
                 }
                 all_items.setdefault(new_data['sid'], {}).update(new_data)
+        return all_items
 
+    def action_data(self, event, *args, **kwargs):
+        """
+        Find data about a specific item
+        """
+        for _search in args:
+            for _id, _item in self._get_all_items().iteritems():
+                try:
+                    if re.search(_search, _item.get('name'), re.IGNORECASE):
+                        self.chat.send_message(
+                            _('Found {0}: {1}').format(_search, _item),
+                            event=event
+                        )
+                except re.error:
+                    pass
+
+    def action_search(self, event, *args, **kwargs):
+        """
+        Locate items from the inventory
+        """
+        all_items = self._get_all_items()
 
         search_items = []
         for _search in args:
