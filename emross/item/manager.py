@@ -1,5 +1,6 @@
 import copy
 import re
+import sys
 
 from lib.cacheable import CacheableData
 from lib import six
@@ -106,3 +107,56 @@ class InventoryManager(Controllable, CacheableData):
             )
         elif 'quiet' not in kwargs:
             self.chat.send_message('Sorry, I do not have any of those items!')
+
+    def action_use(self, event, *args, **kwargs):
+        """Use a given item, eg. sid=123"""
+
+        sid = kwargs.get('sid')
+        if sid:
+            sid = int(sid)
+
+        found = self.data.get(sid)
+
+        if not found:
+            if 'quiet' not in kwargs:
+                self.chat.send_message(_('I do not have any of those!'),
+                    event=event)
+
+            return
+
+        item_manager = self.bot.item_manager
+
+        try:
+            num = kwargs.get('num', 1)
+            if num == '*':
+                num = sys.maxsize
+            else:
+                num = int(num)
+        except ValueError:
+            num = 0
+
+        total, work = 0, True
+        while work and total < num:
+            used = 0
+
+            for item_id, item in found.iteritems():
+                if not work:
+                    break
+                if not item['use']:
+                    self.log.debug(_('Unable to use item: {0}').format(item))
+                    continue
+
+                times = min(item['item']['num'], num-total)
+                for c in six.moves.range(times):
+                   json = item_manager.use(self.bot.cities[0], item_id)
+
+                   if json['code'] == EmrossWar.SUCCESS:
+                       used += 1
+                   else:
+                       # Something wrong, stop using items
+                       work = False
+                       break
+
+            total += used
+            if not used:
+                break
