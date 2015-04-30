@@ -56,16 +56,16 @@ class InventoryManager(Controllable, CacheableData):
 
 
     def adjust_item_stock(self, item_id, qty=1):
-        try:
-            for sid, values in self._data.iteritems():
+        for sid, values in self._data.iteritems():
+            try:
                 values[int(item_id)]['item']['num'] += qty
 
                 if values[int(item_id)]['item']['num'] < 1:
                     del values[int(item_id)]
 
                 return
-        except KeyError:
-            pass
+            except KeyError:
+                pass
 
     def action_search(self, event, *args, **kwargs):
         """
