@@ -169,7 +169,7 @@ class InventoryManager(Controllable, CacheableData):
                     self.log.debug(_('Unable to use item: {0}').format(item))
                     continue
 
-                times = min(item['item']['num'], num-total)
+                times = min(item['item']['num'], num) - total
                 for c in six.moves.range(times):
                    json = item_manager.use(self.bot.cities[0], item_id)
 
