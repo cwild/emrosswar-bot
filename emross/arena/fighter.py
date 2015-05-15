@@ -204,7 +204,8 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
                 if hero.data.get(Hero.EXPERIENCE) >= hero.data.get(Hero.TARGET_EXPERIENCE):
                     city.hero_manager.expire()
-                    self.chat.send_message('My {0} is now level {1}'.format(hero, hero.data[Hero.LEVEL]+1), event=event)
+                    self.chat.send_message(_('My {0} is now level {1}').format(\
+                        hero, hero.data[Hero.LEVEL]+1), event=event)
                     break
 
                 if int(json['ret'].get('lose', 0)) > 0 or json['ret']['win'] <= self.LOSS:
@@ -304,7 +305,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 )
 
                 if int(hero.data['id']) in self.currently_fighting:
-                    self.log.info('Skip currently fighting hero, {0}'.format(hero))
+                    self.log.info(_('Skip currently fighting hero, {0}').format(hero))
                     continue
 
                 """
@@ -313,9 +314,9 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 """
                 tainted = False
                 losses = 0
-                for _ in range(remaining + below - max_vigor):
+                for i in range(remaining + below - max_vigor):
                     if int(hero.data['id']) in self.currently_fighting:
-                        self.log.info('Stop currently fighting hero, {0}'.format(hero))
+                        self.log.info(_('Stop currently fighting hero, {0}').format(hero))
                         break
 
                     level = hero.data.get(Hero.LEVEL)
@@ -330,7 +331,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         losses += 1
 
                         if losses == loss_limit:
-                            self.log.info('Loss limit reached, stopping fighting with {0}'.format(hero))
+                            self.log.info(_('Loss limit reached, stopping fighting with {0}').format(hero))
                             opponents.remove_opponent(opponent)
                             break
                     elif losses > 0:
