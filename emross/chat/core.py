@@ -97,6 +97,13 @@ class Chat(Task):
                     method, args, kwargs = MessageParser.parse_message(text, targets,
                         myself=msg.get('from_name') == self.bot.userinfo.get('nick'),
                         filter=self.player_filter.filter)
+
+                    try:
+                        data['channel'] = CHANNELS[kwargs['channel'].lower()]
+                        del kwargs['channel']
+                    except KeyError:
+                        pass
+
                     event = Event(method, **data)
                     self.bot.events.notify(event, *args, **kwargs)
 
@@ -146,16 +153,13 @@ class Chat(Task):
     def ping(self, event, *args, **kwargs):
         self.send_message('pong', event=event)
 
-    def send_message(self, message, channel=Channel.ALLIANCE, prefix='', event=None, **kwargs):
+    def send_message(self, message, prefix='', event=None, **kwargs):
         can_send = False
 
         try:
-            if event:
-                channel = event.channel
-            else:
-                channel = int(channel)
-        except ValueError:
-            channel = CHANNELS.get(channel.lower(), Channel.ALLIANCE)
+            channel = event.channel
+        except AttributeError:
+            channel = Channel.ALLIANCE
 
         if channel == Channel.ALLIANCE:
             guild_id = self.bot.userinfo.get('guildid')
@@ -166,6 +170,8 @@ class Chat(Task):
             if event:
                 target, can_send = event.player_id, True
 
+        elif channel == Channel.WORLD:
+            target, can_send = 0, True
 
         if can_send:
             """
@@ -192,4 +198,4 @@ class Chat(Task):
     def spam(self, event, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
         for i in range(int(kwargs.get('times', 1))):
-            self.send_message(msg, channel=kwargs.get('channel', Channel.ALLIANCE))
+            self.send_message(msg, event=event)
