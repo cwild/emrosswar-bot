@@ -40,7 +40,7 @@ class AutoTrade(Task):
 
     def setup(self):
         self.remote = RemoteTrade(**settings.plugin_api)
-        self.trade = Trade(self.bot)
+        self.trade = self.bot.builder.task(Trade)
         self._synced_items = None
 
     def process(self, mode=BUYER, *args, **kwargs):

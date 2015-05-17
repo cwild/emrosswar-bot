@@ -83,22 +83,47 @@ class Trade(Controllable):
         return self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)
 
     @Controllable.restricted
-    def action_p2p(self, event, search_item, *args, **kwargs):
+    def action_p2p(self, event, search_item=None, *args, **kwargs):
         """
         Player-to-Player trade. Sell the listed `item`
         """
         player = kwargs.get('player', event.player_name)
         price = int(kwargs.get('price', self.P2P_SELLER_DEFAULT_PRICE))
 
-        items = self.bot.inventory.find_search_items_from_names(search_item)
+        try:
+            items = [int(kwargs['sid'])]
+        except (KeyError, ValueError):
+            items = self.bot.inventory.find_search_items_from_names(search_item)
+
+        self.log.debug(items)
+
         if len(items) > 1:
-            self.chat.send_message(_('You need to be more specific with your item'), event=event)
+            self.chat.send_message(\
+                _('You need to be more specific as the following items match:'),
+                event=event
+            )
+
+            for item in items:
+                try:
+                    name = EmrossWar.ITEM[str(item)]['name']
+                except KeyError:
+                    name = _('Unknown item')
+
+                self.chat.send_message(_('sid={0}, name={1}').format(\
+                    item, name),
+                    event=event
+                )
+
+            self.chat.send_message(\
+                _('You could try using the item number instead eg. sid=1234'),
+                event=event
+            )
             return
 
         sellable_item = None
 
         for item in items:
-            for item_id, data in self.bot.inventory._data[item].iteritems():
+            for item_id, data in self.bot.inventory.data[item].iteritems():
                 try:
                     if int(data['lockinfo']['locked']) == 1:
                         self.chat.send_message(_('That item is locked for {0}!').format(\
