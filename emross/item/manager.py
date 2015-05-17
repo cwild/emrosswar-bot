@@ -87,6 +87,20 @@ class InventoryManager(Controllable, CacheableData):
                 all_items.setdefault(new_data['sid'], {}).update(new_data)
         return all_items
 
+    def find_search_items_from_names(self, *args):
+        all_items = self._get_all_items()
+
+        search_items = []
+        for _search in args:
+            for _id, _item in all_items.iteritems():
+                try:
+                    if re.search(_search, _item.get('name'), re.IGNORECASE):
+                        search_items.append(int(_id))
+                except re.error:
+                    pass
+
+        return search_items
+
     def action_data(self, event, *args, **kwargs):
         """
         Find data about a specific item
@@ -107,15 +121,7 @@ class InventoryManager(Controllable, CacheableData):
         Locate items from the inventory
         """
         all_items = self._get_all_items()
-
-        search_items = []
-        for _search in args:
-            for _id, _item in all_items.iteritems():
-                try:
-                    if re.search(_search, _item.get('name'), re.IGNORECASE):
-                        search_items.append(int(_id))
-                except re.error:
-                    pass
+        search_items = self.find_search_items_from_names(*args)
 
         found = self.bot.find_inventory_items(search_items)
         result = []

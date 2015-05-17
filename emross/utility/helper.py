@@ -30,6 +30,7 @@ from emross.mail import AttackMailHandler, ScoutMailHandler, MailException
 from emross.mail.mailer import Mailer, MailMan
 from emross.resources import Resource
 from emross.shop import Shop
+from emross.trade.trader import Trade
 from emross.utility.about import AboutHelper
 from emross.utility.base import EmrossBaseObject
 from emross.utility.builder import BuildManager
@@ -145,6 +146,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         # Register Controllable modules
         self.builder.task(Mailer)
         self.builder.task(MailMan)
+        self.builder.task(Trade)
 
         if self.api.player:
             if hasattr(self.settings, 'build_path') and \

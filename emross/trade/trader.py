@@ -1,10 +1,15 @@
+from __future__ import division
+
 from emross.api import EmrossWar
 from emross.exceptions import TradeException
-from emross.utility.base import EmrossBaseObject
+from emross.resources import Resource
+from emross.utility.controllable import Controllable
 
 from lib import six
 
-class Trade(EmrossBaseObject):
+class Trade(Controllable):
+    COMMAND = 'trade'
+
     TRADE_URL = 'game/safe_goods_api.php'
     MARKET_URL = 'game/safe_market_api.php'
 
@@ -16,6 +21,9 @@ class Trade(EmrossBaseObject):
     MAX_ITEMS = 20
 
     TRADE_LIMIT_REACHED = 3605
+
+    P2P_BUYER_COST = 10
+    P2P_SELLER_DEFAULT_PRICE = 1
 
     def _list(self, type, city, url=TRADE_URL, page=1, *args, **kwargs):
         return self.bot.api.call(url, type=type, city=city.id, page=page, *args, **kwargs)
@@ -43,15 +51,27 @@ class Trade(EmrossBaseObject):
                     break
         return result
 
-    def sell_item(self, city, id, price):
-        json = self.bot.api.call(self.TRADE_URL, action=self.SELL_ITEM, city=city.id, id=id, safe_num=1, price=price)
+    def sell_item(self, city, id, price, player=None, **kwargs):
+        """
+        Given a city, sell the specified item id for the specified price.
+        If player is supplied then do a p2p trade
+        """
+        json = self.bot.api.call(self.TRADE_URL, action=self.SELL_ITEM,
+                    city=city.id, id=id, safe_num=1, price=price,
+                    player_pname=player)
 
         if json['code'] == self.TRADE_LIMIT_REACHED:
             raise TradeException('Maximum number of trade items has been reached')
 
         if json['code'] != EmrossWar.SUCCESS:
             self.log.warning(six.u('Problem selling item {0} at {1} for {2} gold').format(id, city, price))
-            raise TradeException
+            raise TradeException(json.get('ret') or 'Problem selling item')
+
+        if player:
+            msg = _('P2P trade item {id} to "{player}" for {price} {resource}').format(\
+                id=id, player=player, price=price, resource=EmrossWar.LANG.get('COIN', 'gold')
+            )
+            self.chat.send_message(msg, event=kwargs.get('event'))
 
         return EmrossWar.SUCCESS
 
@@ -61,3 +81,58 @@ class Trade(EmrossBaseObject):
         """
         self.log.info(six.u('Attempting to buy item {0} from {1}').format(id, city.name))
         return self.bot.api.call(self.MARKET_URL, action='purchasing', city=city.id, id=id, *args, **kwargs)
+
+    @Controllable.restricted
+    def action_p2p(self, event, search_item, *args, **kwargs):
+        """
+        Player-to-Player trade. Sell the listed `item`
+        """
+        player = kwargs.get('player', event.player_name)
+        price = int(kwargs.get('price', self.P2P_SELLER_DEFAULT_PRICE))
+
+        items = self.bot.inventory.find_search_items_from_names(search_item)
+        if len(items) > 1:
+            self.chat.send_message(_('You need to be more specific with your item'), event=event)
+            return
+
+        sellable_item = None
+
+        for item in items:
+            for item_id, data in self.bot.inventory._data[item].iteritems():
+                try:
+                    if int(data['lockinfo']['locked']) == 1:
+                        self.chat.send_message(_('That item is locked for {0}!').format(\
+                            self.bot.human_friendly_time(data['lockinfo']['secs'])), event=event)
+                        continue
+                except KeyError:
+                    pass
+
+                if int(data['sale']) > 0:
+                    sellable_item = item_id
+                    break
+
+        if not sellable_item:
+            self.chat.send_message(_("I couldn't find that item, no deal!"), event=event)
+            return
+
+        city = self.bot.richest_city()
+        cost = price * (self.SELLING_FEE / 100)
+
+        if city.resource_manager.meet_requirements({Resource.GOLD: cost}, **kwargs):
+            result = self.sell_item(city, sellable_item, price, player, event=event)
+
+            if result == EmrossWar.SUCCESS:
+                self.chat.send_message(_("Don't forget to buy that item, you hear?"), event=event)
+            else:
+                self.chat.send_message(_("Something didn't go to plan.."), event=event)
+        else:
+            self.chat.send_message(_('That would cost me too much!'), event=event)
+
+
+if __name__ == "__main__":
+    id, player, price = 1, u'test \xf3 player', 123
+
+    msg = _('P2P trade item {id} to "{player}" for {price} {resource}').format(\
+        id=id, player=player, price=price, resource=EmrossWar.LANG.get('COIN', 'gold')
+    )
+    print msg
