@@ -79,7 +79,7 @@ class Controllable(EmrossBaseObject):
                     self.log.debug('The command password does not match!')
                     return
 
-            outer.update(kwargs)
-            return method(self, *args, **outer)
+            kwargs.update(outer)
+            return method(self, *args, **kwargs)
 
         return wrapped
