@@ -7,8 +7,6 @@ locale.setlocale(locale.LC_ALL, '')
 import math
 import re
 import time
-import sys
-sys.path.extend(['lib/urllib3/'])
 
 from multiprocessing.dummy import RLock
 

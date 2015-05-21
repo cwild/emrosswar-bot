@@ -21,8 +21,12 @@ except ImportError:
     from lib.ordered_dict import OrderedDict
 
 
-sys.path.extend(['lib/urllib3/'])
-from urllib3 import PoolManager, make_headers, exceptions
+try:
+    # Natively installed version
+    import urllib3
+except ImportError:
+    sys.path.extend(['lib/urllib3/'])
+    import urllib3
 
 
 from emross import device, lang
@@ -60,7 +64,7 @@ class EmrossWarApi(object):
     def init_pool(cls, connections=10, timeout=15, **kwargs):
         with cls._LOCK:
             if cls.CONN_POOL is None:
-                cls.CONN_POOL = PoolManager(maxsize=connections, timeout=timeout, **kwargs)
+                cls.CONN_POOL = urllib3.PoolManager(maxsize=connections, timeout=timeout, **kwargs)
                 logger.info('PoolManager initialised with {0} connections'.format(connections))
 
     @property
@@ -72,7 +76,7 @@ class EmrossWarApi(object):
         return pool
 
     def create_headers(self):
-        return make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
+        return urllib3.make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
 
     def call(self, *args, **kwargs):
         for i in xrange(1, 6):
@@ -99,7 +103,7 @@ class EmrossWarApi(object):
                 logger.exception(e)
                 logger.debug('Pause for a second.')
                 time.sleep(1)
-            except exceptions.HTTPError as e:
+            except urllib3.exceptions.HTTPError as e:
                 logger.debug((args, kwargs))
                 logger.debug(e)
                 wait = 1 + (i % 10)
@@ -138,7 +142,7 @@ class EmrossWarApi(object):
                     'http://{0}/{1}'.format(server, method),
                     fields=params, headers=self.create_headers()
                 )
-        except exceptions.HTTPError as e:
+        except urllib3.exceptions.HTTPError as e:
             logger.exception(e)
             r = DummyResponse(status=503, data=e)
 
@@ -159,7 +163,7 @@ class EmrossWarApi(object):
                     if result:
                         return result
 
-            raise exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
+            raise urllib3.exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
 
         jsonp = r.data
         jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
