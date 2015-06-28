@@ -73,6 +73,10 @@ class Construct(FilterableCityTask):
                     if use_scrolls:
                         city.countdown_manager.use_items_for_task(task, self.COUNTDOWN_ITEMS)
 
+                elif free_land == 0:
+                    self.log.debug(six.u('{0} is out of free land. Unable to build.').format(city))
+                    continue
+
                 elif open_slots and self.MAX_BUILD_SLOTS > len(tasks) == capacity:
                     """
                     Not already building this structure at this city.
@@ -98,10 +102,6 @@ class Construct(FilterableCityTask):
 
                         if done:
                             break
-
-                elif free_land == 0:
-                    self.log.debug(six.u('{0} is out of free land. Unable to build.').format(city))
-                    continue
 
 
                 if len(tasks) < capacity and structure not in current_build \
