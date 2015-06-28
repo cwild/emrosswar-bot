@@ -20,7 +20,10 @@ except ImportError:
 def _parse_args(arg_strs):
     args, kwargs = [], OrderedDict()
 
-    for s in _split(arg_strs):
+    # shlex is not able to handle unicode natively
+    # http://stackoverflow.com/questions/14218992/shlex-split-still-not-supporting-unicode
+    for s in map(lambda s: s.decode('utf8'), _split(arg_strs.encode('utf8'))):
+
         if s.count('=') == 1:
             key, value = s.split('=', 1)
             kwargs[key] = value
