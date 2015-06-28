@@ -170,6 +170,7 @@ class Study(FilterableCityTask, Controllable):
                 ctdwn = self.upgrade(city, tech, owner)
                 if ctdwn['code'] == EmrossWar.SUCCESS:
                     city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
+                    self.reschedule()
                     break
 
 
