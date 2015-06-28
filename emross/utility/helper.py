@@ -181,18 +181,18 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
             chat.send_message('{0}: {data}'.format(self.STATUS_COMMAND,
                 data = ', '.join(['{0}={1}'.format(k,v) for k, v in parts])
-            ))
+            ), event=event)
         self.events.subscribe(self.STATUS_COMMAND, status)
 
         def uptime(event, *args, **kwargs):
             chat = self.builder.task(Chat)
             f = self.human_friendly_time(time.time() - self.session.start_time)
-            chat.send_message('uptime: {0}'.format(f))
+            chat.send_message('uptime: {0}'.format(f), event=event)
         self.events.subscribe(self.UPTIME_COMMAND, uptime)
 
         def wealth(event, *args, **kwargs):
             chat = self.builder.task(Chat)
-            chat.send_message(self.total_wealth(*args, **kwargs))
+            chat.send_message(self.total_wealth(*args, **kwargs), event=event)
         self.events.subscribe(self.WEALTH_COMMAND, wealth)
 
     def update(self):
