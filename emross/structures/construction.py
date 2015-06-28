@@ -109,6 +109,8 @@ class Construct(FilterableCityTask):
                     ctdwn = self.upgrade(city, structure)
                     if ctdwn['code'] == EmrossWar.SUCCESS:
                         city.countdown_manager.add_tasks(ctdwn['ret']['cdlist'])
+                        # Run again so that we may use scrolls etc
+                        self.reschedule()
                 else:
                     result = False
 
