@@ -41,11 +41,11 @@ class Favourites(Controllable):
         self.get_favs()
 
         favs = self.favs[self.DEVIL_ARMY]
-        self.chat.send_message('{num}*{monster}: {remain} remaining loots.'.format(\
+        self.chat.send_message(_('{num}*{monster}: {remain} remaining loots.').format(\
             num=len(favs),
             monster=EmrossWar.LANG.get('MONSTER', 'NPCs'),
             remain=sum([self.bot.npc_attack_limit - x.attack for x in favs])
-        ))
+        ), event=event)
 
     def add(self, wid, cat):
         return self.bot.api.call(FAVOURITES_URL, act='addreport', wid=wid, cat=cat)
@@ -53,17 +53,19 @@ class Favourites(Controllable):
     def clear_favs(self, cat=DEVIL_ARMY, *args, **kwargs):
         cat = int(cat)
         for f in self.favs[cat]:
-            self.log.info('Deleting fav {0}'.format(f.id))
+            self.log.debug(_('Deleting fav {0}').format(f.id))
             self.bot.api.call(FAVOURITES_URL, act='delfavnpc', fid=f.id)
 
     def get_favs(self, cat=DEVIL_ARMY):
+        """
+        Update the list of favourites of the specified type
+        """
         json = self.bot.api.call(FAVOURITES_URL, act='getfavnpc', cat=cat)
-        favs = json['ret']['favs']
 
-        self.favs[cat][:] = []
-        for data in favs:
-            fav = self.TYPES.get(cat, GenericFavourite)(data, self.bot)
-            self.favs[cat].append(fav)
+        self.favs[cat][:] = [
+            self.TYPES.get(cat, GenericFavourite)(data, self.bot)
+            for data in json['ret']['favs']
+        ]
 
     def sort_favs(self, city, cat=DEVIL_ARMY):
         """
