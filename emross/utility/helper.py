@@ -42,9 +42,9 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
     USERINFO_URL = 'game/get_userinfo_api.php'
     OTHER_USERINFO_URL = 'game/api_get_userinfo2.php'
 
-    STATUS_COMMAND = 'status'
-    UPTIME_COMMAND = 'uptime'
-    WEALTH_COMMAND = 'wealth'
+    STATUS_COMMAND = _('status')
+    UPTIME_COMMAND = _('uptime')
+    WEALTH_COMMAND = _('wealth')
 
     def __init__(self, api, socket_writer=None, settings=None, *args, **kwargs):
         super(EmrossWarBot, self).__init__(bot=self, time_to_live=60, *args, **kwargs)
@@ -86,7 +86,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
 
     def __del__(self):
-        self.log.debug('Clean up bot instance')
+        self.log.debug(_('Clean up bot instance'))
 
     def __repr__(self):
         try:
@@ -96,7 +96,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             return ''
 
     def disconnect(self, *args, **kwargs):
-        self.log.debug('Disconnecting')
+        self.log.debug(_('Disconnecting'))
         self.api.shutdown = True
         self.runnable = False
         self.blocked = True
@@ -108,12 +108,12 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         try:
             self.session.save()
         except IOError:
-            self.log.warning('Error saving session')
+            self.log.warning(_('Error saving session'))
 
     @property
     def userinfo(self):
         if not self.is_initialised and self.closing:
-            raise BotException('userinfo unavailable and marked for shutdown')
+            raise BotException(_('userinfo unavailable and marked for shutdown'))
         return self.data
 
     def socket_writer(self, data):
@@ -172,12 +172,12 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             ]
 
             conquer = self.userinfo.get('conq', [0, 0, None, 5])
-            conqueror_id, conq_end, conq_name, _ = conquer
+            conqueror_id, conq_end, conq_name, _discard = conquer
 
             if conqueror_id:
-                parts.append(('conquered by', conq_name))
+                parts.append((_('conquered by'), conq_name))
                 f = self.human_friendly_time(conq_end - time.time())
-                parts.append(('conquer ends', f))
+                parts.append((_('conquer ends'), f))
 
             chat.send_message('{0}: {data}'.format(self.STATUS_COMMAND,
                 data = ', '.join(['{0}={1}'.format(k,v) for k, v in parts])
@@ -200,7 +200,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         Setup bot with player account data
         """
 
-        self.log.debug('Updating player info')
+        self.log.debug(_('Updating player info'))
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         self._data = userinfo = json['ret']['user']
@@ -230,7 +230,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         except KeyError:
             gift_item = gid
 
-        self.log.info('Collecting gift "{0}"'.format(gift_item))
+        self.log.info(_('Collecting gift "{0}"').format(gift_item))
         json = self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
         if int(gid) == inventory.DAILY_GIFT[0]:
@@ -240,7 +240,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         return json
 
     def scout_map(self, **kwargs):
-        self.log.info('Trying to find more targets to attack')
+        self.log.info(_('Trying to find more targets to attack'))
 
         try:
             last_scan = self.session.last_scan
@@ -249,7 +249,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         hours = kwargs.get('scouting_interval', 72)
         if time.time() < last_scan + hours*3600:
-            self.log.info('The world was scanned less than {0} hours ago'.format(hours))
+            self.log.debug(_('The world was scanned less than {0} hours ago').format(hours))
         else:
             try:
                 self.world.search(**kwargs)
@@ -261,7 +261,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                 self.session.save()
 
         try:
-            self.log.info('Look at scout reports to try to locate devil armies')
+            self.log.debug(_('Look at scout reports to try to locate devil armies'))
             self.scout_mail.process(**kwargs)
         except MailException:
             pass
@@ -306,14 +306,14 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             pass
 
     def clearout_inventory(self, city=None, use_items=False, sell_items=False, **kwargs):
-        self.log.info('Clear the item inventories')
+        self.log.debug(_('Clear the item inventories'))
 
         it = item.ItemType
         for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
             page = 1
             sale_list = []
 
-            self.log.info('Find items of type {0}'.format(itype))
+            self.log.debug(_('Find items of type {0}').format(itype))
             while True:
                 json = self.item_manager.list(page=page, type=itype)
 
@@ -327,11 +327,11 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    self.log.debug('Last page of item type {0}'.format(itype))
+                    self.log.debug(_('Last page of item type {0}').format(itype))
                     break
 
             if sale_list:
-                self.log.info('Sell {0} item/s of type {1}'.format(len(sale_list), itype))
+                self.log.debug(_('Sell {0} item/s of type {1}').format(len(sale_list), itype))
                 city = city or self.poorest_city()
 
                 for item_id in sale_list:
@@ -377,7 +377,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                 _search = _search.pop(0)['item']
 
             try:
-                self.log.debug('Searching for item {0}: "{1}"'.format(\
+                self.log.debug(_('Searching for item {0}: "{1}"').format(\
                     sid, _search.get('name', 'Unknown')
                 ))
 
