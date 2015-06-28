@@ -54,11 +54,9 @@ class Construct(FilterableCityTask):
 
         for city in self.cities(**kwargs):
 
-            if city.data[0] == 0:
-                self.log.debug(six.u('{0} is out of free land. Unable to build.').format(city))
-                continue
-
+            free_land = city.data[0]
             current_level = self.structure_level(city, structure)
+
             if current_level < level:
                 tasks = city.countdown_manager.get_tasks(task_type=TaskType.BUILDING)
 
@@ -100,6 +98,11 @@ class Construct(FilterableCityTask):
 
                         if done:
                             break
+
+                elif free_land == 0:
+                    self.log.debug(six.u('{0} is out of free land. Unable to build.').format(city))
+                    continue
+
 
                 if len(tasks) < capacity and structure not in current_build \
                     and city.resource_manager.meet_requirements(Building.cost(structure, current_level+1), **kwargs):
