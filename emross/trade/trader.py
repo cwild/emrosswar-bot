@@ -87,7 +87,7 @@ class Trade(Controllable):
         """
         Player-to-Player trade. Sell the listed `item`
         """
-        player = kwargs.get('player', event.player_name)
+        player = kwargs.get('player') or event.player_name
         price = int(kwargs.get('price', self.P2P_SELLER_DEFAULT_PRICE))
 
         try:
@@ -144,7 +144,7 @@ class Trade(Controllable):
         cost = price * (self.SELLING_FEE / 100)
 
         if city.resource_manager.meet_requirements({Resource.GOLD: cost}, **kwargs):
-            result = self.sell_item(city, sellable_item, price, player, event=event)
+            result = self.sell_item(city, sellable_item, price, player.encode('utf8'), event=event)
 
             if result == EmrossWar.SUCCESS:
                 self.chat.send_message(_("Don't forget to buy that item, you hear?"), event=event)
@@ -155,7 +155,7 @@ class Trade(Controllable):
 
 
 if __name__ == "__main__":
-    id, player, price = 1, u'test \xf3 player', 123
+    id, player, price = 1, six.u('test \xf3 player'), 123
 
     msg = _('P2P trade item {id} to "{player}" for {price} {resource}').format(\
         id=id, player=player, price=price, resource=EmrossWar.LANG.get('COIN', 'gold')
