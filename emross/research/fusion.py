@@ -134,6 +134,9 @@ class AutoFusion(Task, Controllable):
 
                         if report:
                             self.chat.send_message(msg)
+                    else:
+                        self.log.debug(_('Fusion failure: %s'), json)
+                        finished = True
 
                 # Can't do any more combos
                 if finished:
