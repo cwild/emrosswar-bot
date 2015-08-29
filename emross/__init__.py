@@ -1,5 +1,10 @@
 import gettext
-gettext.install('emrosswar-bot', 'resources/locale', unicode=True)
+gettext.install(
+    'emrosswar-bot',
+    'resources/locale',
+    unicode=True,
+    names=('gettext', 'ngettext')
+)
 
 device = 'EW-IPAD'
 lang = 'en'

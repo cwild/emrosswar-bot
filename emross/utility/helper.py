@@ -42,9 +42,16 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
     USERINFO_URL = 'game/get_userinfo_api.php'
     OTHER_USERINFO_URL = 'game/api_get_userinfo2.php'
 
-    STATUS_COMMAND = _('status')
-    UPTIME_COMMAND = _('uptime')
-    WEALTH_COMMAND = _('wealth')
+    STATUS_COMMAND = gettext('status')
+    UPTIME_COMMAND = gettext('uptime')
+    WEALTH_COMMAND = gettext('wealth')
+
+    TIME_PERIODS = (
+        (60, gettext('minute')),
+        (3600, gettext('hour')),
+        (86400, gettext('day')),
+        (86400*7, gettext('week'))
+    )
 
     def __init__(self, api, socket_writer=None, settings=None, *args, **kwargs):
         super(EmrossWarBot, self).__init__(bot=self, time_to_live=60, *args, **kwargs)
@@ -86,7 +93,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
 
     def __del__(self):
-        self.log.debug(_('Clean up bot instance'))
+        self.log.debug(gettext('Clean up bot instance'))
 
     def __repr__(self):
         try:
@@ -96,7 +103,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             return ''
 
     def disconnect(self, *args, **kwargs):
-        self.log.debug(_('Disconnecting'))
+        self.log.debug(gettext('Disconnecting'))
         self.api.shutdown = True
         self.runnable = False
         self.blocked = True
@@ -108,12 +115,12 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         try:
             self.session.save()
         except IOError:
-            self.log.warning(_('Error saving session'))
+            self.log.warning(gettext('Error saving session'))
 
     @property
     def userinfo(self):
         if not self.is_initialised and self.closing:
-            raise BotException(_('userinfo unavailable and marked for shutdown'))
+            raise BotException(gettext('userinfo unavailable and marked for shutdown'))
         return self.data
 
     def socket_writer(self, data):
@@ -175,9 +182,9 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             conqueror_id, conq_end, conq_name, _discard = conquer
 
             if conqueror_id:
-                parts.append((_('conquered by'), conq_name))
+                parts.append((gettext('conquered by'), conq_name))
                 f = self.human_friendly_time(conq_end - time.time())
-                parts.append((_('conquer ends'), f))
+                parts.append((gettext('conquer ends'), f))
 
             chat.send_message('{0}: {data}'.format(self.STATUS_COMMAND,
                 data = ', '.join(['{0}={1}'.format(k,v) for k, v in parts])
@@ -187,7 +194,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         def uptime(event, *args, **kwargs):
             chat = self.builder.task(Chat)
             f = self.human_friendly_time(time.time() - self.session.start_time)
-            chat.send_message('uptime: {0}'.format(f), event=event)
+            chat.send_message('{0}: {1}'.format(gettext('uptime'), f), event=event)
         self.events.subscribe(self.UPTIME_COMMAND, uptime)
 
         def wealth(event, *args, **kwargs):
@@ -200,7 +207,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         Setup bot with player account data
         """
 
-        self.log.debug(_('Updating player info'))
+        self.log.debug(gettext('Updating player info'))
         json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         self._data = userinfo = json['ret']['user']
@@ -209,9 +216,13 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         skip.update(getattr(self.settings, 'ignore_cities', []))
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
+        self.log.debug(
+            ngettext('Player has {0} city', 'Player has {0} cities', len(cities)).format(len(cities))
+        )
+
         for city in cities:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
-            self.log.debug(six.u('Adding "{0}" ({1}) to city list').format(city.name, city.id))
+            self.log.debug(gettext('Adding "{0}" ({1}) to city list').format(city.name, city.id))
             self._cities.append(city)
 
         if not self.is_initialised:
@@ -230,7 +241,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         except KeyError:
             gift_item = gid
 
-        self.log.info(_('Collecting gift "{0}"').format(gift_item))
+        self.log.info(gettext('Collecting gift "{0}"').format(gift_item))
         json = self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
         if int(gid) == inventory.DAILY_GIFT[0]:
@@ -240,7 +251,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         return json
 
     def scout_map(self, **kwargs):
-        self.log.info(_('Trying to find more targets to attack'))
+        self.log.info(gettext('Trying to find more targets to attack'))
 
         try:
             last_scan = self.session.last_scan
@@ -249,7 +260,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         hours = kwargs.get('scouting_interval', 72)
         if time.time() < last_scan + hours*3600:
-            self.log.debug(_('The world was scanned less than {0} hours ago').format(hours))
+            self.log.debug(gettext('The world was scanned less than {0} hours ago').format(hours))
         else:
             try:
                 self.world.search(**kwargs)
@@ -261,7 +272,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                 self.session.save()
 
         try:
-            self.log.debug(_('Look at scout reports to try to locate devil armies'))
+            self.log.debug(gettext('Look at scout reports to try to locate devil armies'))
             self.scout_mail.process(**kwargs)
         except MailException:
             pass
@@ -287,7 +298,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     def _city_wealth(self, func=max, text='most'):
         city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
-        self.log.debug(six.u('Chosen the city with the {0} {resource}, {city} ({amount})').format(text,
+        self.log.debug(gettext('Chosen the city with the {0} {resource}, {city} ({amount})').format(text,
             resource=EmrossWar.LANG.get('COIN', 'gold'),
             city=city, amount=city.resource_manager.get_amount_of(Resource.GOLD))
         )
@@ -306,14 +317,14 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             pass
 
     def clearout_inventory(self, city=None, use_items=False, sell_items=False, **kwargs):
-        self.log.debug(_('Clear the item inventories'))
+        self.log.debug(gettext('Clear the item inventories'))
 
         it = item.ItemType
         for itype in [it.WEAPON, it.ARMOR, it.RING, it.MOUNT, it.BOOK]:
             page = 1
             sale_list = []
 
-            self.log.debug(_('Find items of type {0}').format(itype))
+            self.log.debug(gettext('Find items of type {0}').format(itype))
             while True:
                 json = self.item_manager.list(page=page, type=itype)
 
@@ -327,11 +338,11 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
                 page += 1
                 if page > json['ret']['max']:
-                    self.log.debug(_('Last page of item type {0}').format(itype))
+                    self.log.debug(gettext('Last page of item type {0}').format(itype))
                     break
 
             if sale_list:
-                self.log.debug(_('Sell {0} item/s of type {1}').format(len(sale_list), itype))
+                self.log.debug(gettext('Sell {0} item/s of type {1}').format(len(sale_list), itype))
                 city = city or self.poorest_city()
 
                 for item_id in sale_list:
@@ -377,7 +388,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                 _search = _search.pop(0)['item']
 
             try:
-                self.log.debug(_('Searching for item {0}: "{1}"').format(\
+                self.log.debug(gettext('Searching for item {0}: "{1}"').format(\
                     sid, _search.get('name', 'Unknown')
                 ))
 
@@ -466,7 +477,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
     def human_friendly_time(self, seconds):
         num, duration = 0, long(round(seconds))
         runtime = []
-        for period, unit in [(60, 'minute'), (3600, 'hour'), (86400, 'day'), (86400*7, 'week')][::-1]:
+        for period, unit in self.TIME_PERIODS[::-1]:
             num, duration = divmod(duration, period)
             if num:
                 p = '{0}{1}'.format(unit, 's'*(num!=1))
