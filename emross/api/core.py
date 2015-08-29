@@ -59,24 +59,25 @@ class EmrossWarApi(object):
         self.error_timer = 0
         self.lock = threading.Lock()
         self.shutdown = False
+        self._headers = urllib3.make_headers(\
+            user_agent=self.user_agent,
+            keep_alive=True,
+            accept_encoding=True
+        )
 
     @classmethod
     def init_pool(cls, connections=10, timeout=15, **kwargs):
         with cls._LOCK:
             if cls.CONN_POOL is None:
                 cls.CONN_POOL = urllib3.PoolManager(maxsize=connections, timeout=timeout, **kwargs)
-                logger.info('PoolManager initialised with {0} connections'.format(connections))
+                logger.debug('PoolManager initialised with {0} connections'.format(connections))
 
     @property
     def pool(self):
-        pool = self.__class__.CONN_POOL
-        if not pool:
-            self.__class__.init_pool()
-            pool = self.__class__.CONN_POOL
-        return pool
+        if not self.CONN_POOL:
+            self.init_pool()
 
-    def create_headers(self):
-        return urllib3.make_headers(user_agent=self.user_agent, keep_alive=True, accept_encoding=True)
+        return self.CONN_POOL
 
     def call(self, *args, **kwargs):
         for i in xrange(1, 6):
@@ -140,7 +141,7 @@ class EmrossWarApi(object):
             r = self.pool.request(
                     'GET',
                     'http://{0}/{1}'.format(server, method),
-                    fields=params, headers=self.create_headers()
+                    fields=params, headers=self._headers
                 )
         except urllib3.exceptions.HTTPError as e:
             logger.exception(e)
