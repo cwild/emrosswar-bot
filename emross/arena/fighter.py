@@ -6,6 +6,7 @@ from emross.api import EmrossWar
 from emross.chat import Channel
 from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
+from emross.item import inventory, item
 from emross.mail.mailer import Mailer
 from emross.utility.base import EmrossBaseObject
 from emross.utility.controllable import Controllable
@@ -62,7 +63,7 @@ class OpponentFinder(EmrossBaseObject):
             for lvl, opps in opponents.iteritems():
                 for oppid, opp in opps.iteritems():
                     if oppid in self.opponent_victors:
-                        self.log.debug('Skip {0} as it has beaten us already'.format(opp))
+                        self.log.debug(gettext('Skip {0} as it has beaten us already').format(opp))
                         continue
                     self.opponents[lvl][oppid] = opp
 
@@ -133,7 +134,7 @@ class OpponentFinder(EmrossBaseObject):
         oppid = opponent['id']
         del self.opponents[lvl][oppid]
         self.opponent_victors.add(oppid)
-        self.log.info(six.u('Removed hero "{0}" from "{1}"').format(Hero(opponent), opponent['u']))
+        self.log.info(gettext('Removed hero "{0}" from "{1}"').format(Hero(opponent), opponent['u']))
 
 
 class ArenaFighter(FilterableCityTask, Controllable):
@@ -146,9 +147,15 @@ class ArenaFighter(FilterableCityTask, Controllable):
     MULTI_HITS = 5
     ALLOW_MULTI_HITS = True
 
+    # item id, vigor quantity
+    VIGOR_POTIONS = {
+        10: inventory.POTION_OF_VIGOR[0],
+        100: inventory.POTION_OF_VIGOR_II[0]
+    }
+
     TARGETS = TargetManager()
 
-    def action_attack(self, event, hero, target, multi=None,
+    def action_attack(self, event, hero, target, multi=None, buy_vigor=None,
                     stoponlose=1, sleep=(), *args, **kwargs):
         """
         Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
@@ -185,11 +192,58 @@ class ArenaFighter(FilterableCityTask, Controllable):
             hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
 
 
+        available_vigor_potions = {}
+        exchanged_vigor, desired_vigor = 0, 0
+        vigor_potions = sorted(self.VIGOR_POTIONS.keys(), reverse=True)
+
+        if buy_vigor:
+            try:
+                desired_vigor = abs(int(buy_vigor))
+                json = self.bot.item_manager.find(self.VIGOR_POTIONS.values())
+                for potion in json['ret']['item']:
+                    available_vigor_potions[int(potion['sid'])] = int(potion['num'])
+            except ValueError as e:
+                self.log.debug(e)
+
         try:
             self.currently_fighting.add(hero_id)
 
-            while hero.data.get(Hero.VIGOR, 0) > 0:
+            multi = multi if multi is not None else self.ALLOW_MULTI_HITS
+
+            while True:
                 times = self.MULTI_HITS if multi and hero.data.get(Hero.VIGOR, 0) >= self.MULTI_HITS else None
+
+                if hero.data.get(Hero.VIGOR, 0) < (self.MULTI_HITS if multi else 1):
+
+                    if exchanged_vigor < desired_vigor:
+
+                        pots = (reward for reward in vigor_potions if desired_vigor - exchanged_vigor > reward)
+                        poison = None
+
+                        # Choose our poison
+                        for vigor_rewarded in pots:
+                            if available_vigor_potions[self.VIGOR_POTIONS[vigor_rewarded]]:
+                                # This type of potion is in stock, let's use it!
+                                poison = self.VIGOR_POTIONS[vigor_rewarded]
+                                break
+
+                        if poison:
+                            json = city.hero_manager.use_hero_item(hero, action='energy', itemid=poison)
+
+                            if json['code'] == EmrossWar.SUCCESS:
+                                available_vigor_potions[self.VIGOR_POTIONS[vigor_rewarded]] -= 1
+                                exchanged_vigor += vigor_rewarded
+                                hero.data[Hero.VIGOR] = int(json['ret']['energy'])
+
+                                """
+                                Continue to next loop to avoid breakout and
+                                recalculate if we can perform a multi-hit
+                                """
+                                continue
+
+                    # Still allowed to hit between 0 and MULTI_HITS
+                    if not hero.data.get(Hero.VIGOR):
+                        break
 
                 json = self.attack(hero_id, int(target), sleep=sleep, times=times)
                 if json['code'] != EmrossWar.SUCCESS:
@@ -314,7 +368,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 """
                 tainted = False
                 losses = 0
-                allow_multi = allow_multi or self.ALLOW_MULTI_HITS
+                allow_multi = allow_multi if allow_multi is not None else self.ALLOW_MULTI_HITS
 
                 while hero.data.get(Hero.VIGOR, 0) > (max_vigor - below):
 
