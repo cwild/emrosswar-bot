@@ -36,7 +36,7 @@ class OpponentFinder(EmrossBaseObject):
 
         user_specified = ArenaFighter.TARGETS[self.bot.world_name][level+1]
         if user_specified:
-            self.log.debug(_('Found user specified heroes: {0}').format(user_specified))
+            self.log.debug(gettext('Found user specified heroes: {0}').format(user_specified))
 
             for targetid in user_specified:
                 opponents[level+1][targetid] = dict(u=USER_SPECIFIED, id=targetid)
@@ -77,14 +77,14 @@ class OpponentFinder(EmrossBaseObject):
                 opponent = self.select_preferred_opponent(hero, self.opponents[lvl])
 
                 if opponent:
-                    self.log.debug(_('Found an opponent at level {0}, stop search').format(lvl))
+                    self.log.debug(gettext('Found an opponent at level {0}, stop search').format(lvl))
                     break
 
         opp = opponent or last_resort[0]
         if opp['u'] is USER_SPECIFIED:
-            self.log.info(_('Our {0} will fight Hero {1}').format(hero, opp['id']))
+            self.log.info(gettext('Our {0} will fight Hero {1}').format(hero, opp['id']))
         else:
-            self.log.info(_('Our {0} will fight an opposing {1}').format(hero, Hero(opp)))
+            self.log.info(gettext('Our {0} will fight an opposing {1}').format(hero, Hero(opp)))
 
         return opp
 
@@ -175,7 +175,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 pass
 
         if not hero_id:
-            self.chat.send_message('Could not find the specified hero', event=event)
+            self.chat.send_message(gettext('Could not find the specified hero'), event=event)
             return
 
         if sleep:
@@ -196,7 +196,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     try:
                         msg = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
                     except KeyError:
-                        msg = 'Stopping after error {0} occurred!'.format(json['code'])
+                        msg = gettext('Stopping after error {0} occurred!').format(json['code'])
                     self.chat.send_message(msg, event=event)
                     break
 
@@ -205,7 +205,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
                 if hero.data.get(Hero.EXPERIENCE) >= hero.data.get(Hero.TARGET_EXPERIENCE):
                     city.hero_manager.expire()
-                    self.chat.send_message(_('My {0} is now level {1}').format(\
+                    self.chat.send_message(gettext('My {0} is now level {1}').format(\
                         hero, hero.data[Hero.LEVEL]+1), event=event)
                     break
 
@@ -305,7 +305,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 )
 
                 if int(hero.data['id']) in self.currently_fighting:
-                    self.log.info(_('Skip currently fighting hero, {0}').format(hero))
+                    self.log.info(gettext('Skip currently fighting hero, {0}').format(hero))
                     continue
 
                 """
@@ -319,7 +319,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 while hero.data.get(Hero.VIGOR, 0) > (max_vigor - below):
 
                     if int(hero.data['id']) in self.currently_fighting:
-                        self.log.info(_('Stop currently fighting hero, {0}').format(hero))
+                        self.log.info(gettext('Stop currently fighting hero, {0}').format(hero))
                         break
 
                     level = hero.data.get(Hero.LEVEL)
@@ -350,7 +350,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         losses -= 1
 
                     if losses >= loss_limit:
-                        self.log.info(_('Loss limit reached, stopping fighting with {0}').format(hero))
+                        self.log.info(gettext('Loss limit reached, stopping fighting with {0}').format(hero))
                         opponents.remove_opponent(opponent)
                         break
 
