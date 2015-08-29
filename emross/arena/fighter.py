@@ -144,6 +144,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
     DRAW = 0
     WIN = 1
     MULTI_HITS = 5
+    ALLOW_MULTI_HITS = True
 
     TARGETS = TargetManager()
 
@@ -273,7 +274,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
     def setup(self):
         self.currently_fighting = set()
 
-    def process(self, below=1, loss_limit=1, *args, **kwargs):
+    def process(self, below=1, loss_limit=1, allow_multi=None, *args, **kwargs):
         """
         below - how many vigor below max should we stay?
         loss_limit - how many concurrent defeats before deciding target is too strong?
@@ -281,22 +282,21 @@ class ArenaFighter(FilterableCityTask, Controllable):
         """
 
         max_vigor = self.VIGOR_BASE + (2 * self.bot.alliance.tech(AllyTech.INCENTIVE))
-        self.log.info('Max {0} is {1}'.format(VIGOR, max_vigor))
+        self.log.debug('Max {0} is {1}'.format(VIGOR, max_vigor))
         below = min(below, max_vigor)
 
         opponents = OpponentFinder(self.bot)
 
         cities = self.cities(**kwargs)
         for city in cities:
-            for hero in city.hero_manager.heroes.itervalues():
+            for hero in city.hero_manager.ordered_by_stats(stats=[Hero.VIGOR, Hero.LEVEL], descending=False):
                 if hero.data.get(Hero.LEVEL) == Hero.MAX_LEVEL:
                     self.log.debug(six.u('Skipping {0}, already MAX level').format(hero))
                     continue
 
-                remaining = hero.data.get(Hero.VIGOR, 0)
                 self.log.info('{0} has {amt} {vigor}. Current streak: {streak}, Total W/L: {win}/{loss}'.format(\
                     hero,
-                    amt=remaining,
+                    amt=hero.data.get(Hero.VIGOR, 0),
                     vigor=VIGOR,
                     streak=hero.data.get(Hero.WINS, 0),
                     win=hero.data.get(Hero.TOTAL_WINS, 0),
@@ -314,7 +314,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 """
                 tainted = False
                 losses = 0
-                for i in range(remaining + below - max_vigor):
+                allow_multi = allow_multi or self.ALLOW_MULTI_HITS
+
+                while hero.data.get(Hero.VIGOR, 0) > (max_vigor - below):
+
                     if int(hero.data['id']) in self.currently_fighting:
                         self.log.info(_('Stop currently fighting hero, {0}').format(hero))
                         break
@@ -322,20 +325,34 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     level = hero.data.get(Hero.LEVEL)
                     opponent = opponents.find_arena_opponent(hero, level, **kwargs)
 
-                    json = self.attack(hero.data['id'], opponent['id'])
+                    times = None
+                    sleep = ()
+
+                    if allow_multi and (hero.data.get(Hero.VIGOR, 0) - self.MULTI_HITS) >= (max_vigor - below):
+                        sleep = False
+                        times = self.MULTI_HITS
+
+                    json = self.attack(hero.data['id'], opponent['id'], times=times, sleep=sleep)
+
                     if json['code'] != EmrossWar.SUCCESS:
                         break
 
-                    hero.data[Hero.EXPERIENCE] += json['ret']['exp']
-                    if json['ret']['win'] <= self.LOSS:
+                    hero.data[Hero.VIGOR] -= max(times, 1)
+                    hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
+
+                    if 'lose' in json['ret']:
+                        losses += int(json['ret']['lose'])
+
+                    elif json['ret']['win'] <= self.LOSS:
                         losses += 1
 
-                        if losses == loss_limit:
-                            self.log.info(_('Loss limit reached, stopping fighting with {0}').format(hero))
-                            opponents.remove_opponent(opponent)
-                            break
                     elif losses > 0:
                         losses -= 1
+
+                    if losses >= loss_limit:
+                        self.log.info(_('Loss limit reached, stopping fighting with {0}').format(hero))
+                        opponents.remove_opponent(opponent)
+                        break
 
                     if hero.data.get(Hero.EXPERIENCE) > hero.data.get(Hero.TARGET_EXPERIENCE):
                         tainted = True
