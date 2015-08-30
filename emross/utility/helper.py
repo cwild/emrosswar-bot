@@ -216,14 +216,15 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         skip.update(getattr(self.settings, 'ignore_cities', []))
         cities = [city for city in userinfo['city'] if city['id'] not in skip]
 
-        self.log.debug(
-            ngettext('Player has {0} city', 'Player has {0} cities', len(cities)).format(len(cities))
-        )
-
         for city in cities:
             city = City(self, city['id'], city['name'], x=city['x'], y=city['y'])
             self.log.debug(gettext('Adding "{0}" ({1}) to city list').format(city.name, city.id))
             self._cities.append(city)
+
+        self.log.debug(
+            ngettext('Player has {0} city', 'Player has {0} cities',
+                len(self._cities)).format(len(self._cities))
+        )
 
         if not self.is_initialised:
             self.is_initialised = True
