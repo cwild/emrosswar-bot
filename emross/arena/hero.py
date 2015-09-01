@@ -83,8 +83,10 @@ class Hero(EmrossBaseObject):
     COMMAND = 'c2'
     EXPERIENCE = 'ex'
     GUARDING = 'fy'
+    HERO_ID = 'gid'
     LEVEL = 'g'
     LOYALTY = 'f'
+    REBORN = 'reborn'
     STATE = 's'
     TARGET_EXPERIENCE = 'te'
     TOTAL_LOSSES = 'tl'
@@ -131,8 +133,11 @@ class Hero(EmrossBaseObject):
         except AttributeError:
             return self._gear
 
-    def stat(self, attribute):
-        return self.data.get(attribute, None)
+    def can_reborn(self):
+        return bool(self.data.get('showReborn', False))
+
+    def stat(self, attribute, default=None):
+        return self.data.get(attribute, default)
 
     def __repr__(self):
         hero_data = self.client

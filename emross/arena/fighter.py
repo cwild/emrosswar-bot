@@ -8,6 +8,7 @@ from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
 from emross.item import inventory, item
 from emross.mail.mailer import Mailer
+from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 from emross.utility.controllable import Controllable
 from emross.utility.task import FilterableCityTask
@@ -146,6 +147,11 @@ class ArenaFighter(FilterableCityTask, Controllable):
     WIN = 1
     MULTI_HITS = 5
     ALLOW_MULTI_HITS = True
+    REBORN_COST = {
+        Resource.GOLD: 10000000
+    }
+
+    HERO_VIGOR_DEPLETED = 8303
 
     # item id, vigor quantity
     VIGOR_POTIONS = {
@@ -155,7 +161,8 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
     TARGETS = TargetManager()
 
-    def action_attack(self, event, hero, target, multi=None, buy_vigor=None,
+    def action_attack(self, event, hero, target, multi=None,
+                    buy_vigor=None, reborn=None,
                     stoponlose=1, sleep=(), *args, **kwargs):
         """
         Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
@@ -171,12 +178,9 @@ class ArenaFighter(FilterableCityTask, Controllable):
         hero_id, found = None, False
         for city in self.cities(**kwargs):
             try:
-                for _id, h in city.hero_manager.heroes.iteritems():
-                    if int(h.data.get('gid')) == _hero['hero_id']:
-                        hero_id, hero = _id, h
-                        found = True
-                        break
-                if found:
+                hero = city.hero_manager.get_hero_by_attr(Hero.HERO_ID, _hero['hero_id'])
+                if hero:
+                    hero_id = hero.stat('id')
                     break
             except KeyError:
                 pass
@@ -190,7 +194,6 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
         self.chat.send_message('{0} has {1} {2} for fighting'.format(hero, \
             hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
-
 
         available_vigor_potions = {}
         exchanged_vigor, desired_vigor = 0, 0
@@ -211,9 +214,29 @@ class ArenaFighter(FilterableCityTask, Controllable):
             multi = multi if multi is not None else self.ALLOW_MULTI_HITS
 
             while True:
-                times = self.MULTI_HITS if multi and hero.data.get(Hero.VIGOR, 0) >= self.MULTI_HITS else None
+                if hero.stat(Hero.LEVEL) == Hero.MAX_LEVEL:
 
-                if hero.data.get(Hero.VIGOR, 0) < (self.MULTI_HITS if multi else 1):
+                    if reborn and city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
+                        json = city.hero_manager.use_hero_item(hero, action='reborn')
+
+                        if json['code'] == EmrossWar.SUCCESS:
+                            gi = json['ret']['geninfo']
+                            hero.data[Hero.LEVEL] = int(gi.get('g_grade', hero.data[Hero.LEVEL]-1))
+                            hero.data[Hero.EXPERIENCE] = 0
+                            hero.data[Hero.VIGOR] = int(gi['energy'])
+
+                            self.chat.send_message(
+                                gettext('{0} is reborn!').format(hero),
+                                event=event
+                            )
+                            continue
+
+                    # Max level still!
+                    break
+
+                times = self.MULTI_HITS if multi and hero.stat(Hero.VIGOR, 0) >= self.MULTI_HITS else None
+
+                if hero.stat(Hero.VIGOR, 0) < (self.MULTI_HITS if multi else 1):
 
                     if exchanged_vigor < desired_vigor:
 
@@ -246,7 +269,14 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         break
 
                 json = self.attack(hero_id, int(target), sleep=sleep, times=times)
-                if json['code'] != EmrossWar.SUCCESS:
+
+                if json['code'] == self.HERO_VIGOR_DEPLETED:
+                    self.log.debug(gettext('Hero vigor looks depleted, do a final check'))
+                    city.hero_manager.expire()
+                    hero = city.hero_manager.get_hero_by_attr('id', hero_id)
+                    continue
+
+                elif json['code'] != EmrossWar.SUCCESS:
                     try:
                         msg = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
                     except KeyError:
@@ -257,11 +287,14 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 hero.data[Hero.VIGOR] -= max(times, 1)
                 hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
 
-                if hero.data.get(Hero.EXPERIENCE) >= hero.data.get(Hero.TARGET_EXPERIENCE):
+                if hero.stat(Hero.EXPERIENCE) >= hero.stat(Hero.TARGET_EXPERIENCE):
+                    hero.data[Hero.LEVEL] += 1
                     city.hero_manager.expire()
+
                     self.chat.send_message(gettext('My {0} is now level {1}').format(\
-                        hero, hero.data[Hero.LEVEL]+1), event=event)
-                    break
+                        hero, hero.stat(Hero.LEVEL)), event=event)
+
+                    continue
 
                 if int(json['ret'].get('lose', 0)) > 0 or json['ret']['win'] <= self.LOSS:
                     if stoponlose:
@@ -271,7 +304,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
             self.currently_fighting.remove(hero_id)
 
         self.chat.send_message('{0} has {1} {2} left'.format(hero, \
-            hero.data.get(Hero.VIGOR, 0), VIGOR), event=event)
+            hero.stat(Hero.VIGOR, 0), VIGOR), event=event)
 
     def action_search(self, event, level=None, exact=0, *args, **kwargs):
         """

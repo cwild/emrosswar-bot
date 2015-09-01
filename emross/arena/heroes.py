@@ -141,6 +141,11 @@ class HeroManager(Controllable, CacheableData):
 
             return json
 
+    def get_hero_by_attr(self, attr, value=None):
+        for hero in self.heroes.itervalues():
+            if hero.stat(attr) == value:
+                return hero
+
     def highest_stat_hero(self, stat=Hero.COMMAND):
         try:
             hero = self.ordered_by_stats(stats=(stat,))[0]
@@ -200,3 +205,10 @@ class HeroManager(Controllable, CacheableData):
             hero.data[Hero.STATE] = Hero.AVAILABLE
 
         return json
+
+    def use_hero_item(self, hero, **kwargs):
+
+        params = dict(id=hero.data['id'], city=self.city.id)
+        params.update(kwargs)
+
+        return self.bot.api.call(CONSCRIPT_GEAR_URL, **params)
