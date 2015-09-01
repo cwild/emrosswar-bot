@@ -76,6 +76,13 @@ class City(EmrossBaseObject, CacheableData):
         return json['ret']['city']
 
 
+    def get_active_buffs(self):
+        """
+        eg:
+        [{'itemid': 196, 'secs': 3403, 'id': 413076}]
+        """
+        return self.data[23]
+
     def get_gold_count(self):
         return self.resource_manager.get_amounts_of(Resource.GOLD)
 

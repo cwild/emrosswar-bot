@@ -60,7 +60,7 @@ class Construct(FilterableCityTask):
             if current_level < level:
                 tasks = city.countdown_manager.get_tasks(task_type=TaskType.BUILDING)
 
-                buffs = city.data[23]
+                buffs = city.get_active_buffs()
                 capacity = 1 + len([b for b in buffs if b['itemid'] in self.EXTRA_SLOT_ITEMS])
                 self.log.debug(six.u('Build capacity at {0} is {1}').format(city, capacity))
 
