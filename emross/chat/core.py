@@ -78,10 +78,9 @@ class Chat(Task):
             targets.append(self.bot.api.player.username)
             targets.extend(self.bot.api.player.groups or [])
 
-        _lineid = self.lineid
         for msg in messages[::-1]:
             try:
-                _lineid = msg['line_id']
+                self.bot.session.chat_id = msg['line_id']
                 text = msg.get('line_txt')
 
                 data = {
@@ -122,7 +121,6 @@ class Chat(Task):
             except Exception as e:
                 self.log.exception(e)
 
-        self.bot.session.chat_id = _lineid
 
     def parse_events(self, messages):
         """
