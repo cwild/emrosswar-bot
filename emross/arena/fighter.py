@@ -222,13 +222,15 @@ class ArenaFighter(FilterableCityTask, Controllable):
             while True:
                 if hero.stat(Hero.LEVEL) == Hero.MAX_LEVEL:
 
-                    if reborn and city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
+                    if reborn and hero.can_reborn() and \
+                        city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
                         json = city.hero_manager.use_hero_item(hero, action='reborn')
 
                         if json['code'] == EmrossWar.SUCCESS:
                             gi = json['ret']['geninfo']
                             hero.data[Hero.LEVEL] = int(gi.get('g_grade', hero.data[Hero.LEVEL]-1))
                             hero.data[Hero.EXPERIENCE] = 0
+                            hero.data['showReborn'] = False
                             hero.data[Hero.REBORN] = gi['reborn']
                             hero.data[Hero.VIGOR] = int(gi['energy'])
 
