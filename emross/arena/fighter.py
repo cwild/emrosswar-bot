@@ -153,6 +153,12 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
     HERO_VIGOR_DEPLETED = 8303
 
+    # exp modifier, item id
+    EXP_POTIONS = {
+        150: inventory.POTION_OF_EXP,
+        200: inventory.POTION_OF_EXP_II
+    }
+
     # item id, vigor quantity
     VIGOR_POTIONS = {
         10: inventory.POTION_OF_VIGOR[0],
@@ -162,7 +168,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
     TARGETS = TargetManager()
 
     def action_attack(self, event, hero, target, multi=None,
-                    buy_vigor=None, reborn=None,
+                    buy_vigor=None, exp_potion=None, reborn=None,
                     stoponlose=1, sleep=(), *args, **kwargs):
         """
         Specify a "hero" and a "target" for it to attack. Flags: "stoponlose", "sleep"
@@ -267,6 +273,48 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     # Still allowed to hit between 0 and MULTI_HITS
                     if not hero.data.get(Hero.VIGOR):
                         break
+
+
+                if exp_potion:
+                    try:
+                        exp_potion = int(exp_potion)
+                        buff_id = self.EXP_POTIONS[exp_potion][0]
+
+                        buffs = set([buff['itemid'] for buff in city.get_active_buffs()])
+                        if buff_id not in buffs:
+                            itemid = self.EXP_POTIONS[exp_potion][0]
+                            self.log.info(
+                                gettext('"{0}" not active at "{1}"').format(
+                                    EmrossWar.ITEM[str(itemid)].get('name', itemid),
+                                    city
+                                )
+                            )
+
+                            potion_items = self.bot.find_inventory_item(self.EXP_POTIONS[exp_potion])
+                            self.log.debug(potion_items)
+
+                            # item id, num, sale price
+                            potion_id = min(potion_items, key=lambda i:i[0])
+
+                            json = self.bot.item_manager.use(city, potion_id[0])
+                            if json['code'] == EmrossWar.SUCCESS:
+                                try:
+                                    self.log.info(
+                                        gettext('"{0}" is now an active buff').format(
+                                            EmrossWar.ITEM[str(itemid)].get('name', itemid)
+                                        )
+                                    )
+                                    buffs.append(json['ret']['buff'])
+                                except KeyError:
+                                    city.expire()
+
+                    except (KeyError, ValueError):
+                        self.chat.send_message(
+                            gettext('Error when trying to use experience potion!'),
+                            event=event
+                        )
+                        return
+
 
                 json = self.attack(hero_id, int(target), sleep=sleep, times=times)
 
