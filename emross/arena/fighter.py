@@ -229,6 +229,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                             gi = json['ret']['geninfo']
                             hero.data[Hero.LEVEL] = int(gi.get('g_grade', hero.data[Hero.LEVEL]-1))
                             hero.data[Hero.EXPERIENCE] = 0
+                            hero.data[Hero.REBORN] = gi['reborn']
                             hero.data[Hero.VIGOR] = int(gi['energy'])
 
                             self.chat.send_message(
@@ -339,8 +340,12 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     hero.data[Hero.LEVEL] += 1
                     city.hero_manager.expire()
 
+                    lvl_txt = hero.stat(Hero.LEVEL)
+                    if int(hero.stat(Hero.REBORN)) > 0:
+                        lvl_txt = '{0}+{1}*'.format(lvl_txt, hero.stat(Hero.REBORN))
+
                     self.chat.send_message(gettext('My {0} is now level {1}').format(\
-                        hero, hero.stat(Hero.LEVEL)), event=event)
+                        hero, lvl_txt), event=event)
 
                     continue
 
