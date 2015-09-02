@@ -16,7 +16,7 @@ from emross.utility.task import FilterableCityTask
 from lib import six
 
 VIGOR = EmrossWar.TRANSLATE['f_city_hero'].get('16', 'Vigor:')[:-1]
-USER_SPECIFIED = _('User Specified')
+USER_SPECIFIED = gettext('User Specified')
 
 class TargetManager(dict):
     def __missing__(self, key):
@@ -41,7 +41,8 @@ class OpponentFinder(EmrossBaseObject):
             self.log.debug(gettext('Found user specified heroes: {0}').format(user_specified))
 
             for targetid in user_specified:
-                opponents[level+1][targetid] = dict(u=USER_SPECIFIED, id=targetid)
+                # g = Hero.LEVEL
+                opponents[level+1][targetid] = dict(u=USER_SPECIFIED, id=targetid, g=level+1)
 
             if opponents:
                 return opponents
@@ -165,6 +166,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
         100: inventory.POTION_OF_VIGOR_II[0]
     }
 
+    AUTO_TARGET = '*'
     TARGETS = TargetManager()
 
     def action_attack(self, event, hero, target, multi=None,
@@ -216,6 +218,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
         try:
             self.currently_fighting.add(hero_id)
+            opponents = OpponentFinder(self.bot)
 
             multi = multi if multi is not None else self.ALLOW_MULTI_HITS
 
@@ -319,7 +322,15 @@ class ArenaFighter(FilterableCityTask, Controllable):
                         return
 
 
-                json = self.attack(hero_id, int(target), sleep=sleep, times=times)
+                _target = target
+                if target == self.AUTO_TARGET:
+                    try:
+                        opponent = opponents.find_arena_opponent(hero, level, **kwargs)
+                        _target = opponent['id']
+                    except Exception as e:
+                        self.log.exception(e)
+
+                json = self.attack(hero_id, _target, sleep=sleep, times=times)
 
                 if json['code'] == self.HERO_VIGOR_DEPLETED:
                     self.log.debug(gettext('Hero vigor looks depleted, do a final check'))
@@ -411,7 +422,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
 
         win>0, draw=0, loss<0
         """
-        return self.bot.api.call(CONSCRIPT_URL, gid=hero, tgid=target, **kwargs)
+        return self.bot.api.call(CONSCRIPT_URL, gid=hero, tgid=int(target), **kwargs)
 
     def setup(self):
         self.currently_fighting = set()
@@ -458,13 +469,13 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 losses = 0
                 allow_multi = allow_multi if allow_multi is not None else self.ALLOW_MULTI_HITS
 
-                while hero.data.get(Hero.VIGOR, 0) > (max_vigor - below):
+                while hero.stat(Hero.VIGOR, 0) > (max_vigor - below):
 
                     if int(hero.data['id']) in self.currently_fighting:
                         self.log.info(gettext('Stop currently fighting hero, {0}').format(hero))
                         break
 
-                    level = hero.data.get(Hero.LEVEL)
+                    level = hero.stat(Hero.LEVEL)
                     opponent = opponents.find_arena_opponent(hero, level, **kwargs)
 
                     times = None
