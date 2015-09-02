@@ -83,6 +83,9 @@ class City(EmrossBaseObject, CacheableData):
         """
         return self.data[23]
 
+    def add_buff(self, buff):
+        self.get_active_buffs().append(buff)
+
     def get_gold_count(self):
         return self.resource_manager.get_amounts_of(Resource.GOLD)
 

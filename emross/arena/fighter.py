@@ -307,7 +307,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                                             EmrossWar.ITEM[str(itemid)].get('name', itemid)
                                         )
                                     )
-                                    buffs.append(json['ret']['buff'])
+                                    city.add_buff(json['ret']['buff'])
                                 except KeyError:
                                     city.expire()
 
