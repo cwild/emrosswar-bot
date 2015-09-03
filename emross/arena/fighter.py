@@ -325,7 +325,7 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 _target = target
                 if target == self.AUTO_TARGET:
                     try:
-                        opponent = opponents.find_arena_opponent(hero, level, **kwargs)
+                        opponent = opponents.find_arena_opponent(hero, hero.stat(Hero.LEVEL), **kwargs)
                         _target = opponent['id']
                     except Exception as e:
                         self.log.exception(e)
@@ -350,8 +350,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
                 hero.data[Hero.EXPERIENCE] += int(json['ret']['exp'])
 
                 if hero.stat(Hero.EXPERIENCE) >= hero.stat(Hero.TARGET_EXPERIENCE):
+                    hero.data[Hero.EXPERIENCE] = 0
                     hero.data[Hero.LEVEL] += 1
                     city.hero_manager.expire()
+                    hero = city.hero_manager.get_hero_by_attr('id', hero_id)
 
                     lvl_txt = hero.stat(Hero.LEVEL)
                     if int(hero.stat(Hero.REBORN)) > 0:
