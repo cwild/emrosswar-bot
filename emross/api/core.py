@@ -176,9 +176,13 @@ class EmrossWarApi(object):
             logger.debug('Error with response. Headers: {0}, Body: {1}'.format(r.headers, r.data))
             raise
 
-        if int(json.get('code', 0)) == 0:
-            self.error_timer = 0
-        self.errors[:] = []
+        try:
+            if int(json.get('code', 0)) == 0:
+                self.error_timer = 0
+        except AttributeError:
+            pass
+        finally:
+            self.errors[:] = []
 
         if sleep is False:
             # No delay from our end
