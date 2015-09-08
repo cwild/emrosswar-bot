@@ -32,6 +32,7 @@ class OpponentFinder(EmrossBaseObject):
         super(OpponentFinder, self).__init__(bot)
         self.opponents = defaultdict(dict)
         self.opponent_victors = set()
+        self.beaten = set()
 
     def find_opponents(self, level, searches=3, *args, **kwargs):
         opponents = defaultdict(dict)
@@ -330,6 +331,13 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     except Exception as e:
                         self.log.exception(e)
 
+                """
+                Multi-hits don't end winning streaks so we want to beat an opponent
+                first to make sure that we end their winning streak and don't spam the activity list!
+                """
+                if _target not in opponents.beaten:
+                    times = None
+
                 json = self.attack(hero_id, _target, sleep=sleep, times=times)
 
                 if json['code'] == self.HERO_VIGOR_DEPLETED:
@@ -368,6 +376,8 @@ class ArenaFighter(FilterableCityTask, Controllable):
                     if stoponlose:
                         self.chat.send_message('{0} retires after defeat'.format(hero), event=event)
                         break
+                else:
+                    opponents.beaten.add(_target)
         finally:
             self.currently_fighting.remove(hero_id)
 
