@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
         argument_default=argparse.SUPPRESS,
-        description=_('The EmrossWar Bot'),
+        description=gettext('The EmrossWar Bot'),
         epilog='%(prog)s --multi'
         )
     parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)

@@ -68,7 +68,7 @@ class Trade(Controllable):
             raise TradeException(json.get('ret') or 'Problem selling item')
 
         if player:
-            msg = _('P2P trade item {id} to "{player}" for {price} {resource}').format(\
+            msg = gettext('P2P trade item {id} to "{player}" for {price} {resource}').format(\
                 id=id, player=player, price=price, resource=EmrossWar.LANG.get('COIN', 'gold')
             )
             self.chat.send_message(msg, event=kwargs.get('event'))
@@ -99,7 +99,7 @@ class Trade(Controllable):
 
         if len(items) > 1:
             self.chat.send_message(\
-                _('You need to be more specific as the following items match:'),
+                gettext('You need to be more specific as the following items match:'),
                 event=event
             )
 
@@ -107,15 +107,15 @@ class Trade(Controllable):
                 try:
                     name = EmrossWar.ITEM[str(item)]['name']
                 except KeyError:
-                    name = _('Unknown item')
+                    name = gettext('Unknown item')
 
-                self.chat.send_message(_('sid={0}, name={1}').format(\
+                self.chat.send_message(gettext('sid={0}, name={1}').format(\
                     item, name),
                     event=event
                 )
 
             self.chat.send_message(\
-                _('You could try using the item number instead eg. sid=1234'),
+                gettext('You could try using the item number instead eg. sid=1234'),
                 event=event
             )
             return
@@ -126,7 +126,7 @@ class Trade(Controllable):
             for item_id, data in self.bot.inventory.data[item].iteritems():
                 try:
                     if int(data['lockinfo']['locked']) == 1:
-                        self.chat.send_message(_('That item is locked for {0}!').format(\
+                        self.chat.send_message(gettext('That item is locked for {0}!').format(\
                             self.bot.human_friendly_time(data['lockinfo']['secs'])), event=event)
                         continue
                 except KeyError:
@@ -137,7 +137,7 @@ class Trade(Controllable):
                     break
 
         if not sellable_item:
-            self.chat.send_message(_("I couldn't find that item, no deal!"), event=event)
+            self.chat.send_message(gettext("I couldn't find that item, no deal!"), event=event)
             return
 
         city = self.bot.richest_city()
@@ -147,17 +147,17 @@ class Trade(Controllable):
             result = self.sell_item(city, sellable_item, price, player.encode('utf8'), event=event)
 
             if result == EmrossWar.SUCCESS:
-                self.chat.send_message(_("Don't forget to buy that item, you hear?"), event=event)
+                self.chat.send_message(gettext("Don't forget to buy that item, you hear?"), event=event)
             else:
-                self.chat.send_message(_("Something didn't go to plan.."), event=event)
+                self.chat.send_message(gettext("Something didn't go to plan.."), event=event)
         else:
-            self.chat.send_message(_('That would cost me too much!'), event=event)
+            self.chat.send_message(gettext('That would cost me too much!'), event=event)
 
 
 if __name__ == "__main__":
     id, player, price = 1, six.u('test \xf3 player'), 123
 
-    msg = _('P2P trade item {id} to "{player}" for {price} {resource}').format(\
+    msg = gettext('P2P trade item {id} to "{player}" for {price} {resource}').format(\
         id=id, player=player, price=price, resource=EmrossWar.LANG.get('COIN', 'gold')
     )
     print msg

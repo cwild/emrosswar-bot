@@ -41,7 +41,7 @@ class Favourites(Controllable):
         self.get_favs()
 
         favs = self.favs[self.DEVIL_ARMY]
-        self.chat.send_message(_('{num}*{monster}: {remain} remaining loots.').format(\
+        self.chat.send_message(gettext('{num}*{monster}: {remain} remaining loots.').format(\
             num=len(favs),
             monster=EmrossWar.LANG.get('MONSTER', 'NPCs'),
             remain=sum([self.bot.npc_attack_limit - x.attack for x in favs])
@@ -53,7 +53,7 @@ class Favourites(Controllable):
     def clear_favs(self, cat=DEVIL_ARMY, *args, **kwargs):
         cat = int(cat)
         for f in self.favs[cat]:
-            self.log.debug(_('Deleting fav {0}').format(f.id))
+            self.log.debug(gettext('Deleting fav {0}').format(f.id))
             self.bot.api.call(FAVOURITES_URL, act='delfavnpc', fid=f.id)
 
     def get_favs(self, cat=DEVIL_ARMY):

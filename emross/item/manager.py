@@ -110,7 +110,7 @@ class InventoryManager(Controllable, CacheableData):
                 try:
                     if re.search(_search, _item.get('name'), re.IGNORECASE):
                         self.chat.send_message(
-                            _('Found {0}: {1}').format(_search, _item),
+                            gettext('Found {0}: {1}').format(_search, _item),
                             event=event
                         )
                 except re.error:
@@ -148,7 +148,7 @@ class InventoryManager(Controllable, CacheableData):
 
         if not found:
             if 'quiet' not in kwargs:
-                self.chat.send_message(_('I do not have any of those!'),
+                self.chat.send_message(gettext('I do not have any of those!'),
                     event=event)
 
             return
@@ -172,7 +172,7 @@ class InventoryManager(Controllable, CacheableData):
                 if not work:
                     break
                 if not item['use']:
-                    self.log.debug(_('Unable to use item: {0}').format(item))
+                    self.log.debug(gettext('Unable to use item: {0}').format(item))
                     continue
 
                 times = min(item['item']['num'], num) - total
