@@ -49,13 +49,15 @@ class Hero(EmrossBaseObject):
     QUEEN = 'c'
     KING = 'b'
     ACE = 'a'
+    JOKER = 'j'
 
     RANKS = {
         TEN: '10',
-        JACK: 'Jack',
-        QUEEN: 'Queen',
-        KING: 'King',
-        ACE: 'Ace'
+        JACK: gettext('Jack'),
+        QUEEN: gettext('Queen'),
+        KING: gettext('King'),
+        ACE: gettext('Ace'),
+        JOKER: gettext('Joker')
     }
 
     CLUBS = 4
@@ -64,10 +66,10 @@ class Hero(EmrossBaseObject):
     SPADES = 3
 
     FACES = {
-        CLUBS: 'Clubs',
-        DIAMONDS: 'Diamonds',
-        HEARTS: 'Hearts',
-        SPADES: 'Spades'
+        CLUBS: gettext('Clubs'),
+        DIAMONDS: gettext('Diamonds'),
+        HEARTS: gettext('Hearts'),
+        SPADES: gettext('Spades')
     }
 
     FACE_SYMBOLS = {
