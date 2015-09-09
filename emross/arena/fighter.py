@@ -9,7 +9,6 @@ from emross.arena.hero import Hero
 from emross.handlers.client_errors import InvalidDataHandler
 from emross.item import inventory, item
 from emross.mail.mailer import Mailer
-from emross.resources import Resource
 from emross.utility.base import EmrossBaseObject
 from emross.utility.controllable import Controllable
 from emross.utility.task import FilterableCityTask
@@ -150,9 +149,6 @@ class ArenaFighter(FilterableCityTask, Controllable):
     WIN = 1
     MULTI_HITS = 5
     ALLOW_MULTI_HITS = True
-    REBORN_COST = {
-        Resource.GOLD: 10000000
-    }
 
     HERO_VIGOR_DEPLETED = 8303
 
@@ -227,17 +223,8 @@ class ArenaFighter(FilterableCityTask, Controllable):
             while True:
                 if hero.stat(Hero.LEVEL) == Hero.MAX_LEVEL:
 
-                    if reborn and hero.can_reborn() and \
-                        city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
-                        json = city.hero_manager.use_hero_item(hero, action='reborn')
-
-                        if json['code'] == EmrossWar.SUCCESS:
-                            gi = json['ret']['geninfo']
-                            hero.data[Hero.LEVEL] = int(gi.get('g_grade', hero.data[Hero.LEVEL]-1))
-                            hero.data[Hero.EXPERIENCE] = 0
-                            hero.data['showReborn'] = False
-                            hero.data[Hero.REBORN] = gi['reborn']
-                            hero.data[Hero.VIGOR] = int(gi['energy'])
+                    if reborn and city.hero_manager.reborn_hero(hero):
+                        if hero.stat(Hero.LEVEL) < Hero.MAX_LEVEL:
 
                             self.chat.send_message(
                                 gettext('{0} is reborn!').format(hero),

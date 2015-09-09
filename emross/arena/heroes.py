@@ -9,6 +9,7 @@ from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 from emross.arena.hero import Gear, Hero
 from emross.arena.fighter import ArenaFighter
+from emross.resources import Resource
 from emross.structures.buildings import Building
 from emross.structures.construction import Construct
 from emross.utility.controllable import Controllable
@@ -16,6 +17,10 @@ from emross.utility.controllable import Controllable
 
 class HeroManager(Controllable, CacheableData):
     COMMAND = 'heroes'
+
+    REBORN_COST = {
+        Resource.GOLD: 10000000
+    }
 
     def __init__(self, bot, city):
         super(HeroManager, self).__init__(bot)
@@ -192,6 +197,46 @@ class HeroManager(Controllable, CacheableData):
         remaining = int(capacity - len(self.heroes))
         self.log.debug(six.u('{0} remaining hero slots at {1}').format(remaining, self.city))
         return remaining
+
+    def reborn_hero(self, hero):
+
+        if hero.can_reborn() and self.city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
+            json = self.use_hero_item(hero, action='reborn')
+            """
+            {'code': 0, 'ret': {'geninfo':
+                {'g_liftblood': '0',
+                'extra': '{"tianfu_temp":"7"}',
+                'energy': '85',
+                'reborn': '1',
+                'n_intellect': '74',
+                'g_power': 483,
+                'bf_command': '0',
+                'n_power': '461',
+                'g_cid': 'HERO_CITY_ID',
+                'g_command': 2998, 'id': 'UNIQUE_HERO_ID',
+                'n_commend': '339', 'n_status': '0',
+                'user_if': '0', 'n_cd': '0', 'g_fy': '0',
+                'g_recovery': '124480',
+                'tlose': '0', 'g_gid': '335', 'g_grade': '37',
+                'largess_times': '1441414339',
+                'tianfu': '5',
+                'largess_num': '5',
+                'g_commend': 362, 'g_uid': 'UNIQUE_USER_ID', 'g_intellect': 79, 'g_speed': '1.08',
+                'twin': '25905', 'g_exploit': '0', 'n_command': '2612', 'wins': '25905', 'g_status': '0',
+                'g_name': 'Rookie', 'g_fealty': '75'},
+                'cost_gold': 10000000}
+            }
+            """
+
+            if json['code'] == EmrossWar.SUCCESS:
+                gi = json['ret']['geninfo']
+                hero.data[Hero.LEVEL] = int(gi.get('g_grade', hero.data[Hero.LEVEL]-1))
+                hero.data[Hero.EXPERIENCE] = 0
+                hero.data['showReborn'] = False
+                hero.data[Hero.REBORN] = gi['reborn']
+                hero.data[Hero.VIGOR] = int(gi['energy'])
+
+        return hero
 
     def revive_hero(self, hero):
         """
