@@ -6,6 +6,7 @@ from emross.api import EmrossWar
 from emross.chat import Channel
 from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
+from emross.handlers.client_errors import InvalidDataHandler
 from emross.item import inventory, item
 from emross.mail.mailer import Mailer
 from emross.resources import Resource
@@ -264,7 +265,10 @@ class ArenaFighter(FilterableCityTask, Controllable):
                                 break
 
                         if poison:
-                            json = city.hero_manager.use_hero_item(hero, action='energy', itemid=poison)
+                            json = city.hero_manager.use_hero_item(hero,
+                                    action='energy', itemid=poison,
+                                    _handlers={EmrossWar.INVALID_DATA: InvalidDataHandler}
+                                )
 
                             if json['code'] == EmrossWar.SUCCESS:
                                 available_vigor_potions[self.VIGOR_POTIONS[vigor_rewarded]] -= 1

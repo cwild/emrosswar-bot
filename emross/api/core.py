@@ -80,14 +80,21 @@ class EmrossWarApi(object):
         return self.CONN_POOL
 
     def call(self, *args, **kwargs):
-        for i in xrange(1, 6):
+
+        try:
+            _handlers = handlers.copy()
+            _handlers.update(kwargs['_handlers'])
+        except (KeyError, TypeError):
+            pass
+
+        for i in six.moves.range(1, 6):
             if self.shutdown:
                 raise EmrossWarApiException('No further API calls permitted for {0}'.format(self.player))
             try:
                 json = self._call(*args, **kwargs)
 
-                if json['code'] in handlers:
-                    handler = handlers[json['code']](self.bot, *args, **kwargs)
+                if json['code'] in _handlers:
+                    handler = _handlers[json['code']](self.bot, *args, **kwargs)
                     result = handler.process(json)
                     if result is not None:
                         return result
@@ -214,6 +221,7 @@ class EmrossWar(six.with_metaclass(EmrossCache)):
     INSUFFICIENT_GOLD  = 1306
     ITEM_DOES_NOT_EXIST = 3403
 
+    INVALID_DATA = 2513
 
     @staticmethod
     def safe_text(s):

@@ -15,6 +15,14 @@ class CoolDownHandler(handler.EmrossHandler):
         logger.debug('Wait {0} seconds for cooldown'.format(self.DELAY))
         time.sleep(self.DELAY)
 
+class InvalidDataHandler(handler.EmrossHandler):
+    DELAY = 30
+
+    def process(self, json):
+        self.log.info(gettext('Invalid data, try again after {0}s').format(self.DELAY))
+        self.log.debug((self.args, self.kwargs))
+        time.sleep(self.DELAY)
+
 class InvalidKeyHandler(handler.EmrossHandler):
     def process(self, json=None):
         logger.warning('Invalid API key!')
