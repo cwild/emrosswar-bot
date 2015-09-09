@@ -45,7 +45,7 @@ class GearForger(Task):
         items = {}
         items['item_goods'] = json['ret'].get('item_goods', [])
 
-        items['item_material'] = json['ret'].get('item_material', {})
+        items['item_material'] = dict(json['ret'].get('item_material', {}))
         for sid, qty in items['item_material'].iteritems():
             items['item_material'][sid] = int(qty)
 
