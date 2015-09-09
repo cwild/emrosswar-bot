@@ -55,7 +55,7 @@ class HeroManager(Controllable, CacheableData):
 
                     s = str(h.stat(Hero.STATE))
                     state = EmrossWar.LANG['HEROSTATE'].get(s)
-                    message = ['{0}'.format(self.city.name)]
+                    message = [six.u('{0}').format(self.city.name)]
                     message.append('{0}: {1}'.format(h.client.get('name'), state or s))
 
                     if int(h.stat(Hero.GUARDING)):
