@@ -84,6 +84,7 @@ class EmrossWarApi(object):
         try:
             _handlers = handlers.copy()
             _handlers.update(kwargs['_handlers'])
+            del kwargs['_handlers']
         except (KeyError, TypeError):
             pass
 
