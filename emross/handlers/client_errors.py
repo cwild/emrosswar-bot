@@ -8,6 +8,26 @@ from emross.handlers import handler
 
 logger = logging.getLogger(__name__)
 
+class BannedAccountHandler(handler.EmrossHandler):
+    BAN_CHECKS = 1
+
+    def process(self, json, *args, **kwargs):
+        try:
+            if self.bot.api.player.ban_check >= self.BAN_CHECKS:
+                self.log.warning(gettext('Banned. Nothing can be done!'))
+                return json
+
+            self.log.info(gettext('Account is banned! Check whether we can connect directly to the game server'))
+            data = self.bot.api.player.remote.check_account(self.bot.api.player.username, banned=True)
+            self.bot.api.player.ban_check += 1
+            return {
+                'code': EmrossWar.SUCCESS,
+                'ret': {'server':data.get('server'), 'user':self.bot.api.player.username}
+                }
+        except Exception as e:
+            self.log.error(e)
+
+
 class CoolDownHandler(handler.EmrossHandler):
     DELAY = 10
 

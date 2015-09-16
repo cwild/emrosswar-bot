@@ -4,6 +4,7 @@ import pickle
 from emross import master as MASTER
 from emross.api import EmrossWar
 from emross.exceptions import BotException, EmrossWarApiException
+from emross.handlers.client_errors import BannedAccountHandler
 from emross.utility.remote_api import RemoteApi
 from emross.utility import settings
 
@@ -36,6 +37,8 @@ class Player(object):
         self.disable_modules = set(disable_modules)
         self.playtimes = [(-1, 25)]
         self._remote = None
+
+        self.ban_check = 0
 
         # Magic to update dict with whatever kwargs we receive
         self.__dict__.update(kwargs)
@@ -92,7 +95,7 @@ class Player(object):
 
 
         json = api.call(self.MASTER_QUERY_URL, server=MASTER, user=self.username,
-                    action='login', pvp=0, key=None, handle_errors=False)
+                    action='login', pvp=0, key=None, handle_errors=False, _handlers={14: BannedAccountHandler})
 
         if json['code'] != EmrossWar.SUCCESS:
             try:
