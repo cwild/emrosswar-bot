@@ -4,6 +4,7 @@ import random
 import time
 
 from emross import exceptions
+from emross.api impoer EmrossWar
 from emross.handlers import handler
 
 logger = logging.getLogger(__name__)
