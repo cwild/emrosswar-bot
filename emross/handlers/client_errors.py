@@ -4,7 +4,6 @@ import random
 import time
 
 from emross import exceptions
-from emross.api import EmrossWar
 from emross.handlers import handler
 
 logger = logging.getLogger(__name__)
@@ -21,6 +20,9 @@ class BannedAccountHandler(handler.EmrossHandler):
             self.log.info(gettext('Account is banned! Check whether we can connect directly to the game server'))
             data = self.bot.api.player.remote.check_account(self.bot.api.player.username, banned=True)
             self.bot.api.player.ban_check += 1
+
+            from emross.api import EmrossWar
+
             return {
                 'code': EmrossWar.SUCCESS,
                 'ret': {'server':data.get('server'), 'user':self.bot.api.player.username}
