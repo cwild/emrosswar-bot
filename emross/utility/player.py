@@ -116,6 +116,9 @@ class Player(object):
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException('Account password is incorrect')
 
+        # Reset the ban check
+        self.ban_check = 0
+
         key = json['ret']['key']
 
         self._sync_pvp_key(bot, key, user, server)
