@@ -103,7 +103,7 @@ class EmrossWarApi(object):
                     continue
 
                 if not isinstance(json['code'], int):
-                    logger.debug('API call attempt %d failed with an invalid client code.', (i,))
+                    logger.debug('API call attempt %d failed with an invalid client code.', i)
                     logger.warning(json)
                     time.sleep(random.randrange(2,3))
                 else:
@@ -116,7 +116,7 @@ class EmrossWarApi(object):
                 logger.debug((args, kwargs))
                 logger.debug(e)
                 wait = 1 + (i % 10)
-                logger.debug('Wait %d seconds before retry', (wait,))
+                logger.debug('Wait %d seconds before retry', wait)
                 time.sleep(wait)
 
 
