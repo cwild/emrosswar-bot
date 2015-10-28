@@ -101,10 +101,10 @@ class Player(object):
             try:
                 err = EmrossWar.LANG['ERROR']['SERVER'][str(json['code'])]
             except KeyError:
-                err = 'Received error {0} during login'.format(json['code'])
+                err = gettext('Received error {0} during login').format(json['code'])
 
             msg = '"{0}": {1}'.format(self.username, err)
-            bot.pushover.send_message(msg, title='Account Logon Error')
+            bot.pushover.send_message(msg, title=gettext('Account Logon Error'))
 
             raise BotException(msg)
 
@@ -114,7 +114,7 @@ class Player(object):
         json = api.call(self.LOGIN_URL, server=server, username=user, \
                     password=self.password, key=None, handle_errors=False)
         if json['code'] != EmrossWar.SUCCESS:
-            raise BotException('Account password is incorrect')
+            raise BotException(EmrossWar.LANG['ERROR']['SERVER'].get(str(json['code']), gettext('Account login error')))
 
         # Reset the ban check
         self.ban_check = 0
