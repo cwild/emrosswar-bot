@@ -29,7 +29,7 @@ except ImportError:
     import urllib3
 
 
-from emross import device, lang
+import emross
 from emross.exceptions import EmrossWarApiException
 from emross.handlers import handlers, HTTP_handlers
 
@@ -142,7 +142,7 @@ class EmrossWarApi(object):
             return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
 
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
-                    ('key', key), ('_l', lang), ('_p', device)])
+                    ('key', key), ('_l', emross.lang), ('_p', emross.device)])
 
         params.update(kwargs)
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
