@@ -5,6 +5,8 @@ except ImportError, e:
 
 import os
 import logging
+import urllib
+
 logger = logging.getLogger(__name__)
 
 class Session(object):
@@ -20,7 +22,7 @@ class Session(object):
     def filename(self):
         server = self.bot.api.game_server
         userid = self.bot._data.get('id') or self.bot.userinfo['id']
-        filename = self.PATH.format(server=server, userid=userid)
+        filename = self.PATH.format(server=urllib.quote(server, safe=''), userid=userid)
         logger.debug(filename)
         return filename
 
