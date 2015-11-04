@@ -48,6 +48,7 @@ class EmrossWarApi(object):
     _LOCK = threading.Lock()
     CONN_POOL = None
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
+    DEFAULT_HEADERS = {}
 
     def __init__(self, api_key, game_server, user_agent=None, pushid=None, player=None):
         self.api_key = api_key
@@ -59,11 +60,12 @@ class EmrossWarApi(object):
         self.error_timer = 0
         self.lock = threading.Lock()
         self.shutdown = False
-        self._headers = urllib3.make_headers(\
+        self._headers = self.DEFAULT_HEADERS.copy()
+        self._headers.update(urllib3.make_headers(\
             user_agent=self.user_agent,
             keep_alive=True,
             accept_encoding=True
-        )
+        ))
 
     @classmethod
     def init_pool(cls, connections=10, timeout=15, **kwargs):
