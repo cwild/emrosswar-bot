@@ -40,7 +40,8 @@ class Player(object):
         self.ban_check = 0
 
         # Magic to update dict with whatever kwargs we receive
-        self.__dict__.update(kwargs)
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
 
     def get(self, name, default=None):
         return self.__dict__.get(name, default)
