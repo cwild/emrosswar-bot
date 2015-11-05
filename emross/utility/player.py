@@ -1,7 +1,7 @@
 import logging
 import pickle
 
-from emross import master as MASTER
+import emross
 from emross.api import EmrossWar
 from emross.exceptions import BotException, EmrossWarApiException
 from emross.handlers.client_errors import BannedAccountHandler
@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Player(object):
     USER_CACHE = 'build/user.cache'
-    LOGIN_URL = 'game/login_api.php'
-    MASTER_QUERY_URL = 'info.php'
+    LOGIN_URL = EmrossWar.URL(lambda: EmrossWar.CONFIG.get('FUNC_LOGIN'), 'game/login_api.php')
 
     def __init__(self,
         server,
@@ -64,15 +63,13 @@ class Player(object):
 
     @property
     def remote(self):
-        try:
-            if self._remote:
-                return self._remote
+        if not self._remote:
+            try:
+                self._remote = AccountApi(**settings.plugin_api)
+            except AttributeError as e:
+                logger.exception(e)
 
-            remote = self._remote = AccountApi(**settings.plugin_api)
-            return remote
-        except AttributeError as e:
-            logger.exception(e)
-            return None
+        return self._remote
 
     def account_login(self, bot, *args, **kwargs):
         """Account login to acquire a new API key"""
@@ -94,7 +91,7 @@ class Player(object):
             raise EmrossWarApiException('No password set to relog with {}, try again soon'.format(api.player))
 
 
-        json = api.call(self.MASTER_QUERY_URL, server=MASTER, user=self.username,
+        json = api.call(EmrossWar.MASTER_QUERY_URL, server=EmrossWar.MASTER_HOST, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False, _handlers={14: BannedAccountHandler})
 
         if json['code'] != EmrossWar.SUCCESS:
@@ -186,7 +183,7 @@ class Player(object):
         # Sync the key with our external API
         if self.remote:
             logger.debug('Push new key to remote API for account "{0}"'.format(self.username))
-            self.remote.sync_account(self.username, key, master=MASTER)
+            self.remote.sync_account(self.username, key, master=emross.master)
 
         bot.errors.task_done()
 
@@ -194,11 +191,12 @@ class Player(object):
     def check_external_api(self, bot=None, **kwargs):
         if self.username is None:
             logger.debug('Unknown account username, unable to check')
-            return
 
-        if self.remote:
+        elif self.remote:
             data = self.remote.check_account(self.username, **kwargs)
             return data.get('key'), (data.get('server') or '')[7:-1]
+
+        return None, None
 
     def load_user_cache(self):
         keys = {}

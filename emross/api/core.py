@@ -208,6 +208,30 @@ class EmrossWarApi(object):
         return json
 
 
+class URLHelper(object):
+
+    def __init__(self, url, default='/', *args, **kwargs):
+        self.url = url
+        self.default = default
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        try:
+            url = self.url(*self.args, **self.kwargs)
+        except TypeError as e:
+            logger.debug(e)
+            url = self.url
+
+        if url:
+            return url
+
+        try:
+            # Is the default value calculated dynamically?
+            return self.default()
+        except TypeError:
+            return self.default
+
 
 class EmrossWar(six.with_metaclass(EmrossCache)):
 
@@ -229,6 +253,16 @@ class EmrossWar(six.with_metaclass(EmrossCache)):
     @staticmethod
     def safe_text(s):
         return s if isinstance(s, unicode) else six.u(s)
+
+    @classmethod
+    def URL(cls, *args, **kwargs):
+        logger.debug('Creating new URLHelper with args={0}, kwargs={1}'.format(args, kwargs))
+        return URLHelper(*args, **kwargs)
+
+# Dynamic properties
+EmrossWar.MASTER_HOST = EmrossWar.URL(lambda: EmrossWar.CONFIG.get('MASTERHOST', '')[7:-1], lambda: emross.master)
+EmrossWar.MASTER_QUERY_URL = EmrossWar.URL(lambda: EmrossWar.CONFIG.get('MASTER_QUERY_URL'), 'info.php')
+
 
 if __name__ == "__main__":
     import emross

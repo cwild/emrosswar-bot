@@ -1,3 +1,4 @@
+import collections
 import hashlib
 import logging
 import os
@@ -10,7 +11,7 @@ try:
 except ImportError:
     import json as simplejson
 
-from emross import master as MASTER
+import emross
 
 logger = logging.getLogger(__name__)
 
@@ -29,21 +30,20 @@ def json_decoder(data):
 class EmrossContent(object):
     lock = threading.Lock()
     pool = urllib3.PoolManager()
-    FILE_HASHES = None
+    FILE_HASHES = {}
 
     @classmethod
     def load(cls, filename, decoder=json_decoder, force=False, fatal=False, **kwargs):
-        if cls.FILE_HASHES is None:
-            cls.FILE_HASHES = {}
-            _init_cache()
+        if cls.FILE_HASHES.get(emross.master) is None:
+            cls.FILE_HASHES[emross.master] = {}
+            _init_cache(emross.master)
 
         with cls.lock:
-            from emross import lang
-            filename = filename % {'lang': lang}
+            filename = filename % {'lang': emross.lang}
             logger.debug('Checking "%s"' % filename)
             content = None
-            localfile = os.path.join(CACHE_PATH, MASTER, filename)
-            logger.debug('Local file = %s' % localfile)
+            localfile = os.path.join(CACHE_PATH, emross.master, filename)
+            logger.debug('Local file = %s', localfile)
 
             target_dir = os.path.dirname(localfile)
             if not os.path.exists(target_dir):
@@ -52,8 +52,8 @@ class EmrossContent(object):
 
             if force is False and filename == 'md5.dat':
                 pass
-            elif force or filename not in cls.FILE_HASHES or \
-                cls.check_hash(localfile) != cls.FILE_HASHES.get(filename):
+            elif force or filename not in cls.FILE_HASHES[emross.master] or \
+                cls.check_hash(localfile) != cls.FILE_HASHES[emross.master].get(filename):
                 # We need to download the file
                 r = cls.get_file(filename, **kwargs)
                 if r.status == 200:
@@ -62,7 +62,7 @@ class EmrossContent(object):
                     with open(localfile, 'wb') as fp:
                         fp.writelines(content)
                 else:
-                    logger.critical('Unable to load file %s' % filename)
+                    logger.critical('Unable to load file %s', filename)
                     if fatal:
                         raise Exception('Unable to obtain critical data file')
 
@@ -82,7 +82,7 @@ class EmrossContent(object):
     @classmethod
     def get_file(cls, filename, **kwargs):
         logger.info('Download file "%s"' % filename)
-        return cls.pool.request('GET', os.path.join(DATA_URL % MASTER, filename), headers={'User-Agent': USER_AGENT}, **kwargs)
+        return cls.pool.request('GET', os.path.join(DATA_URL % emross.master, filename), headers={'User-Agent': USER_AGENT}, **kwargs)
 
     @classmethod
     def check_hash(cls, filename):
@@ -103,8 +103,9 @@ class EmrossContent(object):
 
 
 class InternalCache(object):
-    lock = threading.Lock()
-    DATA = {}
+    lock = threading.RLock()
+    DATA = collections.defaultdict(dict)
+    TEMPLATES = {}
 
 
 class EmrossCache(type):
@@ -117,20 +118,28 @@ class EmrossCache(type):
         cache = self.__class__._cache
 
         with cache.lock:
-            if key not in cache.DATA:
+            if key not in cache.DATA[emross.master]:
+
+                # Save for later!
+                if key not in cache.TEMPLATES:
+                    cache.TEMPLATES[key] = dict(value=value, model=model, **kwargs)
+
                 filename = value
                 value = EmrossContent.load(value, **kwargs)
                 if model:
                     value = model(filename, value)
-                cache.DATA[key] = value
+                cache.DATA[emross.master][key] = value
 
     def __getattr__(self, name):
         cache = self.__class__._cache
 
         with cache.lock:
-            val = cache.DATA.get(name)
+            val = cache.DATA[emross.master].get(name)
             if val:
                 return val
+            elif name in cache.TEMPLATES:
+                self.extend(name, **cache.TEMPLATES[name])
+                return cache.DATA[emross.master].get(name)
 
         raise AttributeError(name)
 
@@ -151,12 +160,12 @@ class EmrossDataHandler(object):
 
 
 # Initialise our cache
-def _init_cache():
-    logger.info('Initialise cache using master server "%s"' % MASTER)
+def _init_cache(master):
+    logger.info('Initialise cache using master server "%s"', master)
     try:
-        force = os.path.getmtime(os.path.join(CACHE_PATH, MASTER, 'md5.dat'))+86400 < time.time()
+        force = os.path.getmtime(os.path.join(CACHE_PATH, master, 'md5.dat'))+86400 < time.time()
     except (IOError, OSError):
         force = True
 
-    EmrossContent.FILE_HASHES = dict((v, k) for k, v in [(part.split(',')) \
+    EmrossContent.FILE_HASHES[master] = dict((v, k) for k, v in [(part.split(',')) \
         for part in EmrossContent.load('md5.dat', None, force, redirect=False, fatal=True).split(';') if len(part) > 0])

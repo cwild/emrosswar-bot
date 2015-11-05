@@ -498,7 +498,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         Query the game world only once per run
         """
         if not self._world_name:
-            json = self.api.call('naming.php', emross.master, s=self.api.game_server, key=None)
+            json = self.api.call(EmrossWar.CONFIG.get('MASTER_NAMING', 'naming.php'), EmrossWar.MASTER_HOST, s=self.api.game_server, key=None)
             if json['code'] == EmrossWar.SUCCESS:
                 self._world_name = json['ret']
 
