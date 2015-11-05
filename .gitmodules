@@ -4,3 +4,6 @@
 [submodule "lib/crochet"]
 	path = lib/crochet
 	url = git@github.com:itamarst/crochet.git
+[submodule "lib/demjson"]
+	path = lib/demjson
+	url = https://github.com/dmeranda/demjson.git
