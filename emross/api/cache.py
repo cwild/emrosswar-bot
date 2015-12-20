@@ -65,6 +65,10 @@ class EmrossContent(object):
             hash = yield cls.check_hash(localfile)
 
         if force or cls.FILE_HASHES[emross.master].get(filename) != hash:
+            if hash:
+                logger.debug('"%s" has failed hash, expected "%s"', filename,
+                    cls.FILE_HASHES[emross.master].get(filename))
+
             # We need to download the file
             try:
                 content = yield cls.get_file(filename, **kwargs)
@@ -158,13 +162,16 @@ class EmrossCache(type):
             cache.lock.release()
 
 
-    @emross.defer.inlineCallbacks
     def __getattr__(self, name):
         cache = self._cache
 
-        yield cache.lock.acquire()
-
         try:
+            return cache.DATA[emross.master][name]
+        except KeyError:
+            pass
+
+        @emross.defer.inlineCallbacks
+        def inner():
             val = cache.DATA[emross.master].get(name)
 
             if val:
@@ -172,10 +179,10 @@ class EmrossCache(type):
             elif name in cache.TEMPLATES:
                 yield self.extend(name, **cache.TEMPLATES[name])
                 emross.defer.returnValue(cache.DATA[emross.master].get(name))
-        finally:
-            cache.lock.release()
 
-        raise AttributeError(name)
+            raise AttributeError(name)
+
+        return cache.lock.run(inner)
 
 
 class EmrossDataHandler(object):
