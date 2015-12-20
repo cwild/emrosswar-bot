@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import emross
-from emross.api import EmrossWarApi, agent
+from emross.api import EmrossWarApi, agent, cache_ready
 from emross.utility.helper import EmrossWarBot
 
 
@@ -33,7 +33,7 @@ class BotManager(object):
         agent._agent._pool.maxPersistentPerHost = pool
 
         for bot in self.bots:
-            emross.reactor.callWhenRunning(bot.startup)
+            cache_ready(bot.startup)
 
         if workhorse:
             emross.reactor.run()

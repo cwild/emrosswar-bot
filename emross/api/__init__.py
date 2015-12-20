@@ -12,8 +12,9 @@ agent = client.ContentDecoderAgent(
 del client
 
 from emross.api.core import EmrossWarApi, EmrossWar
+from emross.api.cache import cache_ready
 
-def config_fix(original):
+def config_js_fix(original):
 
     s = original[original.find('{') : original.rfind('}')+1]
     s = s.replace(':!0', ':1').replace(':!1', ':0')
@@ -33,10 +34,10 @@ def config_fix(original):
 
     return _json
 
-EmrossWar.extend('CONFIG', 'data/config.js', decoder=config_fix)
+EmrossWar.extend('CONFIG', 'data/config.js', decoder=config_js_fix)
 
 # Cleanup
-del config_fix
+del config_js_fix
 
 EmrossWar.extend('LANG', 'translation/%(lang)s/lng.js')
 EmrossWar.extend('TRANSLATE', 'translation/%(lang)s/translate.js')

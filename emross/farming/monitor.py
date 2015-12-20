@@ -3,7 +3,8 @@ import time
 
 from lib import six
 
-from emross.api import EmrossWar
+import emross
+from emross.api import EmrossWar, cache_ready
 from emross.utility.controllable import Controllable
 from emross.utility.task import Task
 
@@ -14,7 +15,7 @@ class FarmMonitor(Controllable, Task):
 
     DEFAULT_MINUTE_WINDOW = 30
     EXPIRY_PERIOD = 86400
-    NPC = EmrossWar.LANG.get('MONSTER', 'DevilArmy')
+    NPC = cache_ready(lambda: setattr(FarmMonitor, 'NPC', EmrossWar.LANG.get('MONSTER', 'DevilArmy')))
     PATTERN = '<b>(.*)</b>'
 
     def setup(self):

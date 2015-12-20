@@ -18,6 +18,9 @@ CACHE_PATH = 'build/cache/'
 DATA_URL =  'http://%s/ver_ipad/build/'
 USER_AGENT = 'EmrossWar/1.42 CFNetwork/548.1.4 Darwin/11.0.0'
 
+
+_CACHE_WAITING = []
+
 def json_decoder(data):
     s = data[ data.find('{') : data.rfind('}')+1 ]
     try:
@@ -154,7 +157,9 @@ class EmrossCache(type):
                     cache.TEMPLATES[key] = dict(value=value, model=model, **kwargs)
 
                 filename = value
-                value = yield EmrossContent.load(value, **kwargs)
+                loader = EmrossContent.load(value, **kwargs)
+                _CACHE_WAITING.append(loader)
+                value = yield loader
                 if model:
                     value = model(filename, value)
                 cache.DATA[emross.master][key] = value
@@ -213,3 +218,33 @@ def _init_cache(master):
 
     EmrossContent.FILE_HASHES[master] = dict((v, k) for k, v in [(part.split(',')) \
         for part in file_list.split(';') if len(part) > 0])
+
+
+_CACHE_OBSERVERS = []
+
+def cache_ready(cb, *args, **kwargs):
+    _CACHE_OBSERVERS.append((cb, args, kwargs))
+
+def _setup_cache(jobs, cb):
+    d = emross.defer.DeferredList(jobs, consumeErrors=True)
+    d.addCallback(cb)
+    return d
+
+def _notify_observers(results):
+    logger.debug('Finished loading client data cache, notify observers')
+
+    for observer, args, kwargs in _CACHE_OBSERVERS:
+        try:
+            observer(*args, **kwargs)
+        except Exception:
+            pass
+
+    # Remove the observers, we are done!
+    _CACHE_OBSERVERS[:] = []
+
+_CACHE_READY = emross.defer.Deferred()
+_CACHE_READY.addCallback(_notify_observers)
+
+emross.reactor.callWhenRunning(_setup_cache, _CACHE_WAITING, _CACHE_READY.callback)
+
+del _notify_observers
