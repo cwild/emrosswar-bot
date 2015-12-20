@@ -1,3 +1,14 @@
+from twisted.internet import defer, reactor
+from twisted.python import log
+observer = log.PythonLoggingObserver()
+observer.start()
+
+def deferred_sleep(delay):
+    d = defer.Deferred()
+    delay = reactor.callLater(delay, d.callback, True)
+    d.delay = delay
+    return d
+
 import gettext
 gettext.install(
     'emrosswar-bot',

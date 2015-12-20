@@ -2,9 +2,7 @@ import collections
 import hashlib
 import logging
 import os
-import threading
 import time
-import urllib3
 
 try:
     import simplejson
@@ -12,6 +10,7 @@ except ImportError:
     import json as simplejson
 
 import emross
+from emross.api import agent, Headers, read_body
 
 logger = logging.getLogger(__name__)
 
@@ -28,82 +27,106 @@ def json_decoder(data):
         return {}
 
 class EmrossContent(object):
-    lock = threading.Lock()
-    pool = urllib3.PoolManager()
+    lock = emross.defer.DeferredLock()
     FILE_HASHES = {}
 
     @classmethod
+    @emross.defer.inlineCallbacks
     def load(cls, filename, decoder=json_decoder, force=False, fatal=False, **kwargs):
         if cls.FILE_HASHES.get(emross.master) is None:
+            logger.debug('Check validity of master server: %s', emross.master)
+            domain_check = emross.reactor.resolve(emross.master, timeout=(5,))
+            domain_check.addCallback(lambda ip: logger.debug((emross.master, ip)))
+
+            def error_handler(error):
+                logger.error(error)
+                emross.reactor.stop()
+            domain_check.addErrback(error_handler)
+
+            yield domain_check
+
             cls.FILE_HASHES[emross.master] = {}
-            _init_cache(emross.master)
+            yield _init_cache(emross.master)
 
-        with cls.lock:
-            filename = filename % {'lang': emross.lang}
-            logger.debug('Checking "%s"' % filename)
-            content = None
-            localfile = os.path.join(CACHE_PATH, emross.master, filename)
-            logger.debug('Local file = %s', localfile)
+        filename = filename % {'lang': emross.lang}
+        logger.debug('Checking "%s"', filename)
+        content = None
+        localfile = os.path.join(CACHE_PATH, emross.master, filename)
+        logger.debug('Local file = %s', localfile)
 
-            target_dir = os.path.dirname(localfile)
-            if not os.path.exists(target_dir):
-                logger.debug('Create target directory "%s"' % target_dir)
-                os.makedirs(target_dir)
+        target_dir = os.path.dirname(localfile)
+        if not os.path.exists(target_dir):
+            logger.debug('Create target directory "%s"', target_dir)
+            os.makedirs(target_dir)
 
-            if force is False and filename == 'md5.dat':
-                pass
-            elif force or filename not in cls.FILE_HASHES[emross.master] or \
-                cls.check_hash(localfile) != cls.FILE_HASHES[emross.master].get(filename):
-                # We need to download the file
-                r = cls.get_file(filename, **kwargs)
-                if r.status == 200:
-                    content = r.data
+        if force is False and filename == 'md5.dat':
+            hash = None
+        else:
+            hash = yield cls.check_hash(localfile)
 
-                    with open(localfile, 'wb') as fp:
-                        fp.writelines(content)
-                else:
-                    logger.critical('Unable to load file %s', filename)
-                    if fatal:
-                        raise Exception('Unable to obtain critical data file')
+        if force or cls.FILE_HASHES[emross.master].get(filename) != hash:
+            # We need to download the file
+            try:
+                content = yield cls.get_file(filename, **kwargs)
 
-            # Load the localfile from disk
-            if not content:
-                try:
-                    logger.debug('Load "%s" from cache' % localfile)
-                    fp = open(localfile, 'rb')
+                with open(localfile, 'wb') as fp:
+                    fp.writelines(content)
+
+            except Exception:
+                logger.critical('Unable to load file %s', filename)
+                if fatal:
+                    logger.critical('Unable to obtain critical data file')
+                    emross.reactor.stop()
+
+        # Load the localfile from disk
+        if not content:
+            try:
+                logger.debug('Load "%s" from cache', localfile)
+                with open(localfile, 'rb') as fp:
                     content = fp.read()
-                except IOError:
-                    # We should have been able to locate this file.
-                    return None
+            except IOError:
+                # We should have been able to locate this file.
+                emross.defer.returnValue(None)
 
-            # Return our decoded content, if a decoder is available
-            return decoder(content) if decoder else content
+        # Return our decoded content, if a decoder is available
+        emross.defer.returnValue(decoder(content) if decoder else content)
 
     @classmethod
+    @emross.defer.inlineCallbacks
     def get_file(cls, filename, **kwargs):
-        logger.info('Download file "%s"' % filename)
-        return cls.pool.request('GET', os.path.join(DATA_URL % emross.master, filename), headers={'User-Agent': USER_AGENT}, **kwargs)
+        logger.info('Download file "%s"', filename)
+
+        response = yield agent.request('GET',
+            os.path.join(DATA_URL % emross.master, filename),
+            Headers({'User-Agent': [USER_AGENT]}), **kwargs
+        )
+
+        body = yield read_body(response)
+        emross.defer.returnValue(body)
 
     @classmethod
+    @emross.defer.inlineCallbacks
     def check_hash(cls, filename):
         try:
             with open(filename, 'rb') as fp:
                 hash = hashlib.md5()
+
                 while True:
-                    piece = fp.read(1024*8)
+                    # 1024 * 8 => 8kB
+                    piece = fp.read(8192)
                     if piece:
-                        hash.update(piece)
+                        yield hash.update(piece)
                     else:
-                        d = hash.hexdigest()
-                        logger.debug('MD5 sum = %s' % d)
-                        return d
+                        d = yield hash.hexdigest()
+                        logger.debug('MD5 sum = %s', d)
+                        emross.defer.returnValue(d)
         except IOError as e:
             logger.warning(e)
-            return False
+            emross.defer.returnValue(False)
 
 
 class InternalCache(object):
-    lock = threading.RLock()
+    lock = emross.defer.DeferredLock()
     DATA = collections.defaultdict(dict)
     TEMPLATES = {}
 
@@ -114,32 +137,43 @@ class EmrossCache(type):
     """
     _cache = InternalCache()
 
+    @emross.defer.inlineCallbacks
     def extend(self, key, value, model=None, **kwargs):
-        cache = self.__class__._cache
+        cache = self._cache
 
-        with cache.lock:
+        yield cache.lock.acquire()
+
+        try:
             if key not in cache.DATA[emross.master]:
-
                 # Save for later!
                 if key not in cache.TEMPLATES:
                     cache.TEMPLATES[key] = dict(value=value, model=model, **kwargs)
 
                 filename = value
-                value = EmrossContent.load(value, **kwargs)
+                value = yield EmrossContent.load(value, **kwargs)
                 if model:
                     value = model(filename, value)
                 cache.DATA[emross.master][key] = value
+        finally:
+            cache.lock.release()
 
+
+    @emross.defer.inlineCallbacks
     def __getattr__(self, name):
-        cache = self.__class__._cache
+        cache = self._cache
 
-        with cache.lock:
+        yield cache.lock.acquire()
+
+        try:
             val = cache.DATA[emross.master].get(name)
+
             if val:
-                return val
+                emross.defer.returnValue(val)
             elif name in cache.TEMPLATES:
-                self.extend(name, **cache.TEMPLATES[name])
-                return cache.DATA[emross.master].get(name)
+                yield self.extend(name, **cache.TEMPLATES[name])
+                emross.defer.returnValue(cache.DATA[emross.master].get(name))
+        finally:
+            cache.lock.release()
 
         raise AttributeError(name)
 
@@ -160,12 +194,15 @@ class EmrossDataHandler(object):
 
 
 # Initialise our cache
+@emross.defer.inlineCallbacks
 def _init_cache(master):
     logger.info('Initialise cache using master server "%s"', master)
     try:
-        force = os.path.getmtime(os.path.join(CACHE_PATH, master, 'md5.dat'))+86400 < time.time()
-    except (IOError, OSError):
+        force = yield os.path.getmtime(os.path.join(CACHE_PATH, master, 'md5.dat'))+86400 < time.time()
+    except (IOError, OSError) as e:
         force = True
 
+    file_list = yield EmrossContent.load('md5.dat', None, force, fatal=True)
+
     EmrossContent.FILE_HASHES[master] = dict((v, k) for k, v in [(part.split(',')) \
-        for part in EmrossContent.load('md5.dat', None, force, redirect=False, fatal=True).split(';') if len(part) > 0])
+        for part in file_list.split(';') if len(part) > 0])

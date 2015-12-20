@@ -1,3 +1,16 @@
+from twisted.internet import reactor
+from twisted.web import client
+from twisted.web.http_headers import Headers
+
+read_body = client.readBody
+
+agent = client.ContentDecoderAgent(
+    client.Agent(reactor, pool=client.HTTPConnectionPool(reactor, persistent=True)),
+    [('gzip', client.GzipDecoder)]
+)
+# Remove this reference
+del client
+
 from emross.api.core import EmrossWarApi, EmrossWar
 
 def config_fix(original):

@@ -14,7 +14,6 @@ if len(logging.root.handlers) == 0:
         logging.config.fileConfig('logging.conf')
 
 
-
 import emross.utility.settings
 from emross.utility.manager import BotManager
 from emross.utility.player import Player
@@ -32,7 +31,7 @@ if __name__ == "__main__":
         )
     parser.add_argument('-m', '--multi', help='Multiple players at once!', action='store_true', default=False)
     parser.add_argument('-c', '--console', help='Interactive console', action='store_true', default=False)
-    parser.add_argument('-p', '--poolsize', help='Number of threads to use in the pool', type=int, default=None)
+    parser.add_argument('-p', '--poolsize', help='Maimum number of simultaneous host connections in the pool', type=int, default=None)
     parser.add_argument('-s', '--socket', help='Establish a bi-directional server socket', action='store_true', default=False)
     parser.add_argument('--settings', help='Which settings file should we use?', type=str, default='settings')
     args = parser.parse_args()
@@ -46,29 +45,21 @@ if __name__ == "__main__":
     except AttributeError:
         raise AttributeError('You need to set the API TOO_OFTEN_WARNING code in your settings file')
 
-    manager = BotManager(console=args.console, processes=args.poolsize, \
+    manager = BotManager(console=args.console, poolsize=args.poolsize, \
                         socket=args.socket, settings=settings)
 
-    try:
-        if not args.multi:
-            player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
-            manager.players.append(player)
-        else:
-            try:
-                manager.players = settings.multi_bot
-            except AttributeError:
-                logger.critical('You must specify multiple bots in your settings file.')
-                exit()
+    if not args.multi:
+        player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
+        manager.create_bot_from_player(player)
+    else:
+        try:
+            for player in settings.multi_bot:
+                manager.create_bot_from_player(player)
+        except AttributeError:
+            logger.critical('You must specify multiple bots in your settings file.')
+            exit()
 
-        manager.run()
-
-    except KeyboardInterrupt:
-        logger.critical('Caught KeyboardInterrupt, begin shutdown')
-
-        for bot in manager.bots:
-            bot.shutdown()
-
-    logger.info('Exiting')
+    manager.run()
 
 else:
     def test_bot():
@@ -79,7 +70,7 @@ else:
             player = Player(key=settings.api_key, server=settings.game_server, user_agent=settings.user_agent)
 
         manager = BotManager()
-        manager.players.append(player)
+        manager.create_bot_from_player(player)
         manager.run(workhorse=False)
 
         return next(iter(manager.bots), None)
