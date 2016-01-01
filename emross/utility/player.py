@@ -60,7 +60,7 @@ class Player(object):
 
         parts = ', '.join(parts)
 
-        return 'Player ({0})'.format(parts)
+        return '{0} ({1})'.format(self.__class__.__name__, parts)
 
     @property
     def remote(self):
@@ -72,6 +72,7 @@ class Player(object):
 
         return self._remote
 
+    @emross.defer.inlineCallbacks
     def account_login(self, bot, *args, **kwargs):
         """Account login to acquire a new API key"""
 
@@ -92,7 +93,7 @@ class Player(object):
             raise EmrossWarApiException('No password set to relog with {}, try again soon'.format(api.player))
 
 
-        json = api.call(EmrossWar.MASTER_QUERY_URL, server=EmrossWar.MASTER_HOST, user=self.username,
+        json = yield api.call(EmrossWar.MASTER_QUERY_URL, server=EmrossWar.MASTER_HOST, user=self.username,
                     action='login', pvp=0, key=None, handle_errors=False, _handlers={14: BannedAccountHandler})
 
         if json['code'] != EmrossWar.SUCCESS:
@@ -102,14 +103,14 @@ class Player(object):
                 err = gettext('Received error {0} during login').format(json['code'])
 
             msg = '"{0}": {1}'.format(self.username, err)
-            bot.pushover.send_message(msg, title=gettext('Account Logon Error'))
+            yield bot.pushover.send_message(msg, title=gettext('Account Logon Error'))
 
             raise BotException(msg)
 
         server = json['ret']['server'][7:-1]
         user = json['ret']['user']
 
-        json = api.call(self.LOGIN_URL, server=server, username=user, \
+        json = yield api.call(self.LOGIN_URL, server=server, username=user, \
                     password=self.password, key=None, handle_errors=False)
         if json['code'] != EmrossWar.SUCCESS:
             raise BotException(EmrossWar.LANG['ERROR']['SERVER'].get(str(json['code']), gettext('Account login error')))
@@ -119,17 +120,19 @@ class Player(object):
 
         key = json['ret']['key']
 
-        self._sync_pvp_key(bot, key, user, server)
+        yield self._sync_pvp_key(bot, key, user, server)
 
-        return key
+        emross.defer.returnValue(key)
 
+    @emross.defer.inlineCallbacks
     def update_api_key(self, bot, current_key, *args, **kwargs):
         """Try to find a new key for this bot to use. Search local cache,
         external API and then fallback to logging in directly"""
 
         logger.info('Try to acquire a valid API key for this account')
+
         try:
-            cache = self.load_user_cache()
+            cache = yield self.load_user_cache()
             key = cache[self.username]
             if key == current_key:
                 logger.debug('Cached key matches current one, cannot use')
@@ -138,26 +141,24 @@ class Player(object):
             else:
                 logger.info('Found another key to use from "{0}"'.format(self.USER_CACHE))
                 self.key = key
-                bot.errors.task_done()
-                return
+                emross.defer.returnValue(True)
         except IOError:
             logger.debug('Unable to load "{0}"'.format(self.USER_CACHE))
         except KeyError:
             logger.debug('No cached key for this account')
 
         # Check external API for a remotely cached key
-        key, server = self.check_external_api(bot, invalid_key=current_key)
+        key, server = yield self.check_external_api(bot, invalid_key=current_key)
         if key and key != current_key:
             logger.info('We have another key to try from the remote API.')
             self.key = key
             self.update_user_cache(self.username, key)
-            self._sync_pvp_key(bot, key, self.username, server)
-            bot.errors.task_done()
-            return
+            yield self._sync_pvp_key(bot, key, self.username, server)
+            emross.defer.returnValue(True)
 
         # Last resort... login directly!
         try:
-            key = self.account_login(bot, *args, **kwargs)
+            key = yield self.account_login(bot, *args, **kwargs)
         except Exception as e:
             logger.info('Error encountered trying to acquire new key via login')
             if not self.key:
@@ -166,11 +167,10 @@ class Player(object):
             logger.info('Try current key to check if it really is stale')
             try:
                 # Low level api._call to prevent using emross.handlers
-                json = bot.api._call(bot.USERINFO_URL, handle_errors=False)
+                json = yield bot.api._call(bot.USERINFO_URL, handle_errors=False)
                 if json['code'] == EmrossWar.SUCCESS:
                     self.key = current_key
-                    bot.errors.task_done()
-                    return
+                    emross.defer.returnValue(True)
             except Exception:
                 pass
 
@@ -184,20 +184,21 @@ class Player(object):
         # Sync the key with our external API
         if self.remote:
             logger.debug('Push new key to remote API for account "{0}"'.format(self.username))
-            self.remote.sync_account(self.username, key, master=emross.master)
-
-        bot.errors.task_done()
+            yield self.remote.sync_account(self.username, key, master=emross.master)
 
 
+    @emross.defer.inlineCallbacks
     def check_external_api(self, bot=None, **kwargs):
+        result = (None, None)
+
         if self.username is None:
             logger.debug('Unknown account username, unable to check')
 
         elif self.remote:
-            data = self.remote.check_account(self.username, **kwargs)
-            return data.get('key'), (data.get('server') or '')[7:-1]
+            data = yield self.remote.check_account(self.username, **kwargs)
+            result = data.get('key'), (data.get('server') or '')[7:-1]
 
-        return None, None
+        emross.defer.returnValue(result)
 
     def load_user_cache(self):
         keys = {}
@@ -205,7 +206,7 @@ class Player(object):
             with open(self.USER_CACHE, 'rb') as fp:
                 keys = pickle.load(fp)
         except IOError:
-            logger.debug('Unable to load "%s"' % self.USER_CACHE)
+            logger.debug('Unable to load "%s"', self.USER_CACHE)
 
         return keys
 
@@ -221,11 +222,12 @@ class Player(object):
         cache[username] = key
         self.save_user_cache(cache)
 
+    @emross.defer.inlineCallbacks
     def _sync_pvp_key(self, bot, key, user=None, server=None, **kwargs):
         if not bot.pvp:
-            return
+            emross.defer.returnValue(None)
 
-        json = bot.api._call(self.LOGIN_URL, sleep=False, handle_errors=False,
+        json = yield bot.api._call(self.LOGIN_URL, sleep=False, handle_errors=False,
                             key=None, user=user, action='synckey', **kwargs)
 
         """
@@ -235,7 +237,7 @@ class Player(object):
         been chosen already; otherwise, receive code 4005 and quit out!
         """
         if json['code'] == 12:
-            json = bot.api._call('game/api_ww.php',
+            json = yield bot.api._call('game/api_ww.php',
                 server=server, key=key, action='switch', hero_id=0,
                 sleep=False, handle_errors=False,
                 **kwargs
@@ -246,8 +248,12 @@ class Player(object):
 class AccountApi(RemoteApi):
     """Interact with an external API to get and synchronise """
 
+    @emross.defer.inlineCallbacks
     def check_account(self, username, **kwargs):
-        return self.call('account/check', username=username, **kwargs)
+        json = yield self.call('account/check', username=username, **kwargs)
+        emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def sync_account(self, username, key, **kwargs):
-        return self.call('account/sync', username=username, key=key, **kwargs)
+        json = yield self.call('account/sync', username=username, key=key, **kwargs)
+        emross.defer.returnValue(json)

@@ -1,4 +1,4 @@
-from emross import master as MASTER
+import emross
 from emross.api import EmrossWar
 from emross.utility.controllable import Controllable
 from emross.utility.task import Task
@@ -11,19 +11,21 @@ class GiftCollector(Task, Controllable):
     GIFT_URL = 'game/gift_api.php'
     MASTER_GIFT_URL = 'gift.php'
 
+    @emross.defer.inlineCallbacks
     def action_collect(self, event, code, *args, **kwargs):
         """
         Retrieve a gift `code`
         """
-        self.bot.api.call(self.MASTER_GIFT_URL, server=MASTER, \
+        yield self.bot.api.call(self.MASTER_GIFT_URL, server=emross.master, \
             user=self.bot.api.player.username, code=code, **kwargs)
 
+    @emross.defer.inlineCallbacks
     def process(self):
         if self.bot.pvp:
-            return
+            emross.defer.succeed(None)
     
         self.log.info('Check for gifts')
-        json = self.bot.api.call(self.GIFT_URL, action='list')
+        json = yield self.bot.api.call(self.GIFT_URL, action='list')
 
         if json['code'] == EmrossWar.SUCCESS:
             gifts = json['ret']
@@ -31,7 +33,7 @@ class GiftCollector(Task, Controllable):
                 self.log.debug(gift)
 
                 if gift.get('get', False) == True:
-                    json = self.bot.api.call(self.GIFT_URL, action='get', id=gift['id'])
+                    json = yield self.bot.api.call(self.GIFT_URL, action='get', id=gift['id'])
 
 
 if __name__ == '__main__':

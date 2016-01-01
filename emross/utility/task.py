@@ -1,7 +1,7 @@
 import math
-import threading
 import time
 
+import emross
 from emross.utility.base import EmrossBaseObject
 
 class Task(EmrossBaseObject):
@@ -19,7 +19,7 @@ class Task(EmrossBaseObject):
     def __init__(self, *args, **kwargs):
         super(Task, self).__init__(*args, **kwargs)
 
-        self.lock = threading.Lock()
+        self.lock = emross.defer.DeferredLock()
         self._result = dict()
         self._last_cycle = 0
         self._next_run = 0
@@ -45,6 +45,7 @@ class Task(EmrossBaseObject):
         if self.ENFORCED_INTERVAL:
             setattr(self.bot.session, 'last_cycle_{0}'.format(self.__class__.__name__), value)
 
+    @emross.defer.inlineCallbacks
     def run(self, cycle_start, stage, *args, **kwargs):
         """
         Run this task if the cycle_start time differs
@@ -53,14 +54,16 @@ class Task(EmrossBaseObject):
         or as the result of processing this cycle. Necessary incase a blocking
         task has fired previously and is not rescheduled to run yet.
         """
-        with self.lock:
+        yield self.lock.acquire()
+
+        try:
             if self.can_run_process(cycle_start):
                 self.last_cycle = cycle_start
 
                 if self.bot.is_play_time(kwargs.get('playtimes')):
                     while True:
                         self._rescheduled = False
-                        self._result[stage] = self.process(*args, **kwargs)
+                        self._result[stage] = yield self.process(*args, **kwargs)
 
                         # Unless the Task just rescheduled itself we will stop
                         if not self._rescheduled:
@@ -69,8 +72,10 @@ class Task(EmrossBaseObject):
                     if self._next_run < cycle_start:
                         delay = self.calculate_delay()
                         self.sleep(delay)
+        finally:
+            self.lock.release()
 
-        return self._result.get(stage, None)
+        emross.defer.returnValue(self._result.get(stage, None))
 
     def can_run_process(self, cycle_start):
         if self.ENFORCED_INTERVAL and self.last_cycle + self.INTERVAL > cycle_start:

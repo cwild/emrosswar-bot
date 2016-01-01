@@ -1,6 +1,5 @@
 import logging
 import random
-import sys
 import threading
 import time
 from lib import six
@@ -20,16 +19,14 @@ try:
 except ImportError:
     from lib.ordered_dict import OrderedDict
 
-
 try:
-    # Natively installed version
-    import urllib3
+    from urllib.parse import urlencode
 except ImportError:
-    sys.path.extend(['lib/urllib3/'])
-    import urllib3
+    from urllib import urlencode
 
 
 import emross
+from emross.api import agent, Headers, read_body
 from emross.exceptions import EmrossWarApiException
 from emross.handlers import handlers, HTTP_handlers
 
@@ -39,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 class DummyResponse(object):
-    def __init__(self, status, data):
+    def __init__(self, code, data):
         self.headers = None
-        self.status = status
+        self.code = code
         self.data = data
 
 class EmrossWarApi(object):
@@ -61,26 +58,12 @@ class EmrossWarApi(object):
         self.lock = threading.Lock()
         self.shutdown = False
         self._headers = self.DEFAULT_HEADERS.copy()
-        self._headers.update(urllib3.make_headers(\
-            user_agent=self.user_agent,
-            keep_alive=True,
-            accept_encoding=True
-        ))
+        self._headers.update({
+            'User-Agent': [self.user_agent]
+        })
+        self.headers = Headers(self._headers)
 
-    @classmethod
-    def init_pool(cls, connections=10, timeout=15, **kwargs):
-        with cls._LOCK:
-            if cls.CONN_POOL is None:
-                cls.CONN_POOL = urllib3.PoolManager(maxsize=connections, timeout=timeout, **kwargs)
-                logger.debug('PoolManager initialised with {0} connections'.format(connections))
-
-    @property
-    def pool(self):
-        if not self.CONN_POOL:
-            self.init_pool()
-
-        return self.CONN_POOL
-
+    @emross.defer.inlineCallbacks
     def call(self, *args, **kwargs):
 
         try:
@@ -94,34 +77,36 @@ class EmrossWarApi(object):
             if self.shutdown:
                 raise EmrossWarApiException('No further API calls permitted for {0}'.format(self.player))
             try:
-                json = self._call(*args, **kwargs)
+                json = yield emross.defer.maybeDeferred(self._call, *args, **kwargs)
 
                 if json['code'] in _handlers:
                     handler = _handlers[json['code']](self.bot, *args, **kwargs)
-                    result = handler.process(json)
+                    result = yield handler.process(json)
                     if result is not None:
-                        return result
+                        emross.defer.returnValue(result)
                     # Try the current _call again
                     continue
 
                 if not isinstance(json['code'], int):
                     logger.debug('API call attempt %d failed with an invalid client code.', i)
                     logger.warning(json)
-                    time.sleep(random.randrange(2,3))
+                    yield emross.deferred_sleep(random.randrange(2,3))
                 else:
-                    return json
-            except (AttributeError, EmrossWarApiException, IndexError, JSONDecodeError) as e:
-                logger.exception(e)
-                logger.debug('Pause for a second.')
-                time.sleep(1)
-            except urllib3.exceptions.HTTPError as e:
+                    emross.defer.returnValue(json)
+            except EmrossWarApiException as e:
                 logger.debug((args, kwargs))
                 logger.debug(e)
                 wait = 1 + (i % 10)
                 logger.debug('Wait %d seconds before retry', wait)
-                time.sleep(wait)
+                yield emross.deferred_sleep(wait)
+            except (AttributeError, IndexError, JSONDecodeError) as e:
+                logger.exception(e)
+                logger.debug('Pause for a second.')
+                yield emross.deferred_sleep(1)
 
 
+
+    @emross.defer.inlineCallbacks
     def _call(self, method, server=None,
         sleep=(),
         handle_errors=True,
@@ -139,7 +124,7 @@ class EmrossWarApi(object):
 
         if handle_errors and (key is None or key.strip() == '') and 'key' not in kwargs:
             logger.debug('API key is missing, send dummy InvalidKey error')
-            return {'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''}
+            emross.defer.returnValue({'code': EmrossWar.ERROR_INVALID_KEY, 'ret':''})
 
         params = OrderedDict([('jsonpcallback', 'jsonp%d' % epoch), ('_', epoch + 3600),
                     ('key', key), ('_l', emross.lang), ('_p', emross.device)])
@@ -148,42 +133,44 @@ class EmrossWarApi(object):
         params = (OrderedDict([(k,v) for k,v in params.iteritems() if v is not None]))
 
         try:
-            r = self.pool.request(
-                    'GET',
-                    'http://{0}/{1}'.format(server, method),
-                    fields=params, headers=self._headers
-                )
-        except urllib3.exceptions.HTTPError as e:
+            url = 'http://{0}/{1}?{2}'.format(server, method, urlencode(params))
+            logger.debug('Request: %s', url)
+            response = yield agent.request('GET',
+                url,
+                self.headers
+            )
+            body = yield read_body(response)
+        except Exception as e:
             logger.exception(e)
-            r = DummyResponse(status=503, data=e)
+            response = DummyResponse(code=503, data=e)
+            body = None
 
-        if r.status not in [200, 304]:
-            logger.debug(r.data)
+        if response.code not in [200, 304]:
+            logger.debug(body)
 
             if handle_errors:
-                self.errors.append((r.status, r.data))
+                self.errors.append((response.code, body))
 
                 # Local handlers updated with global ones
                 handlers = HTTP_handlers.copy()
                 handlers.update(http_handlers)
-                handler = handlers.get(r.status)
+                handler = handlers.get(response.code)
 
                 if handler:
                     h = handler(self.bot)
-                    result = h.process(self.errors)
+                    result = yield h.process(self.errors)
                     if result:
-                        return result
+                        emross.defer.returnValue(result)
 
-            raise urllib3.exceptions.HTTPError('Unacceptable HTTP status code %d returned' % r.status)
+            raise EmrossWarApiException('Unacceptable HTTP status code {0} returned'.format(response.code))
 
-        jsonp = r.data
-        jsonp = jsonp[ jsonp.find('(')+1 : jsonp.rfind(')')]
+        jsonp = body[ body.find('(')+1 : body.rfind(')')]
 
         try:
             json = simplejson.loads(jsonp)
             logger.debug(json)
         except Exception:
-            logger.debug('Error with response. Headers: {0}, Body: {1}'.format(r.headers, r.data))
+            logger.debug('Error with decoding response data to JSON: %s', body)
             raise
 
         try:
@@ -202,10 +189,10 @@ class EmrossWarApi(object):
             if sleep:
                 wait += random.randrange(*sleep)
 
-                logger.debug('Wait for %f seconds', wait)
-                time.sleep(wait)
+            logger.debug('Wait for %f seconds', wait)
+            yield emross.deferred_sleep(wait)
 
-        return json
+        emross.defer.returnValue(json)
 
 
 class URLHelper(object):

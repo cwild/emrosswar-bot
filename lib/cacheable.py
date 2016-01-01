@@ -3,7 +3,11 @@ import time
 
 logger = logging.getLogger(__name__)
 
+import emross
+
 class _DummyWith(object):
+    def acquire(self): pass
+    def release(self): pass
     def __enter__(self): pass
     def __exit__(self, type, value, traceback): return True
 _with = _DummyWith()
@@ -42,10 +46,13 @@ class CacheableData(object):
             return _with
 
     @property
+    @emross.defer.inlineCallbacks
     def data(self):
-        with self._lock:
+        try:
+            yield self._lock.acquire()
+
             try:
-                should_update = self.should_update()
+                should_update = yield self.should_update()
             except Exception:
                 should_update = False
 
@@ -56,24 +63,25 @@ class CacheableData(object):
                 self.SUPPRESS_LOCKED_LOGS.add(self.__class__)
             elif time.time() > self._expires or should_update:
                 try:
-                    self.data = self.update(*self.args, **self.kwargs)
+                    self.data = yield emross.defer.maybeDeferred(self.update, *self.args, **self.kwargs)
                 except Exception as e:
                     logger.exception(e)
+        finally:
+            self._lock.release()
 
-        return self._data
+        emross.defer.returnValue(self._data)
 
     @data.setter
     def data(self, value):
-        with self._lock:
-            if isinstance(value, dict):
-                # Default to 0 so we can pass our own dict straight through
-                if value.get('code', 0) != 0:
-                    return
-                value = value.get('ret', value)
+        if isinstance(value, dict):
+            # Default to 0 so we can pass our own dict straight through
+            if value.get('code', 0) != 0:
+                return
+            value = value.get('ret', value)
 
-            if value is not None:
-                self._data = value
-                self._expires = time.time() + self.time_to_live
+        if value is not None:
+            self._data = value
+            self._expires = time.time() + self.time_to_live
 
     def should_update(self):
         return False

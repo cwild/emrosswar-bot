@@ -1,42 +1,81 @@
 import json
 import logging
-import sys
+import urllib
 import urlparse
 
+from base64 import b64encode
+from twisted.web.iweb import IBodyProducer
+from zope.interface import implements
 
-sys.path.extend(['lib/urllib3/'])
-import urllib3
+
+import emross
+from emross.api import agent, Headers, read_body
 
 logger = logging.getLogger(__name__)
 
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 USER_AGENT = 'com.cryformercy.emross.emrosswar-bot %s' % __version__
 
-class RemoteApiException(urllib3.exceptions.HTTPError): pass
+class POSTDataProducer(object):
+    implements(IBodyProducer)
+
+    def __init__(self, data_dict):
+        self.body = urllib.urlencode(data_dict)
+        self.length = len(self.body)
+        logger.debug(self.body)
+
+    def startProducing(self, consumer):
+        consumer.write(self.body)
+        return emross.defer.succeed(None)
+
+    def pauseProducing(self):
+        pass
+
+    def stopProducing(self):
+        pass
+
+class RemoteApiException(Exception): pass
 
 class RemoteApi(object):
-    pool = urllib3.PoolManager()
 
     def __init__(self, url, auth=None, *args, **kwargs):
         super(RemoteApi, self).__init__()
 
         self.url = url
-        self.headers = urllib3.make_headers(basic_auth=auth, \
-            keep_alive=True, accept_encoding=True, user_agent=USER_AGENT)
+        self.headers = {
+            'User-Agent': [USER_AGENT]
+        }
+        try:
+            self.headers['Authorization'] = ['Basic {0}'.format(b64encode(auth))]
+        except TypeError:
+            pass
 
+
+    @emross.defer.inlineCallbacks
     def call(self, uri, method='POST', decoder=json.loads, *args, **kwargs):
         url = urlparse.urljoin(self.url, uri)
+        logger.debug('Request: %s %s', method, url)
         kwargs = dict([(k, v) for k, v in kwargs.iteritems() if v is not None])
-        r = self.__class__.pool.request(method, url, fields=kwargs, headers=self.headers)
-        if r.status is 401:
+
+        headers = self.headers.copy()
+        body = None
+
+        if method == 'POST':
+            headers['Content-Type'] = ['application/x-www-form-urlencoded']
+            body = POSTDataProducer(kwargs)
+
+        response = yield agent.request(method, url, Headers(headers), body)
+        if response.code is 401:
             raise RemoteApiException('Incorrect login details')
 
+        body = yield read_body(response)
+
         try:
-            data = decoder(r.data)
+            data = decoder(body)
             logger.debug(str(data))
-            return data
+            emross.defer.returnValue(data)
         except ValueError:
-            raise RemoteApiException('Problem decoding data: {0}'.format(r.data))
+            raise RemoteApiException('Problem decoding data: {0}'.format(data))
 
     def json_decode(self, s):
         return json.loads(s)

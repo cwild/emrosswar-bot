@@ -1,9 +1,11 @@
+import emross
 from emross.utility.task import Task
 
 class AutoLottery(Task):
     INTERVAL = 1800
     LOTTERY_API = 'game/lottery_api.php'
 
+    @emross.defer.inlineCallbacks
     def process(self):
 
         # Don't check bot.data as it expires - prevent surplus userinfo updates
@@ -14,10 +16,10 @@ class AutoLottery(Task):
 
             while True:
                 self.log.info('List the lottery items')
-                json = self._wheel('list')
+                json = yield self._wheel('list')
 
                 self.log.info('Spin the wheel')
-                json = self._wheel('rotate')
+                json = yield self._wheel('rotate')
                 remain = int(json['ret']['remain'])
 
                 if remain < 1:
@@ -30,5 +32,7 @@ class AutoLottery(Task):
             self.sleep(3600)
 
 
+    @emross.defer.inlineCallbacks
     def _wheel(self, action):
-        return self.bot.api.call(self.LOTTERY_API, action=action)
+        json = yield self.bot.api.call(self.LOTTERY_API, action=action)
+        emross.defer.returnValue(json)

@@ -1,6 +1,6 @@
-import threading
 import time
 
+import emross
 from emross.utility.base import EmrossBaseObject
 
 
@@ -9,21 +9,22 @@ class BuildManager(EmrossBaseObject):
     def __init__(self, bot, *args, **kwargs):
         super(BuildManager, self).__init__(bot, *args, **kwargs)
         self.tasks = {}
-        self.lock = threading.Lock()
-        self.rlock = threading.RLock()
         self.running_build_stages = set()
 
     def task(self, task_class):
-        with self.rlock:
+        """
+        Maintain a single instance of a Task
+        """
+        if task_class not in self.tasks:
             try:
-                handler = self.tasks[task_class]
-            except KeyError:
-                handler = self.tasks[task_class] = task_class(self.bot)
+                self.tasks[task_class] = task_class(self.bot)
             except TypeError as e:
                 logger.exception(e)
                 raise e
-        return handler
 
+        return self.tasks[task_class]
+
+    @emross.defer.inlineCallbacks
     def process(self, tasks, stagename="TASK"):
         """
         Process the build path and pass things to their respective handlers
@@ -32,6 +33,7 @@ class BuildManager(EmrossBaseObject):
 
         results = []
         cycle_start = time.time()
+        next_runtimes = []
 
         for i, stage in enumerate(tasks, start=1):
 
@@ -44,8 +46,9 @@ class BuildManager(EmrossBaseObject):
                         continue
                     args = next(iter(parts[1:2]), ())
                     kwargs = next(iter(parts[2:3]), {})
-                    result = handler.run(cycle_start, i, *args, **kwargs)
+                    result = yield handler.run(cycle_start, i, *args, **kwargs)
                     results.append(result)
+                    next_runtimes.append(handler._next_run)
                 except Exception as e:
                     self.log.exception(e)
 
@@ -55,3 +58,26 @@ class BuildManager(EmrossBaseObject):
 
         # Free this stage for other threads
         self.running_build_stages.remove(stagename)
+        emross.defer.returnValue(next_runtimes)
+
+    @emross.defer.inlineCallbacks
+    def run(self, tasks):
+        """
+        Kick off our task handlers
+        """
+        self.log.debug('Begin task scheduler with {0}'.format(tasks))
+        wait_periods = []
+
+        while not self.bot.closing:
+            wait_periods[:] = []
+            for task, jobs in tasks.iteritems():
+                if task not in self.running_build_stages:
+                    self.running_build_stages.add(task)
+                    wait = yield self.process(jobs, task)
+                    wait_periods.extend(wait)
+
+            # Now wait until we need to run another task agin
+            wait = min([t for t in wait_periods if t > 0]) - time.time()
+            wait = max(wait, 0)
+            self.log.debug('Run again in %f seconds', wait)
+            yield emross.deferred_sleep(wait)
