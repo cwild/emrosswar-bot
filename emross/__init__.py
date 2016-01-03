@@ -25,3 +25,8 @@ master = 'm.emrosswar.com'
 Players whom can control the bot! (applies to all bots)
 """
 OPERATORS = []
+
+"""
+Delay after API calls.
+"""
+ENFORCED_MINIMUM_DELAY = 0

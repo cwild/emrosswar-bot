@@ -1,6 +1,5 @@
 import logging
 import random
-import threading
 import time
 from lib import six
 
@@ -42,8 +41,6 @@ class DummyResponse(object):
         self.data = data
 
 class EmrossWarApi(object):
-    _LOCK = threading.Lock()
-    CONN_POOL = None
     USER_AGENT = """Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Mobile/8H7"""
     DEFAULT_HEADERS = {}
 
@@ -55,7 +52,6 @@ class EmrossWarApi(object):
         self.player = player
         self.errors = []
         self.error_timer = 0
-        self.lock = threading.Lock()
         self.shutdown = False
         self._headers = self.DEFAULT_HEADERS.copy()
         self._headers.update({
@@ -181,14 +177,17 @@ class EmrossWarApi(object):
         finally:
             self.errors[:] = []
 
+        wait = emross.ENFORCED_MINIMUM_DELAY
         if sleep is False:
-            # No delay from our end
             pass
+        elif isinstance(sleep, float):
+            wait += sleep
+        elif sleep and isinstance(sleep, tuple):
+            wait += random.randrange(*sleep)
         else:
-            wait = random.random()
-            if sleep:
-                wait += random.randrange(*sleep)
+            wait += random.random()
 
+        if wait:
             logger.debug('Wait for %f seconds', wait)
             yield emross.deferred_sleep(wait)
 
