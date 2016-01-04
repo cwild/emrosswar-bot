@@ -5,6 +5,7 @@ import sys
 from lib.cacheable import CacheableData
 from lib import six
 
+import emross
 from emross.api import EmrossWar
 from emross.item import item
 from emross.utility.controllable import Controllable
@@ -12,7 +13,7 @@ from emross.utility.controllable import Controllable
 
 class InventoryManager(Controllable, CacheableData):
     CACHE_LIFETIME = 1800
-    COMMAND = 'inventory'
+    COMMAND = gettext('inventory')
     ITEM_PAGES = (
         item.ItemType.WEAPON,
         item.ItemType.ARMOR,
@@ -25,6 +26,7 @@ class InventoryManager(Controllable, CacheableData):
     def __init__(self, bot):
         super(InventoryManager, self).__init__(bot, time_to_live=self.CACHE_LIFETIME)
 
+    @emross.defer.inlineCallbacks
     def update(self, *args, **kwargs):
         data = {}
         known_ids = set()
@@ -32,7 +34,7 @@ class InventoryManager(Controllable, CacheableData):
         for item_type in self.ITEM_PAGES:
             page = 1
             while True:
-                json = self.bot.item_manager.list(page=page, type=item_type)
+                json = yield self.bot.item_manager.list(page=page, type=item_type)
 
                 for _item in json['ret']['item']:
                     try:
@@ -53,7 +55,7 @@ class InventoryManager(Controllable, CacheableData):
         for sid, ids in data.iteritems():
             data[sid] = dict((k, v) for k, v in ids.iteritems() if k in known_ids)
 
-        return dict((k,v) for k, v in data.iteritems() if v)
+        emross.defer.returnValue(dict((k,v) for k, v in data.iteritems() if v))
 
 
     def adjust_item_stock(self, item_id, qty=1):
@@ -68,14 +70,16 @@ class InventoryManager(Controllable, CacheableData):
             except KeyError:
                 pass
 
+    @emross.defer.inlineCallbacks
     def _get_all_items(self):
         """
         Load the cached client item dict but update with other items from
         our inventory where necessary
         """
         all_items = copy.deepcopy(EmrossWar.ITEM.data)
+        data = yield self.data
 
-        for _type in self.data.itervalues():
+        for _type in data.itervalues():
             for _data in _type.itervalues():
                 _item = _data['item']
                 new_data = {
@@ -85,10 +89,12 @@ class InventoryManager(Controllable, CacheableData):
                     'sid': str(_item.get('sid')),
                 }
                 all_items.setdefault(new_data['sid'], {}).update(new_data)
-        return all_items
 
+        emross.defer.returnValue(all_items)
+
+    @emross.defer.inlineCallbacks
     def find_search_items_from_names(self, *args):
-        all_items = self._get_all_items()
+        all_items = yield self._get_all_items()
 
         search_items = []
         for _search in args:
@@ -99,7 +105,7 @@ class InventoryManager(Controllable, CacheableData):
                 except re.error:
                     pass
 
-        return search_items
+        emross.defer.returnvalue(search_items)
 
     def action_data(self, event, *args, **kwargs):
         """

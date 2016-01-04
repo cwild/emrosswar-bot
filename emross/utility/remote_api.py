@@ -28,12 +28,6 @@ class POSTDataProducer(object):
         consumer.write(self.body)
         return emross.defer.succeed(None)
 
-    def pauseProducing(self):
-        pass
-
-    def stopProducing(self):
-        pass
-
 class RemoteApiException(Exception): pass
 
 class RemoteApi(object):
