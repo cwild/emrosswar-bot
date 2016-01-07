@@ -128,7 +128,7 @@ class EmrossContent(object):
                         logger.debug('MD5 sum = %s', d)
                         emross.defer.returnValue(d)
         except IOError as e:
-            logger.warning(e)
+            logger.debug(e)
             emross.defer.returnValue(False)
 
 
@@ -209,6 +209,8 @@ class EmrossDataHandler(object):
 @emross.defer.inlineCallbacks
 def _init_cache(master):
     logger.info('Initialise cache using master server "%s"', master)
+    logger.debug('Using working dir: %s', os.getcwd())
+
     try:
         force = yield os.path.getmtime(os.path.join(CACHE_PATH, master, 'md5.dat'))+86400 < time.time()
     except (IOError, OSError) as e:

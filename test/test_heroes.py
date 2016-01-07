@@ -1,13 +1,13 @@
-import unittest
+from test import bot, unittest
 
+import emross
 from emross.downtown import City
 from emross.arena.hero import Hero
 from emross.arena.heroes import HeroManager
 
-class TestScenario(unittest.TestCase):
+class TestHeroes(unittest.TestCase):
 
     def setUp(self):
-        from test import bot
 
         city = bot.cities[0]
 
@@ -33,16 +33,28 @@ class TestScenario(unittest.TestCase):
             777:Hero({"id":777,"gid":72,"p":78,"i":17,"c1":23,"f":50,"g":12,"c2":933,"fy":0,"s":0,"e":16,"w":4,"tw":5,"tl":1,"ex":56470,"te":257100,"np":0,"ni":0,"nc1":0,"nc2":150,"ns":0,"ncd":0,"pr":36000})
         }
 
+    @emross.defer.inlineCallbacks
     def test_highest_hero_stats(self):
-        self.assertEqual(11969, self.hero_manager1.highest_stat_hero(Hero.COMMAND).data['id'])
-        self.assertEqual(11969, self.hero_manager1.highest_stat_hero(Hero.ATTACK).data['id'])
-        self.assertEqual(11969, self.hero_manager1.highest_stat_hero(Hero.DEFENSE).data['id'])
-        self.assertEqual(12608, self.hero_manager1.highest_stat_hero(Hero.WISDOM).data['id'])
+        hero = yield self.hero_manager1.highest_stat_hero(Hero.COMMAND)
+        self.assertEqual(11969, hero.data['id'])
 
+        hero = yield self.hero_manager1.highest_stat_hero(Hero.ATTACK)
+        self.assertEqual(11969, hero.data['id'])
+
+        hero = yield self.hero_manager1.highest_stat_hero(Hero.DEFENSE)
+        self.assertEqual(11969, hero.data['id'])
+
+        hero = yield self.hero_manager1.highest_stat_hero(Hero.WISDOM)
+        self.assertEqual(12608, hero.data['id'])
+
+    @emross.defer.inlineCallbacks
     def test_weighted_stats(self):
-        self.assertEqual((self.hero_manager2.heroes[666], 1111), self.hero_manager2.ordered_by_scored_stats()[0])
+        hm2heroes = yield self.hero_manager2.heroes
+        hero = yield self.hero_manager2.ordered_by_scored_stats()
+        self.assertEqual((hm2heroes[666], 1111), hero[0])
 
+        hm2ordered = yield self.hero_manager2.ordered_by_scored_stats([(Hero.ATTACK,1)])
         self.assertEqual(
-            [(self.hero_manager2.heroes[555], 103), (self.hero_manager2.heroes[666], 102)],
-            self.hero_manager2.ordered_by_scored_stats([(Hero.ATTACK,1)])[0:2]
+            [(hm2heroes[555], 103), (hm2heroes[666], 102)],
+            hm2ordered[0:2]
         )
