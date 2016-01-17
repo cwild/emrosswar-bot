@@ -1,3 +1,4 @@
+import emross
 from emross.api import EmrossWar
 from emross.utility.task import Task
 
@@ -7,8 +8,10 @@ class GiftEvents(Task):
     ENFORCED_INTERVAL = True
     ACTIVITY_URL = 'game/api_interior_activity.php'
 
+    @emross.defer.inlineCallbacks
     def process(self):
-        if self.bot.userinfo.get('logintrack', 0) == 0:
+        userinfo = yield self.bot.userinfo
+        if userinfo.get('logintrack', 0) == 0:
             return
     
         self.log.info('Check for in-game events')
@@ -18,7 +21,7 @@ class GiftEvents(Task):
 
         while collected:
             collected = False
-            json = self.bot.api.call(self.ACTIVITY_URL, action='list', city=city.id)
+            json = yield self.bot.api.call(self.ACTIVITY_URL, action='list', city=city.id)
 
             if json['code'] != EmrossWar.SUCCESS:
                 break
@@ -29,7 +32,7 @@ class GiftEvents(Task):
                 if collectable:
                     self.log.info('Collect reward for "{0}"'.format(EmrossWar.safe_text(event[7])))
 
-                    json = self.bot.api.call(self.ACTIVITY_URL, action='reward', city=city.id, actid=event_id)
+                    json = yield self.bot.api.call(self.ACTIVITY_URL, action='reward', city=city.id, actid=event_id)
                     if json['code'] == EmrossWar.SUCCESS:
                         collected = True
 

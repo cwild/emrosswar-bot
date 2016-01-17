@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class ServiceUnavailableHandler(EmrossHandler):
     HTTP_STATUS_CODE = 503
     RETRIES = 3
-    DELAY = 30
+    DELAY = 5
 
     @emross.defer.inlineCallbacks
     def process(self, errors):
@@ -18,7 +18,7 @@ class ServiceUnavailableHandler(EmrossHandler):
 
         if count < self.RETRIES:
             logger.debug('Error may be temporary (current count %d)', count)
-            yield emross.deferred_sleep(self.DELAY)
+            yield emross.deferred_sleep(self.DELAY*count)
         else:
             logger.debug('We keep seeing HTTP error %d; try relogging to clear it', self.HTTP_STATUS_CODE)
 

@@ -5,6 +5,7 @@ import math
 
 from lib.cacheable import CacheableData
 
+import emross
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL, CONSCRIPT_GEAR_URL
 from emross.arena.hero import Gear, Hero
@@ -28,9 +29,10 @@ class HeroManager(Controllable, CacheableData):
         self._heroes = {}
 
     @property
+    @emross.defer.inlineCallbacks
     def heroes(self):
-        _ = self.data
-        return self._heroes
+        yield self.data
+        emross.defer.returnValue(self._heroes)
 
     def action_fighter(self, event, *args, **kwargs):
         event.propagate = False
@@ -84,8 +86,9 @@ class HeroManager(Controllable, CacheableData):
                     break
 
     def _hero_gear_handler(self, hero_id):
+        @emross.defer.inlineCallbacks
         def _update(*args, **kwargs):
-            json = self.bot.api.call(*args, **kwargs)
+            json = yield self.bot.api.call(*args, **kwargs)
             gear = {}
 
             if json['code'] == EmrossWar.SUCCESS:
@@ -93,18 +96,19 @@ class HeroManager(Controllable, CacheableData):
                     item = EmrossWar.ITEM[_item['item']['sid']]
                     gear[Gear.TYPE_SLOTS[int(item['type'])]] = _item
 
-            return gear
+            emross.defer.returnValue(gear)
 
 
         return CacheableData(update=_update, method=CONSCRIPT_GEAR_URL, \
                 action='list_gen_item', id=hero_id, city=self.city.id)
 
+    @emross.defer.inlineCallbacks
     def equip_hero_slot_item(self, hero, slot=2, item_id=-1):
         """
         Equip
         Slots
         """
-        json = self.bot.api.call(CONSCRIPT_GEAR_URL,
+        json = yield self.bot.api.call(CONSCRIPT_GEAR_URL,
             action='item_equip',
             id=hero.data['id'],
             i_id=item_id,
@@ -114,19 +118,23 @@ class HeroManager(Controllable, CacheableData):
         if json['code'] == EmrossWar.SUCCESS:
             hero.update(json['ret']['hero'])
 
-        return json
+        emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def list_hero_slot_items(self, hero, slot=2):
-        return self.bot.api.call(CONSCRIPT_GEAR_URL,
+        json = yield self.bot.api.call(CONSCRIPT_GEAR_URL,
             action='list_item',
             id=hero.data['id'],
             slot=slot,
             city=self.city.id)
 
+        emross.defer.returnValue(json)
+
+    @emross.defer.inlineCallbacks
     def update(self):
         self.log.debug(six.u('Update heroes at {0}').format(self.city))
 
-        json = self.bot.api.call(CONSCRIPT_URL, city=self.city.id, action='gen_list')
+        json = yield self.bot.api.call(CONSCRIPT_URL, city=self.city.id, action='gen_list')
 
         if json['code'] == EmrossWar.SUCCESS:
             heroes = set()
@@ -144,33 +152,41 @@ class HeroManager(Controllable, CacheableData):
             for hero in old_heroes:
                 del self._heroes[hero]
 
-            return json
+            emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def get_hero_by_attr(self, attr, value=None):
-        for hero in self.heroes.itervalues():
+        heroes = yield self.heroes
+        for hero in heroes.itervalues():
             if hero.stat(attr) == value:
-                return hero
+                emross.defer.returnValue(hero)
 
+    @emross.defer.inlineCallbacks
     def highest_stat_hero(self, stat=Hero.COMMAND):
         try:
-            hero = self.ordered_by_stats(stats=(stat,))[0]
+            ordered = yield self.ordered_by_stats(stats=(stat,))
+            hero = ordered[0]
             self.log.debug(hero)
             attr_name = Hero.ATTRIBUTE_NAMES.get(stat, 'UNKNOWN')
             self.log.debug('{0} with {1} {2}'.format(hero, hero.data.get(stat), attr_name))
-            return hero
+            emross.defer.returnValue(hero)
         except IndexError:
             pass
 
+    @emross.defer.inlineCallbacks
     def ordered_by_stats(self, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=[], descending=True):
         exclude = set(exclude)
-        heroes = [hero for hero in self.heroes.values() if hero.stat('gid') not in exclude]
+        _heroes = yield self.heroes
+        heroes = [hero for hero in _heroes.values() if hero.stat('gid') not in exclude]
         heroes.sort(key=lambda hero: [hero.data.get(stat) for stat in stats], reverse=descending)
-        return heroes
+        emross.defer.returnValue(heroes)
 
+    @emross.defer.inlineCallbacks
     def ordered_by_scored_stats(self, scoring=[(Hero.COMMAND, 1)], heroes=None, exclude=[]):
         result = []
         exclude = set(exclude)
-        heroes = self.heroes if heroes is None else heroes
+        if heroes is None:
+            heroes = yield self.heroes
 
         for hero_id, hero in heroes.iteritems():
             if hero_id in exclude:
@@ -185,23 +201,27 @@ class HeroManager(Controllable, CacheableData):
         result.sort(key = lambda hero: hero[1], reverse=True)
         self.log.debug(result)
 
-        return result
+        emross.defer.returnValue(result)
 
     @property
+    @emross.defer.inlineCallbacks
     def remaining_hero_capacity(self):
         """
         How many more heroes do we have space to hold at this arena?
         """
-        arena = self.bot.builder.task(Construct).structure_level(self.city, Building.ARENA)
+        arena = yield self.bot.builder.task(Construct).structure_level(self.city, Building.ARENA)
         capacity = math.ceil(arena / 2)
         remaining = int(capacity - len(self.heroes))
         self.log.debug(six.u('{0} remaining hero slots at {1}').format(remaining, self.city))
-        return remaining
+        emross.defer.returnValue(remaining)
 
+    @emross.defer.inlineCallbacks
     def reborn_hero(self, hero):
 
-        if hero.can_reborn() and self.city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=True):
-            json = self.use_hero_item(hero, action='reborn')
+        reborn = yield hero.can_reborn()
+        requirements_met = yield self.city.resource_manager.meet_requirements(self.REBORN_COST, unbrick=reborn)
+        if reborn and requirements_met:
+            json = yield self.use_hero_item(hero, action='reborn')
             """
             {'code': 0, 'ret': {'geninfo':
                 {'g_liftblood': '0',
@@ -236,24 +256,27 @@ class HeroManager(Controllable, CacheableData):
                 hero.data[Hero.REBORN] = gi['reborn']
                 hero.data[Hero.VIGOR] = int(gi['energy'])
 
-        return hero
+        emross.defer.returnValue(hero)
 
+    @emross.defer.inlineCallbacks
     def revive_hero(self, hero):
         """
         Given a hero, try reviving it from the dead!
         """
         self.log.debug(six.u('Try to revive {0} at {1}').format(hero, self.city))
-        json = self.bot.api.call(CONSCRIPT_GEAR_URL, id=hero.data['id'], action='relive', city=self.city.id)
+        json = yield self.bot.api.call(CONSCRIPT_GEAR_URL, id=hero.data['id'], action='relive', city=self.city.id)
 
         if json['code'] == EmrossWar.SUCCESS:
             self.log.info(six.u('Revived {0} at {1}').format(hero, self.city))
             hero.data[Hero.STATE] = Hero.AVAILABLE
 
-        return json
+        emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def use_hero_item(self, hero, **kwargs):
 
         params = dict(id=hero.data['id'], city=self.city.id)
         params.update(kwargs)
 
-        return self.bot.api.call(CONSCRIPT_GEAR_URL, **params)
+        json = yield self.bot.api.call(CONSCRIPT_GEAR_URL, **params)
+        emross.defer.returnValue(json)

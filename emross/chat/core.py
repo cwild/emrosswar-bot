@@ -1,6 +1,7 @@
 import time
 
-from emross.api import EmrossWar
+import emross
+from emross.api import EmrossWar, cache_ready
 from emross.chat.filter import PlayerFilter
 from emross.handlers.handler import EmrossHandler
 from emross.utility.events import Event
@@ -13,11 +14,16 @@ class Channel:
     PRIVATE = 2
     WORLD = 0
 
-CHANNELS = {
-    EmrossWar.LANG['CHATCHANNEL']['0'].lower(): Channel.WORLD,
-    EmrossWar.LANG['CHATCHANNEL']['1'].lower(): Channel.ALLIANCE,
-    EmrossWar.LANG['CHATCHANNEL']['2'].lower(): Channel.PRIVATE,
-}
+
+CHANNELS = {}
+def _ChannelAssignment(name, channel):
+    txt = EmrossWar.LANG['CHATCHANNEL'][name].lower()
+    CHANNELS[txt] = channel
+cache_ready(_ChannelAssignment, '0', Channel.WORLD)
+cache_ready(_ChannelAssignment, '1', Channel.ALLIANCE)
+cache_ready(_ChannelAssignment, '2', Channel.PRIVATE)
+del _ChannelAssignment
+
 
 class ChatEvent:
     NEW_CASTLE = 1
@@ -32,10 +38,12 @@ class ChatEvent:
 class _OldChatApi(EmrossHandler):
     URL = 'game/api_chat.php'
 
+    @emross.defer.inlineCallbacks
     def process(self, errors):
         self.log.debug('Failed to send message, try the old chat API')
         self.log.debug((self.args, self.kwargs))
-        return self.bot.api.call(self.URL, **self.kwargs)
+        json = yield self.bot.api.call(self.URL, **self.kwargs)
+        emross.defer.returnValue(json)
 
 class Chat(Task):
     INTERVAL = 5
@@ -59,8 +67,9 @@ class Chat(Task):
         except AttributeError:
             return -1
 
+    @emross.defer.inlineCallbacks
     def process(self):
-        json = self.bot.api.call(self.URL, lineid=self.lineid)
+        json = yield self.bot.api.call(self.URL, lineid=self.lineid)
 
         for section, parser in self.parsers:
             try:
@@ -69,11 +78,13 @@ class Chat(Task):
             except (AttributeError, IndexError) as e:
                 self.log.exception(e)
 
+    @emross.defer.inlineCallbacks
     def parse_messages(self, messages):
         """
         The messages are both in-game chat and the activity feed
         """
-        targets = [self.bot.userinfo.get('nick', '')]
+        userinfo = yield self.bot.userinfo
+        targets = [userinfo.get('nick', '')]
         if self.bot.api.player:
             targets.append(self.bot.api.player.username)
             targets.extend(self.bot.api.player.groups or [])
@@ -91,10 +102,10 @@ class Chat(Task):
                 }
 
                 if text and (msg.get('from_name') in self.bot.operators or \
-                    msg.get('from_name') == self.bot.userinfo.get('nick')):
+                    msg.get('from_name') == userinfo.get('nick')):
 
                     method, args, kwargs = MessageParser.parse_message(text, targets,
-                        myself=msg.get('from_name') == self.bot.userinfo.get('nick'),
+                        myself=msg.get('from_name') == userinfo.get('nick'),
                         filter=self.player_filter.filter)
 
                     try:
@@ -104,24 +115,25 @@ class Chat(Task):
                         pass
 
                     event = Event(method, **data)
-                    self.bot.events.notify(event, *args, **kwargs)
+                    yield self.bot.events.notify(event, *args, **kwargs)
 
-                elif msg.get('from_name') not in ('', self.bot.userinfo.get('nick')):
+                elif msg.get('from_name') not in ('', userinfo.get('nick')):
                     event = Event('chat_message', **data)
-                    self.bot.events.notify(event, text)
+                    yield self.bot.events.notify(event, text)
 
                 else:
                     event = Event('scroll_activity', **data)
-                    self.bot.events.notify(event, text)
+                    yield self.bot.events.notify(event, text)
             except SkipMessage as e:
                 self.log.debug(e)
             except MessageParsingError:
                 event = Event('chat_message', **data)
-                self.bot.events.notify(event, text)
+                yield self.bot.events.notify(event, text)
             except Exception as e:
                 self.log.exception(e)
 
 
+    @emross.defer.inlineCallbacks
     def parse_events(self, messages):
         """
         The message may contain useful info such as incoming loot notifcations.
@@ -135,7 +147,7 @@ class Chat(Task):
 
                 elif event_type == ChatEvent.COUNTDOWN_RELOAD:
                     event = Event('city.countdown.reload')
-                    self.bot.events.notify(event, city_id=int(msg['cid']))
+                    yield self.bot.events.notify(event, city_id=int(msg['cid']))
 
                 elif event_type in [ChatEvent.NEW_CASTLE, ChatEvent.RESYNC_USER]:
                     # update userinfo on next data access
@@ -151,6 +163,7 @@ class Chat(Task):
     def ping(self, event, *args, **kwargs):
         self.send_message('pong', event=event)
 
+    @emross.defer.inlineCallbacks
     def send_message(self, message, prefix='', event=None, **kwargs):
         can_send = False
 
@@ -160,7 +173,8 @@ class Chat(Task):
             channel = Channel.ALLIANCE
 
         if channel == Channel.ALLIANCE:
-            guild_id = self.bot.userinfo.get('guildid')
+            userinfo = yield self.bot.userinfo
+            guild_id = userinfo.get('guildid')
             if guild_id:
                 target, can_send = guild_id, True
 
@@ -180,10 +194,11 @@ class Chat(Task):
             for letters in map(None, *(iter(message.encode('utf-8')),) * size):
                 chunk = ''.join([l for l in letters if l is not None])
 
-                self._send_message(self.URL,
+                yield self._send_message(self.URL,
                     txt=prefix+chunk,
                     targettype=channel, targetid=target)
 
+    @emross.defer.inlineCallbacks
     def _send_message(self, *args, **kwargs):
         """
         Try to work with the newer chat API, when it works..
@@ -191,9 +206,11 @@ class Chat(Task):
         handlers = {
             500: lambda c : _OldChatApi(c, args, kwargs)
         }
-        return self.bot.api.call(http_handlers=handlers, *args, **kwargs)
+        json = yield self.bot.api.call(http_handlers=handlers, *args, **kwargs)
+        emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def spam(self, event, *args, **kwargs):
         msg = kwargs.get('delim', ' ').join(args)
         for i in range(int(kwargs.get('times', 1))):
-            self.send_message(msg, event=event)
+            yield self.send_message(msg, event=event)

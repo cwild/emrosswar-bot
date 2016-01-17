@@ -1,4 +1,5 @@
-from emross.api import EmrossWar
+import emross
+from emross.api import EmrossWar, cache_ready
 from emross.item.item import ItemRank, ITEMS
 from emross.resources import Resource
 from emross.utility.controllable import Controllable
@@ -7,23 +8,25 @@ from emross.utility.task import Task
 RARE_ITEM_TIERS = {}
 ULTRA_ITEMS_START = 3000
 
-for sid, item in ITEMS.iteritems():
-    if item['rank'] >= ItemRank.RARE:
-        RARE_ITEM_TIERS.setdefault(item['type'], []).append(sid)
+def _setup():
+    for sid, item in ITEMS.iteritems():
+        if item['rank'] >= ItemRank.RARE:
+            RARE_ITEM_TIERS.setdefault(item['type'], []).append(sid)
 
 
-for vals in RARE_ITEM_TIERS.itervalues():
-    """
-    Older items from the base game: decreasing item ID meant lower quality
-    The new Ultra items are the opposite.
-    """
-    vals.sort()
-    old = [sid for sid in vals if sid < ULTRA_ITEMS_START]
-    old.sort(reverse=True)
-    vals[0:len(old)] = old
+    for vals in RARE_ITEM_TIERS.itervalues():
+        """
+        Older items from the base game: decreasing item ID meant lower quality
+        The new Ultra items are the opposite.
+        """
+        vals.sort()
+        old = [sid for sid in vals if sid < ULTRA_ITEMS_START]
+        old.sort(reverse=True)
+        vals[0:len(old)] = old
 
+cache_ready(_setup)
 # Clean up
-del old, sid, item, vals
+del _setup
 
 
 class AutoFusion(Task, Controllable):

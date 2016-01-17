@@ -34,27 +34,55 @@ class BannedAccountHandler(handler.EmrossHandler):
 class CoolDownHandler(handler.EmrossHandler):
     DELAY = 10
 
+    @emross.defer.inlineCallbacks
     def process(self, json):
         logger.debug('Wait {0} seconds for cooldown'.format(self.DELAY))
-        time.sleep(self.DELAY)
+        yield emross.deferred_sleep(self.DELAY)
+
+class InsufficientResources(handler.EmrossHandler):
+
+    @emross.defer.inlineCallbacks
+    def process(self, json=None):
+        try:
+            city = int(self.kwargs['city'])
+            for c in self.bot.cities:
+                if c.id == city:
+                    c.expire()
+                    break
+        except KeyError:
+            for c in self.bot.cities:
+                c.expire()
+
+        # Don't wish to hold anything else up
+        emross.defer.returnValue(json)
 
 class InvalidDataHandler(handler.EmrossHandler):
     DELAY = 30
 
+    @emross.defer.inlineCallbacks
     def process(self, json):
         self.log.info(gettext('Invalid data, try again after {0}s').format(self.DELAY))
         self.log.debug((self.args, self.kwargs))
-        time.sleep(self.DELAY)
+
+        yield emross.deferred_sleep(self.DELAY)
 
 class InvalidKeyHandler(handler.EmrossHandler):
+
+    @emross.defer.inlineCallbacks
     def process(self, json=None):
-        logger.warning('Invalid API key!')
-        logger.debug('Push an error handler onto the stack')
+        logger.warning(gettext('Invalid API key!'))
+
+        logger.debug(gettext('Setup an error handler and wait on it'))
         args = (self.bot, self.bot.api.player.key)+self.args
-        self.bot.errors.put((self.bot.api.player.update_api_key, args, self.kwargs))
-        logger.debug('Wait until errors are cleared')
-        self.bot.errors.join()
-        logger.debug('Finished handling InvalidKey exception')
+
+        self.bot.error = self.bot.api.player.update_api_key(*args, **self.kwargs)
+        solved = yield self.bot.error
+
+        if solved:
+            # No longer in an error state
+            self.bot.error = None
+
+        logger.debug(gettext('Finished handling InvalidKey exception'))
 
 
 class PlayerRaceSelection(handler.EmrossHandler):

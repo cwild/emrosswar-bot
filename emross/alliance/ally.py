@@ -1,5 +1,6 @@
 import time
 
+import emross
 from emross.api import EmrossWar
 from emross.alliance import ALLIANCE_INFO_URL, ALLIANCE_URL
 from emross.utility.controllable import Controllable
@@ -20,33 +21,44 @@ class Alliance(Controllable, CacheableData):
         self._time = None
 
     @property
+    @emross.defer.inlineCallbacks
     def in_ally(self):
-        guildid = self.bot.userinfo.get('guildid', 0)
+        userinfo = yield self.bot.userinfo
+        guildid = userinfo.get('guildid', 0)
 
         if self._time is None and guildid:
             self._time = time.time()
 
-        return guildid > 0
+        emross.defer.returnValue(guildid > 0)
 
+    @emross.defer.inlineCallbacks
     def info(self, **kwargs):
-        return self.bot.api.call(ALLIANCE_INFO_URL, **kwargs)
+        json = yield self.bot.api.call(ALLIANCE_INFO_URL, **kwargs)
+        emross.defer.returnValue(json)
 
     @property
+    @emross.defer.inlineCallbacks
     def hall_tech(self):
-        return self.data[5]
+        data = yield self.data
+        emross.defer.returnValue(data[5])
 
+    @emross.defer.inlineCallbacks
     def tech(self, tech):
         try:
-            state, level, cooldown = self.hall_tech[tech-1]
-            return level
+            hall_tech = yield self.hall_tech
+            state, level, cooldown = hall_tech[tech-1]
+            self.log.debug('"{0}" is level {1}'.format(EmrossWar.LANG['ALLY_TECH'][str(tech)]['name'], level))
+            emross.defer.returnValue(level)
         except (IndexError, KeyError, ValueError):
-            return 0
+            emross.defer.returnValue(0)
 
+    @emross.defer.inlineCallbacks
     def update(self):
-        guildid = self.bot.userinfo.get('guildid', 0)
+        userinfo = yield self.bot.userinfo
+        guildid = userinfo.get('guildid', 0)
 
         if guildid == 0:
-            return {}
+            emross.defer.returnValue({})
 
         if guildid != self.id:
             # Only log if our alliance membership has changed
@@ -57,17 +69,18 @@ class Alliance(Controllable, CacheableData):
             self.id = guildid
 
             self.log.info('is a member of "{0}"'.format(
-                EmrossWar.safe_text(self.bot.userinfo.get('guild', ''))
+                EmrossWar.safe_text(userinfo.get('guild', ''))
             ))
 
         # If there is still some cooldown, do not cache the result
         elif self._data and set([(self.MAX_TECH_LEVEL, 0)]) == \
             set([(level, cooldown) for state, level, cooldown in self._data[5]]):
                 self.log.debug('Maxed Alliance hall, reuse cached data')
-                return self._data
+                emross.defer.returnValue(self._data)
 
         self.log.debug('Update alliance hall info')
-        return self.bot.api.call(ALLIANCE_INFO_URL, op='info')
+        json = yield self.bot.api.call(ALLIANCE_INFO_URL, op='info')
+        emross.defer.returnValue(json)
 
     def action_cooldown(self, event, *args, **kwargs):
         """
@@ -118,7 +131,7 @@ class Alliance(Controllable, CacheableData):
     @Controllable.restricted
     def action_quit(self, event, *args, **kwargs):
         """
-        Quit the current password. Requires provision of a "password".
+        Quit the current alliance. Requires provision of a "password".
         """
         if not self.in_ally:
             return

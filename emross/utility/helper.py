@@ -1,5 +1,4 @@
 from __future__ import division
-from lib import six
 
 import locale
 locale.setlocale(locale.LC_ALL, '')
@@ -7,8 +6,6 @@ locale.setlocale(locale.LC_ALL, '')
 import math
 import re
 import time
-
-from multiprocessing.dummy import RLock
 
 from lib.cacheable import CacheableData
 from lib.session import Session
@@ -55,7 +52,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     def __init__(self, api, socket_writer=None, settings=None, *args, **kwargs):
         super(EmrossWarBot, self).__init__(bot=self, time_to_live=60, *args, **kwargs)
-        self.lock = RLock()
+        self.lock = emross.defer.DeferredLock()
         self.is_initialised = False
         self.closing = False
         self.blocked = False
@@ -65,7 +62,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         api.bot = self
         self._socket_writer = socket_writer
         self.settings = settings
-        self.errors = six.moves.queue.Queue()
+        self.error = None
 
         self.session = Session(self)
 
@@ -109,6 +106,14 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         self.blocked = True
         self.closing = True
 
+    @emross.defer.inlineCallbacks
+    def startup(self):
+        now = self.session.start_time = time.time()
+        self.log.debug(gettext('Started at %s'), now)
+        userinfo = yield self.userinfo
+        self.log.debug(gettext('init id=%s'), userinfo['id'])
+        self.builder.run(self.tasks)
+
     def shutdown(self):
         self.closing = True
         self.session.end_time = time.time()
@@ -131,8 +136,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
     @property
     def cities(self):
-        with self.lock:
-            return self._cities
+        return self._cities
 
     def core_setup(self):
         """
@@ -202,13 +206,14 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             chat.send_message(self.total_wealth(*args, **kwargs), event=event)
         self.events.subscribe(self.WEALTH_COMMAND, wealth)
 
+    @emross.defer.inlineCallbacks
     def update(self):
         """
         Setup bot with player account data
         """
 
         self.log.debug(gettext('Updating player info'))
-        json = self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
+        json = yield self.api.call(self.USERINFO_URL, pushid=self.api.pushid)
 
         self._data = userinfo = json['ret']['user']
 
@@ -231,10 +236,11 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             self.core_setup()
 
         for gift in userinfo['gift']:
-            self.get_gift(gift)
+            yield self.get_gift(gift)
 
-        return userinfo
+        emross.defer.returnValue(userinfo)
 
+    @emross.defer.inlineCallbacks
     def get_gift(self, gift):
         gid = gift['id']
         try:
@@ -243,13 +249,13 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             gift_item = gid
 
         self.log.info(gettext('Collecting gift "{0}"').format(gift_item))
-        json = self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
+        json = yield self.api.call(item.Item.ITEM_LIST, action='gift', id=gid)
 
         if int(gid) == inventory.DAILY_GIFT[0]:
             self.session.last_daily_gift = time.time()
             self.events.notify(events.Event('emross.gift.daily.received'))
 
-        return json
+        emross.defer.returnValue(json)
 
     def scout_map(self, **kwargs):
         self.log.info(gettext('Trying to find more targets to attack'))
@@ -297,13 +303,22 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         return False
 
+    @emross.defer.inlineCallbacks
     def _city_wealth(self, func=max, text='most'):
-        city = func(self.cities, key = lambda c: c.resource_manager.get_amount_of(Resource.GOLD))
+
+        cities = []
+        for _city in self.cities:
+            gold = yield _city.resource_manager.get_amount_of(Resource.GOLD)
+            cities.append((_city, gold))
+
+        city, total = func(cities, key = lambda c: c[1])
+
         self.log.debug(gettext('Chosen the city with the {0} {resource}, {city} ({amount})').format(text,
             resource=EmrossWar.LANG.get('COIN', 'gold'),
-            city=city, amount=city.resource_manager.get_amount_of(Resource.GOLD))
+            city=city, amount=total)
         )
-        return city
+
+        emross.defer.returnValue(city)
 
     def richest_city(self):
         return self._city_wealth(max, 'most')
@@ -327,7 +342,7 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
             self.log.debug(gettext('Find items of type {0}').format(itype))
             while True:
-                json = self.item_manager.list(page=page, type=itype)
+                json = yield self.item_manager.list(page=page, type=itype)
 
                 for _item in json['ret']['item']:
                     try:
@@ -344,11 +359,12 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
             if sale_list:
                 self.log.debug(gettext('Sell {0} item/s of type {1}').format(len(sale_list), itype))
-                city = city or self.poorest_city()
+                if not city:
+                    city = yield self.poorest_city()
 
                 for item_id in sale_list:
                     try:
-                        json = self.item_manager.sell(city=city, id=item_id)
+                        json = yield self.item_manager.sell(city=city, id=item_id)
                         city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                     except (KeyError, TypeError):
                         pass
@@ -364,18 +380,22 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             if not can_process:
                 continue
 
-            result = self.find_inventory_items(_items)
+            result = yield self.find_inventory_items(_items)
 
             for sid, found_items in result.iteritems():
                 for item_id, num, val in found_items:
-                    city = city or self.poorest_city()
-                    func(city=city.id, id=item_id, num=num)
+                    if not city:
+                        city = yield self.poorest_city()
+                    yield func(city=city.id, id=item_id, num=num)
 
 
+    @emross.defer.inlineCallbacks
     def find_inventory_item(self, search_item):
         item_id, item_type, item_rank = search_item
-        return self.find_inventory_items([item_id]).get(item_id)
+        items = yield self.find_inventory_items([item_id])
+        emross.defer.returnValue(items.get(item_id))
 
+    @emross.defer.inlineCallbacks
     def find_inventory_items(self, items):
         result = {}
 
@@ -383,7 +403,8 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             try:
                 _search = EmrossWar.ITEM[str(sid)]
             except AttributeError:
-                _search = self.inventory.data[sid].values()
+                data = yield self.inventory.data
+                _search = data[sid].values()
                 self.log.debug(_search)
                 # Choose the first one
                 _search = _search.pop(0)['item']
@@ -393,15 +414,17 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
                     sid, _search.get('name', 'Unknown')
                 ))
 
+                data = yield self.inventory.data
                 result[sid] = [
                     [_item['item']['id'], _item['item']['num'], _item['sale']]
-                    for _item in self.inventory.data[sid].itervalues()
+                    for _item in data[sid].itervalues()
                 ]
             except KeyError:
                 pass
 
-        return result
+        emross.defer.returnValue(result)
 
+    @emross.defer.inlineCallbacks
     def find_gold_for_city(self, city, gold, unbrick=False):
         """
         Given a city, try to find any items we have that we can sell for gold.
@@ -411,13 +434,13 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
         total_amount = lambda: sum([qty*price for id, qty, price in sellable_items])
 
         if total_amount() < gold and unbrick:
-            items = self.find_inventory_items([
+            items = yield self.find_inventory_items([
                 inventory.GOLD_BRICK[0], inventory.GOLD_BULLION[0]
             ])
             [sellable_items.extend(v) for v in items.itervalues()]
 
         if total_amount() < gold:
-            return False
+            emross.defer.returnValue(False)
 
         total = 0
         for item_id, qty, price in sellable_items:
@@ -429,17 +452,18 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
             if num > 1:
                 kwargs['num'] = num
 
-            json = self.item_manager.sell(city=city, id=item_id, **kwargs)
+            json = yield self.item_manager.sell(city=city, id=item_id, **kwargs)
 
             if json['code'] == EmrossWar.SUCCESS:
                 city.resource_manager.set_amount_of(Resource.GOLD, json['ret']['gold'])
                 total += num*price
 
             if total >= gold:
-                return True
+                emross.defer.returnValue(True)
 
-        return False
+        emross.defer.returnValue(False)
 
+    @emross.defer.inlineCallbacks
     def total_wealth(self, bricked=None, **kwargs):
         coin = EmrossWar.LANG.get('COIN', 'gold')
         parts = []
@@ -450,14 +474,14 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         if bricked:
             bricks = [inventory.GOLD_BULLION[0], inventory.GOLD_BRICK[0]]
-            _items = self.find_inventory_items(bricks)
+            _items = yield self.find_inventory_items(bricks)
 
             for brick in bricks:
                 if brick in _items:
                     parts.append('{0}={1}'.format(EmrossWar.ITEM[str(brick)].get('name'),\
                         sum([qty for item_id, qty, price in _items[brick]])))
 
-        return ', '.join(parts)
+        emross.defer.returnValue(', '.join(parts))
 
     @property
     def minimum_food(self):
@@ -488,18 +512,21 @@ class EmrossWarBot(EmrossBaseObject, CacheableData):
 
         return ', '.join(runtime)
 
+    @emross.defer.inlineCallbacks
     def other_player_info(self, id=None, **kwargs):
         if id:
-            return self.api.call(self.OTHER_USERINFO_URL, id=id, **kwargs)
+            json = yield self.api.call(self.OTHER_USERINFO_URL, id=id, **kwargs)
+            emross.defer.returnValue(json)
 
     @property
+    @emross.defer.inlineCallbacks
     def world_name(self):
         """
         Query the game world only once per run
         """
         if not self._world_name:
-            json = self.api.call(EmrossWar.CONFIG.get('MASTER_NAMING', 'naming.php'), EmrossWar.MASTER_HOST, s=self.api.game_server, key=None)
+            json = yield self.api.call(EmrossWar.CONFIG.get('MASTER_NAMING', 'naming.php'), EmrossWar.MASTER_HOST, s=self.api.game_server, key=None)
             if json['code'] == EmrossWar.SUCCESS:
                 self._world_name = json['ret']
 
-        return self._world_name
+        emross.defer.returnValue(self._world_name)

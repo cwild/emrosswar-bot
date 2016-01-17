@@ -3,7 +3,7 @@ Define the interactions between a hero and his world!
 """
 import re
 
-from emross.api import EmrossWar
+from emross.api import EmrossWar, cache_ready
 from emross.utility.base import EmrossBaseObject
 
 from lib import six
@@ -97,13 +97,7 @@ class Hero(EmrossBaseObject):
     WINS = 'w'
     WISDOM = 'i'
 
-    ATTRIBUTE_NAMES = {
-        ATTACK: EmrossWar.LANG.get('ATTACK', 'Attack'),
-        DEFENSE: EmrossWar.LANG.get('DEFENSE', 'Defense'),
-        COMMAND: EmrossWar.LANG.get('MAXTROOP', 'Command'),
-        LEVEL: EmrossWar.LANG.get('LEVEL', 'Level'),
-        WISDOM: EmrossWar.LANG.get('WISDOM', 'Wisdom')
-    }
+    ATTRIBUTE_NAMES = {}
 
     # States
     AVAILABLE = 0
@@ -174,3 +168,14 @@ class Hero(EmrossBaseObject):
                     break
 
         return result
+
+
+def _AttrAssignment(attribute, key, default=None):
+    Hero.ATTRIBUTE_NAMES[attribute] = EmrossWar.LANG.get(key, default)
+
+cache_ready(_AttrAssignment, Hero.ATTACK, 'ATTACK', 'Attack')
+cache_ready(_AttrAssignment, Hero.DEFENSE, 'DEFENSE', 'Defense')
+cache_ready(_AttrAssignment, Hero.COMMAND, 'MAXTROOP', 'Command')
+cache_ready(_AttrAssignment, Hero.LEVEL, 'LEVEL', 'Level')
+cache_ready(_AttrAssignment, Hero.WISDOM, 'WISDOM', 'Wisdom')
+del _AttrAssignment

@@ -122,14 +122,15 @@ class InventoryManager(Controllable, CacheableData):
                 except re.error:
                     pass
 
+    @emross.defer.inlineCallbacks
     def action_search(self, event, *args, **kwargs):
         """
         Locate items from the inventory
         """
-        all_items = self._get_all_items()
-        search_items = self.find_search_items_from_names(*args)
+        all_items = yield self._get_all_items()
+        search_items = yield self.find_search_items_from_names(*args)
 
-        found = self.bot.find_inventory_items(search_items)
+        found = yield self.bot.find_inventory_items(search_items)
         result = []
         for item_id, values in found.iteritems():
             name = all_items[str(item_id)].get('name')
@@ -143,6 +144,7 @@ class InventoryManager(Controllable, CacheableData):
         elif 'quiet' not in kwargs:
             self.chat.send_message('Sorry, I do not have any of those items!')
 
+    @emross.defer.inlineCallbacks
     def action_use(self, event, *args, **kwargs):
         """Use a given item, eg. sid=123"""
 
@@ -150,7 +152,8 @@ class InventoryManager(Controllable, CacheableData):
         if sid:
             sid = int(sid)
 
-        found = self.data.get(sid)
+        data = yield self.data
+        found = data.get(sid)
 
         if not found:
             if 'quiet' not in kwargs:
@@ -183,7 +186,7 @@ class InventoryManager(Controllable, CacheableData):
 
                 times = min(item['item']['num'], num) - total
                 for c in six.moves.range(times):
-                   json = item_manager.use(self.bot.cities[0], item_id)
+                   json = yield item_manager.use(self.bot.cities[0], item_id)
 
                    if json['code'] == EmrossWar.SUCCESS:
                        used += 1

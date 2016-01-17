@@ -1,5 +1,6 @@
 import math
 
+import emross
 from emross.api import EmrossWar
 from emross.arena import CONSCRIPT_URL
 from emross.arena.hero import Hero
@@ -39,6 +40,7 @@ class City(EmrossBaseObject, CacheableData):
     def __str__(self):
         return six.u('City("{0.name}", x={0.x}, y={0.y})').format(self)
 
+    @emross.defer.inlineCallbacks
     def update(self):
         """Get castle info"""
 
@@ -67,53 +69,60 @@ class City(EmrossBaseObject, CacheableData):
         """
 
         self.log.debug(six.u('Updating city "{0}"').format(self.name))
-        json = self.bot.api.call(self.GET_CITY_INFO, city=self.id)
+        json = yield self.bot.api.call(self.GET_CITY_INFO, city=self.id)
+        userinfo = yield self.bot.userinfo
 
-        self.bot.userinfo['level'] = json['ret']['grade']
-        self.bot.userinfo['money'] = json['ret']['money']
-        self.bot.userinfo['pvp'] = json['ret']['pvp']
+        userinfo['level'] = json['ret']['grade']
+        userinfo['money'] = json['ret']['money']
+        userinfo['pvp'] = json['ret']['pvp']
 
-        return json['ret']['city']
+        emross.defer.returnValue(json['ret']['city'])
 
 
+    @emross.defer.inlineCallbacks
     def get_active_buffs(self):
         """
         eg:
         [{'itemid': 196, 'secs': 3403, 'id': 413076}]
         """
-        return self.data[23]
+        json = yield self.data
+        emross.defer.returnValue(json[23])
 
+    @emross.defer.inlineCallbacks
     def add_buff(self, buff):
-        self.get_active_buffs().append(buff)
+        buffs = yield self.get_active_buffs()
+        buffs.append(buff)
 
+    @emross.defer.inlineCallbacks
     def get_gold_count(self):
-        return self.resource_manager.get_amounts_of(Resource.GOLD)
+        result = yield self.resource_manager.get_amounts_of(Resource.GOLD)
+        emross.defer.returnValue(result)
 
 
+    @emross.defer.inlineCallbacks
     def replenish_food(self, amount=None):
         self.log.debug('Replenishing food')
         if not amount:
-            food, food_limit = self.resource_manager.get_amounts_of(Resource.FOOD)
+            food, food_limit = yield self.resource_manager.get_amounts_of(Resource.FOOD)
             amount = food_limit - food
 
             if self.bot.minimum_food > 0:
                 amount = self.bot.minimum_food - food
                 if amount < 0:
                     self.log.debug('The current food levels exceed the minimum level specified')
-                    return
+                    emross.defer.returnValue(None)
 
                 self.log.info('Replenishing food reserves by {0} to fulfill specified minimum of {1}.'.format(amount, self.bot.minimum_food))
 
         buy_gold = int(math.ceil(self.resource_manager.conversion_rate(Resource.GOLD, Resource.FOOD) * amount))
 
-        available_gold = self.resource_manager.get_amount_of(Resource.GOLD)
+        available_gold = yield self.resource_manager.get_amount_of(Resource.GOLD)
 
         if buy_gold > available_gold:
             buy_gold = available_gold
 
         if buy_gold and buy_gold > 0:
-            self.resource_manager.convert(Resource.GOLD, Resource.FOOD, buy_gold)
-
+            yield self.resource_manager.convert(Resource.GOLD, Resource.FOOD, buy_gold)
 
 
     def create_army(self, threshold, heroes=[], mixed=False):
