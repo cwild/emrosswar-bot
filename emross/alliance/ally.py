@@ -63,7 +63,7 @@ class Alliance(Controllable, CacheableData):
         if guildid != self.id:
             # Only log if our alliance membership has changed
             if self.id is not None:
-                self.log.debug('Not in the same alliance as previous check')
+                self.log.debug(gettext('Not in the same alliance as previous check'))
 
             # update the guildid
             self.id = guildid
@@ -75,44 +75,48 @@ class Alliance(Controllable, CacheableData):
         # If there is still some cooldown, do not cache the result
         elif self._data and set([(self.MAX_TECH_LEVEL, 0)]) == \
             set([(level, cooldown) for state, level, cooldown in self._data[5]]):
-                self.log.debug('Maxed Alliance hall, reuse cached data')
+                self.log.debug(gettext('Maxed Alliance hall, reuse cached data'))
                 emross.defer.returnValue(self._data)
 
-        self.log.debug('Update alliance hall info')
+        self.log.debug(gettext('Update alliance hall info'))
         json = yield self.bot.api.call(ALLIANCE_INFO_URL, op='info')
         emross.defer.returnValue(json)
 
+    @emross.defer.inlineCallbacks
     def action_cooldown(self, event, *args, **kwargs):
         """
         How much longer before I can receive troops?
         """
 
-        if not self.in_ally:
-            return
+        in_ally = yield self.in_ally
+        if not in_ally:
+            emross.defer.returnValue(None)
 
-        json = self.info()
+        json = yield self.info()
         if json['code'] == EmrossWar.SUCCESS:
             moved, quota, cooldown = json['ret'].get('quota', [0,0,0])
             msg = 'Quota: {0}/{1}, Cooldown: {2}'.format(moved, quota, \
                 self.bot.human_friendly_time(cooldown))
             self.chat.send_message(msg, event=event)
 
+    @emross.defer.inlineCallbacks
     def action_join(self, event, *args, **kwargs):
         """
         Join the ally of the player who issued the command!
         Last available team unless specified otherwise.
         """
-        if self.in_ally:
-            return
+        in_ally = yield self.in_ally
+        if not in_ally:
+            emross.defer.returnValue(None)
 
         try:
             # Get player info
-            json = self.bot.other_player_info(id=event.player_id)
+            json = yield self.bot.other_player_info(id=event.player_id)
             player = json['ret']['user']
 
             # Get alliance join info
             guildid = player['guildid']
-            application_info = self.bot.api.call(ALLIANCE_URL, id=guildid)
+            application_info = yield self.bot.api.call(ALLIANCE_URL, id=guildid)
 
             try:
                 # We can provide a team number to apply to
@@ -123,27 +127,30 @@ class Alliance(Controllable, CacheableData):
 
             self.log.info('Apply to "{0}"'.format(EmrossWar.safe_text(team['name'])))
 
-            self.bot.api.call(ALLIANCE_URL, id=guildid, tid=team['id'],
+            yield self.bot.api.call(ALLIANCE_URL, id=guildid, tid=team['id'],
                 info=' '.join(args))
         except KeyError:
-            return
+            pass
 
+    @emross.defer.inlineCallbacks
     @Controllable.restricted
     def action_quit(self, event, *args, **kwargs):
         """
         Quit the current alliance. Requires provision of a "password".
         """
-        if not self.in_ally:
-            return
+        in_ally = yield self.in_ally
+        if not in_ally:
+            emross.defer.returnValue(None)
 
         """
         If this is a command that was sent before we were in the ally then
         we should not respond as it wasn't aimed at us.
         """
         if self._time is None or event.data.get('time', time.time()) < self._time:
-            return
+            emross.defer.returnValue(None)
 
-        if self.bot.userinfo.get('gpower') == RANK_MEMBER:
-            self.bot.api.call(ALLIANCE_INFO_URL, delid=self.bot.userinfo.get('id'))
+        userinfo = yield self.bot.userinfo
+        if userinfo.get('gpower') == RANK_MEMBER:
+            yield self.bot.api.call(ALLIANCE_INFO_URL, delid=userinfo.get('id'))
         else:
-            self.chat.send_message('I rank too high to simply quit!')
+            self.chat.send_message(gettext('I rank too high to simply quit!'))
