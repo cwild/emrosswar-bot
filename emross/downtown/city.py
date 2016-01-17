@@ -125,12 +125,16 @@ class City(EmrossBaseObject, CacheableData):
             yield self.resource_manager.convert(Resource.GOLD, Resource.FOOD, buy_gold)
 
 
+    @emross.defer.inlineCallbacks
     def create_army(self, threshold, heroes=[], mixed=False):
         """
         Return a dict of the various soldiers to include in this army.
         `threshold` can be a dict-like object or a list
         """
-        heroes = heroes or self.hero_manager.heroes.values()
+        if not heroes:
+            _heroes = yield self.hero_manager.heroes
+            heroes = _heroes.values()
+
         if not heroes:
             raise NoHeroesAvailable('Cannot find any available heroes at "{0}"'.format(self.name))
 
@@ -181,7 +185,7 @@ class City(EmrossBaseObject, CacheableData):
                 pass
 
         if army and mixed:
-            self.log.debug('Total army size {0}'.format(army))
+            self.log.debug(gettext('Total army size {0}').format(army))
 
             total = sum(army.values())
             if total > max_carry:
@@ -190,9 +194,11 @@ class City(EmrossBaseObject, CacheableData):
         if not army:
             raise InsufficientSoldiers('No soldiers were added to the army at "{0}"'.format(self.name))
 
-        return dict([('soldier_num{0}'.format(k), v) for k, v in army.iteritems()])
+        result = dict([('soldier_num{0}'.format(k), v) for k, v in army.iteritems()])
+        emross.defer.returnValue(result)
 
 
+    @emross.defer.inlineCallbacks
     def get_available_heroes(self, extra=1, stats=[Hero.LEVEL, Hero.EXPERIENCE], exclude=True):
         """
         Find the available heroes for this city
@@ -210,7 +216,7 @@ class City(EmrossBaseObject, CacheableData):
             ]
         }
         """
-        json = self.bot.api.call(CONSCRIPT_URL, city=self.id, action='gen_list', extra=extra)
+        json = yield self.bot.api.call(CONSCRIPT_URL, city=self.id, action='gen_list', extra=extra)
         self.heroes[:] = []
 
         heroes = json['ret']['hero']
@@ -226,13 +232,15 @@ class City(EmrossBaseObject, CacheableData):
             self.heroes.append(Hero(data))
 
 
+    @emross.defer.inlineCallbacks
     def choose_hero(self, capacity=None,
         exclude_hero_ranks=[],
         **kwargs):
         """
         Which hero should we use?
         """
-        heroes = [h for h in self.hero_manager.ordered_by_stats([Hero.COMMAND])
+        _heroes = yield self.hero_manager.ordered_by_stats([Hero.COMMAND])
+        heroes = [h for h in _heroes
                     if h.stat(Hero.VIGOR) > 0 and not h.stat(Hero.GUARDING)
                     and h.stat(Hero.STATE) == Hero.AVAILABLE
                     and h.client.get('rank') not in exclude_hero_ranks
@@ -242,10 +250,10 @@ class City(EmrossBaseObject, CacheableData):
             raise NoHeroesAvailable
 
         if not capacity:
-            return heroes[0]
+            emross.defer.returnValue(heroes[0])
 
         for hero in heroes[::-1]:
             if hero.stat(Hero.COMMAND) >= capacity:
-                return hero
+                emross.defer.returnValue(hero)
 
         raise InsufficientHeroCommand
