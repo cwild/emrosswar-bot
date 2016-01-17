@@ -1,3 +1,5 @@
+from __future__ import division
+
 import math
 from lib import six
 
@@ -143,3 +145,52 @@ class ResourceManager(EmrossBaseObject):
 
         self.log.debug('Target resource requirements not met')
         emross.defer.returnValue(False)
+
+    @emross.defer.inlineCallbacks
+    def calculate_multiples(self, cost, include_minimum_food=True):
+        result = 0
+
+        cur_gold = yield self.get_amount_of(Resource.GOLD)
+        cur_food = yield self.get_amount_of(Resource.FOOD)
+        conversion_rate = {}
+        conversion_rate[(Resource.GOLD, Resource.FOOD)] = yield self.conversion_rate(Resource.GOLD, Resource.FOOD)
+        conversion_rate[(Resource.GOLD, Resource.WOOD)] = yield self.conversion_rate(Resource.GOLD, Resource.WOOD)
+        conversion_rate[(Resource.GOLD, Resource.IRON)] = yield self.conversion_rate(Resource.GOLD, Resource.IRON)
+
+        numerator = cur_gold
+        denominator = cost.get(Resource.GOLD, 0)
+
+        """
+        Maintain the minimum food?!
+        We might exit early if the available resources are insufficient.
+        """
+        if include_minimum_food:
+            min_food = self.bot.minimum_food
+
+            if min_food - cur_food > 0:
+                numerator -= (min_food - cur_food) * conversion_rate[(Resource.GOLD, Resource.FOOD)]
+
+                if numerator < 0:
+                    # We do not have enough to maintain min food!
+                    emross.defer.returnValue(result)
+
+        if Resource.WOOD in cost:
+            cur_wood = yield self.get_amount_of(Resource.WOOD)
+            numerator += cur_wood * conversion_rate[(Resource.GOLD, Resource.WOOD)]
+            denominator += cost.get(Resource.WOOD, 0) * conversion_rate[(Resource.GOLD, Resource.WOOD)]
+
+        if Resource.IRON in cost:
+            cur_iron = yield self.get_amount_of(Resource.IRON)
+            numerator += cur_iron * conversion_rate[(Resource.GOLD, Resource.IRON)]
+            denominator += cost.get(Resource.IRON, 0) * conversion_rate[(Resource.GOLD, Resource.IRON)]
+
+        if Resource.FOOD in cost:
+            numerator += cur_iron * conversion_rate[(Resource.GOLD, Resource.FOOD)]
+            denominator += cost.get(Resource.FOOD, 0) * conversion_rate[(Resource.GOLD, Resource.FOOD)]
+
+        try:
+            result = int(math.floor(numerator / denominator))
+        except Exception as e:
+            self.log.debug(e)
+
+        emross.defer.returnValue(result)

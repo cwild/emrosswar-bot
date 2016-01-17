@@ -1,5 +1,6 @@
 from lib import six
 
+import emross
 from emross.api import EmrossWar
 from emross.item import inventory
 from emross.resources import Resource
@@ -18,8 +19,9 @@ class GoldHoarder(Task):
 
     NOT_ALLOWED_DURING_WAR = 809
 
+    @emross.defer.inlineCallbacks
     def process(self, retry_after_fail=300, *args, **kwargs):
-        json = self.bot.api.call(self.bot.USERINFO_URL, action='g_cd')
+        json = yield self.bot.api.call(self.bot.USERINFO_URL, action='g_cd')
         conversion_cooldown = json['ret'][0]
 
         delay = None
@@ -28,13 +30,12 @@ class GoldHoarder(Task):
             self.log.info('Cooldown of {0} seconds before conversion is possible'.format(conversion_cooldown))
             delay = min(conversion_cooldown, self.INTERVAL)
         else:
-            city = self.bot.richest_city()
+            city = yield self.bot.richest_city()
 
             for gold_id, gold_type, gold_amount in self.CONVERSION_OPTIONS[::-1]:
                 cost = gold_amount * self.CONVERSION_PENALTY
-                qty = 0
-                while city.resource_manager.meet_requirements({Resource.GOLD: cost*(qty+1)}, convert=False):
-                    qty += 1
+
+                qty = yield city.resource_manager.calculate_multiples({Resource.GOLD: cost})
 
                 if qty:
                     self.log.info(six.u('Try to convert {0} into {1}*"{2}" at {city}').format(\
@@ -44,7 +45,7 @@ class GoldHoarder(Task):
                         city=city)
                     )
 
-                    json = self.bot.api.call(GOLD_CONVERSION_URL, city=city.id, type=gold_type, num=qty)
+                    json = yield self.bot.api.call(GOLD_CONVERSION_URL, city=city.id, type=gold_type, num=qty)
                     if json['code'] == EmrossWar.SUCCESS:
                         city.resource_manager.modify_amount_of(Resource.GOLD, -int(json['ret']))
                         delay = min(int(json['ext'][0]), self.INTERVAL)
@@ -52,7 +53,7 @@ class GoldHoarder(Task):
                     elif json['code'] == self.NOT_ALLOWED_DURING_WAR:
                         self.log.info('Cannot convert during war, try again in {0} seconds'.format(\
                             retry_after_fail))
-                        self.sleep(retry_after_fail)
+                        delay = retry_after_fail
                         break
 
         self.sleep(delay or self.INTERVAL)
