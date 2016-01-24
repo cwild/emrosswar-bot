@@ -107,12 +107,15 @@ class InventoryManager(Controllable, CacheableData):
 
         emross.defer.returnvalue(search_items)
 
+    @emross.defer.inlineCallbacks
     def action_data(self, event, *args, **kwargs):
         """
         Find data about a specific item
         """
+        all_items = yield self._get_all_items()
+
         for _search in args:
-            for _id, _item in self._get_all_items().iteritems():
+            for _id, _item in all_items().iteritems():
                 try:
                     if re.search(_search, _item.get('name'), re.IGNORECASE):
                         self.chat.send_message(
@@ -142,7 +145,7 @@ class InventoryManager(Controllable, CacheableData):
                 six.u('Cache: {0}').format(', '.join(result)), event=event
             )
         elif 'quiet' not in kwargs:
-            self.chat.send_message('Sorry, I do not have any of those items!')
+            self.chat.send_message(gettext('Sorry, I do not have any of those items!'))
 
     @emross.defer.inlineCallbacks
     def action_use(self, event, *args, **kwargs):

@@ -23,7 +23,7 @@ class BotManager(object):
         logger.debug('Adding new bot for %s', player)
 
         api = EmrossWarApi(player.key, player.server, player.user_agent, player=player)
-        bot = EmrossWarBot(api, **kwargs)
+        bot = EmrossWarBot(api, settings=self.settings, **kwargs)
         self.bots.append(bot)
 
     def run(self, workhorse=True):

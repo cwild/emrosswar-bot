@@ -74,6 +74,7 @@ class AutoFusion(Task, Controllable):
 
         return combos
 
+    @emross.defer.inlineCallbacks
     def fuse_items(self, city, *items):
         """
         Combine 3 items to upgrade one of the them to the next item tier
@@ -86,33 +87,37 @@ class AutoFusion(Task, Controllable):
             kwargs['item{0}'.format(i)] = item_id
 
             for _ in range(enhance):
-                json = self.bot.item_manager.downgrade(city, item_id)
+                json = yield self.bot.item_manager.downgrade(city, item_id)
                 if json['code'] != EmrossWar.SUCCESS:
                     break
 
-        return self.bot.api.call(self.COMBINE_URL, action='combine',
+        json = yield self.bot.api.call(self.COMBINE_URL, action='combine',
                             city=city.id, **kwargs)
 
+        emross.defer.returnValue(json)
+
+    @emross.defer.inlineCallbacks
     def list_items(self):
         self.log.info('List items available for fusion')
 
         items = []
-        json = self.bot.api.call(self.COMBINE_URL, action='list')
+        json = yield self.bot.api.call(self.COMBINE_URL, action='list')
 
         if json['code'] == EmrossWar.SUCCESS:
             for _item in json['ret']['items']:
                 item_id, sid, enhance = map(int, _item)
                 items.append((item_id, sid, enhance))
 
-        return items
+        emross.defer.returnValue(items)
 
+    @emross.defer.inlineCallbacks
     def process(self, tier=2, fuse_below=1, report=REPORT, downgrade=DOWNGRADE_FUSEABLE, **kwargs):
 
         # Keep fusing items until there are no more left or the required gold is not met
         finished = False
 
         while not finished:
-            items = self.list_items()
+            items = yield self.list_items()
             fuseable = self.find_fuseable_combos(items, tier, fuse_below, downgrade)
 
             if not fuseable:
@@ -122,13 +127,14 @@ class AutoFusion(Task, Controllable):
             for combos in fuseable.itervalues():
 
                 for fuseitems in combos:
-                    city = self.bot.richest_city()
+                    city = yield self.bot.richest_city()
 
-                    if not city.resource_manager.meet_requirements({Resource.GOLD: self.FUSION_COST}, **kwargs):
+                    met = yield city.resource_manager.meet_requirements({Resource.GOLD: self.FUSION_COST}, **kwargs)
+                    if not met:
                         finished = True
                         break
 
-                    json = self.fuse_items(city, *fuseitems)
+                    json = yield self.fuse_items(city, *fuseitems)
 
                     if json['code'] == EmrossWar.SUCCESS:
                         msg = 'Successfully fused: "{0}"'.format(json['ret']['name'])
